@@ -36,7 +36,7 @@
   [{:keys [params page] :as route}]
   (if (empty? params)
     [[:services/set-default-route route]]
-    [[:services/fetch (db/parse-query-params page params)]
+    [[:services.catalogs/fetch (db/parse-query-params page params)]
      [::load-cart]]))
 
 
@@ -59,10 +59,26 @@
 
 
 (reg-event-fx
- :services/fetch
+ :services.catalogs/fetch
  [(path db/path)]
- (fn [{db :db} [_ query-params]]
-   {:db (assoc db :params query-params)}))
+ (fn [{db :db} [k query-params]]
+   {:db       (assoc db :params query-params)
+    :dispatch [:ui/loading k true]
+    :graphql  {:query
+               [[:catalogs
+                 [:id :name :code
+                  [:properties [:id :name]]
+                  [:items [:id]]]]]
+               :on-success [::fetch-catalogs-success k]
+               :on-failure [:graphql/failure k]}}))
+
+
+(reg-event-fx
+ ::fetch-catalogs-success
+ [(path db/path)]
+ (fn [{db :db} [_ k response]]
+   (.log js/console response)
+   {:dispatch [:ui/loading k false]}))
 
 
 (reg-event-fx

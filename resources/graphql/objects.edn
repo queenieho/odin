@@ -95,7 +95,7 @@
             :breed        {:type        String
                            :resolve     (:get :pet/breed)
                            :description "The pet's breed."}
-            :weight       {:type        Long
+            :weight       {:type        :Long
                            :resolve     (:get :pet/weight)
                            :description "The pet's weight."}
             :sterile      {:type        Boolean
@@ -128,6 +128,27 @@
                            :resolve (:get :fitness/dealbreakers)}
             :conflicts    {:type    String
                            :resolve (:get :fitness/conflicts)}}}
+
+
+  :catalog
+  {:fields {:name       {:type        (non-null String)
+                         :description "Name of catalog"
+                         :resolve     (:get :catalogue/name)}
+            :id         {:type    (non-null :Long)
+                         :resolve (:get :db/id)}
+            :items      {:type        (list :catalog_item)
+                         :description "List of items in a catalog"
+                         :resolve     (:get :catalogue/items)}
+            :properties {:type        (list :property)
+                         :description "Properties that this catalog is enabled for"
+                         :resolve     (:get :catalogue/properties)}
+            :code       {:type    (non-null :Keyword)
+                         :resolve (:get :catalogue/code)}}}
+
+
+  :catalog_item
+  {:fields {:id {:type    (non-null :Long)
+                 :resolve (:get :db/id)}}}
 
 
   :check
@@ -238,6 +259,20 @@
             :updated  {:type    (non-null :Instant)
                        :resolve :entity/updated}}}
 
+  ;; [:date :time :number :desc :variant]
+
+
+  ;; :service_field
+  ;; {:fields
+  ;;  {:index   {:type (non-null Integer)}
+  ;;   :label   {:type (non-null String)}
+  ;;   :type    {:type (non-null :service_field_type)}
+  ;;   :date    {:type :Instant}
+  ;;   :time    {:type :Instant}
+  ;;   :number  {:type Integer}
+  ;;   :desc    {:type String}
+  ;;   :variant {:type :Long}}}
+
 
   :order
   {:fields {:id                    {:type    (non-null :Long)
@@ -250,6 +285,8 @@
                                     :resolve (:get :order/quantity)}
             :name                  {:type    String
                                     :resolve :order/name}
+            ;; :fields                {:type    (list :service_field)
+            ;;                         :resolve :order/fields}
             :desc                  {:type        String
                                     :description "DEPRECATED: Use `:request` or `:summary`."
                                     :resolve     (:get :order/desc)}

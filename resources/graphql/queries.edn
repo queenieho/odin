@@ -5,6 +5,8 @@
   :accounts        {:type    (list :account)
                     :args    {:params {:type :accounts_query_params}}
                     :resolve :account/list}
+  :catalogs        {:type    (list :catalog)
+                    :resolve :catalog/list}
   :order           {:type    :order
                     :args    {:id {:type (non-null :Long)}}
                     :resolve :order/entry}
