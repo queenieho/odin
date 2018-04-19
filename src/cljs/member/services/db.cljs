@@ -12,7 +12,7 @@
 
 
 (def default-params
-  {:category :all})
+  {:category nil})
 
 
 ;; Should submited ps requests be held here? are these keys appropriate for them?
