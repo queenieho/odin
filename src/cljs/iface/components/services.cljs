@@ -42,7 +42,7 @@
        :value         (when-let [date (:value field)]
                         (js/moment date))
        :on-change     #(on-change (:index field) (when-let [x %] (.toISOString x)))
-       :disabled-days [0 6]
+       :disabled-days (vec (:excluded_days field))
        :show-today    false}]]]])
 
 
