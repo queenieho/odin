@@ -182,10 +182,10 @@
 (defn- get-attached-orders
   [db fee-id orders]
   (->> (filter
-       (fn [order]
-         (let [fees (:service/fees (d/entity db (order/service order)))]
-           (contains? fees fee-id)))
-       orders)))
+        (fn [order]
+          (let [fees (:service/fees (d/entity db (order/service order)))]
+            (contains? fees fee-id)))
+        orders)))
 
 
 (defn- prepare-fees
@@ -364,12 +364,40 @@
         (d/entity (d/db conn) id)))))
 
 
+(defn- update-order-attached-tx
+  [fee-order original-order-id]
+  [:db/retract (td/id fee-order) :order/attached (td/id original-order-id)])
+
+(defn- generate-fee-cancellation-tx
+  [conn original-order-id]
+   (let [fee-orders (:order/_attached (d/entity (d/db conn) original-order-id))]
+    (vec (reduce
+          (fn [txs fee-order]
+            (if (= 1 (count (:order/attached fee-order)))
+              (conj txs [(order/is-canceled (td/id fee-order))])
+              (apply conj
+                     txs
+                     (order/update fee-order
+                                            {:price (* (count (:order/attached fee-order))
+                                                       (* 0.5 (:service/price (:order/service fee-order))))})
+                     [[[:db/retract (td/id fee-order) :order/attached (td/id original-order-id)]]])))
+          []
+          fee-orders))))
+
+
+
 (defn cancel!
   "Cancel a premium service order."
-  [{:keys [requester conn]} {:keys [id notify]} _]
-  @(d/transact conn [(order/is-canceled id)
-                     (events/order-canceled requester id notify)
-                     (source/create requester)])
+  [{:keys [requester conn] :as db} {:keys [id notify]} _]
+  @(d/transact conn
+               (reduce
+                (fn [txs-so-far tx]
+                  (concat txs-so-far tx))
+                (conj []
+                      (order/is-canceled id)
+                      (events/order-canceled requester id notify)
+                      (source/create requester))
+                (generate-fee-cancellation-tx conn (td/id id))))
   (d/entity (d/db conn) id))
 
 
