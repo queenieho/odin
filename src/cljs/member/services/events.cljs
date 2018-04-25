@@ -181,7 +181,7 @@
                                                   :active     true}}
                               [:id :name :description :price :catalogs :active :billed :updated_at
                                [:fees [:id :name :description :price]]
-                               [:fields [:id :index :label :type :required
+                               [:fields [:id :index :label :type :required :excluded_days
                                          [:options [:index :label :value]]]]]]]
                 :on-success [::extract-services k on-success]
                 :on-failure [:graphql/failure k]}})))
