@@ -420,5 +420,6 @@
    (let [order-name (get-in response [:data :cancel_order :name])]
      {:dispatch-n   [[:ui/loading k false]
                      [:services/fetch-orders account-id]]
-      :db           (dissoc db :canceling)
+      :db           (-> (dissoc db :canceling)
+                        (dissoc :orders))
       :notification [:success (str order-name " has been canceled")]})))
