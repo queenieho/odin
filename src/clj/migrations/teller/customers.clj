@@ -50,10 +50,17 @@
 
 (defn- connected-customer-txdata
   [autopay customer sources]
-  (let [ops-id      (-> autopay customer/managing-property :property/rent-connect-id)
-        deposit-id  (-> autopay customer/managing-property :property/deposit-connect-id)
-        customer-id "FIXME" #_(:id (scustomer/create! {:email (account/email (customer/account autopay))}
-                                                      {:account deposit-id}))]
+  (let [ops-id      (-> autopay
+                        customer/managing-property
+                        :property/rent-connect-id)
+        deposit-id  (-> autopay
+                        customer/managing-property
+                        :property/deposit-connect-id)
+        customer-id (str (d/squuid))
+        #_(:id (scustomer/create!
+                {:email (account/email (customer/account autopay))}
+
+                {:account deposit-id}))]
     (doseq [source sources]
       (timbre/infof "\ncreating deposit source! autopay-customer-id: %s\n connect-id: %s\n customer-id: %s\n customer-email: %s\n source-id: %s" customer-id deposit-id (customer/id customer) (account/email (customer/account customer)) (:id source))
       #_(create-connect-source! (customer/id customer)
@@ -186,5 +193,6 @@
 
 
   (enrich-existing-customers-with-teller-stuff teller conn)
+
 
   )
