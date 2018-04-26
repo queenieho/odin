@@ -38,10 +38,10 @@
 
 
 (defn source-for-payment
-  [payment out-ch]
+  [teller payment out-ch]
   (let [account  (:payment/account payment)
         customer (:entity (tcustomer/by-account teller account))
-        type (:payment/for payment)]
+        type     (:payment/for payment)]
     (go
       (try
         (if (#{:payment.type/deposit :payment.type/rent} type)
@@ -62,11 +62,11 @@
 
 
 (defn- <fetch-sources
-  [payments]
+  [teller payments]
   (let [concurrency 500
         in          (chan)
         out         (chan)]
-    (a/pipeline-async concurrency out source-for-payment in)
+    (a/pipeline-async concurrency out (partial source-for-payment teller) in)
     (a/onto-chan in payments)
     (a/into [] out)))
 
@@ -87,7 +87,7 @@
           :payment/customer (td/id customer)
           :payment/source   source-id}))
      payments
-     (a/<!! (<fetch-sources payments)))))
+     (a/<!! (<fetch-sources teller payments)))))
 
 
 
