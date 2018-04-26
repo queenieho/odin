@@ -18,7 +18,10 @@
             [blueprints.models.member-license :as member-license]
             [teller.property :as tproperty]
             [blueprints.models.customer :as customer]
-            [blueprints.models.unit :as unit]))
+            [blueprints.models.unit :as unit]
+            [toolbelt.date :as date]
+            [clj-time.core :as t]
+            [clj-time.coerce :as c]))
 
 
 ;; =============================================================================
@@ -186,7 +189,7 @@
 ;;; plan name
 ;; who the plan's for, which unit, which community
 
-(defn- plan-name
+(defn plan-name
   [teller license]
   (let [account       (member-license/account license)
         email         (account/email account)
@@ -195,6 +198,14 @@
         property      (tcustomer/property customer)
         property-name (tproperty/name property)]
     (str "autopay for " email " @ " property-name " in " unit-name)))
+
+
+(defn autopay-start
+  [customer]
+  (let [property (tcustomer/property customer)
+        tz       (t/time-zone-for-id (tproperty/timezone property))]
+    (-> (c/to-date (t/plus (t/now) (t/months 1)))
+        (date/beginning-of-month tz))))
 
 
 (defn set-autopay!
@@ -210,7 +221,8 @@
               license (member-license/active (d/db conn) requester)
               rate    (member-license/rate license)
               plan    (tplan/create! teller (plan-name teller license) :payment.type/rent rate)]
-          (tsubscription/subscribe! customer plan {:source source})
+          (tsubscription/subscribe! customer plan {:source source
+                                                   :start-at (autopay-start customer)})
           (tsource/by-id teller id))
         (catch Throwable t
           (timbre/error t ::set-autopay! {:email (account/email requester)})
