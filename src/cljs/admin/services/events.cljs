@@ -22,7 +22,7 @@
  (fn [{db :db} [k params]]
    {:dispatch [:ui/loading k true]
     :graphql  {:query      [[:services {:params params}
-                             [:id :name :code :active :catalogs :price :type :archived]]]
+                             [:id :name :name_internal :code :active :catalogs :price :type :archived]]]
                :on-success [::services-query k params]
                :on-failure [:graphql/failure k]}}))
 
@@ -330,27 +330,28 @@
  [(path db/path)]
  (fn [db [_ service]]
    (if (some? service)
-     (let [{:keys [name description code active type properties catalogs price cost billed rental fields fees]} service]
+     (let [{:keys [name name_internal description code active type properties catalogs price cost billed rental fields fees]} service]
        (dissoc db :form)
-       (assoc db :form {:name        name
-                        :description description
-                        :code        code
-                        :active      active
-                        :properties  properties
-                        :catalogs    (map clojure.core/name catalogs)
-                        :type        (if (some? type) type :service)
-                        :price       price
-                        :cost        cost
-                        :billed      billed
-                        :rental      (if (nil? rental)
-                                       false
-                                       rental)
-                        :fields      (if (nil? fields)
-                                       []
-                                       (vecify-fields fields))
-                        :fees        (if (nil? fees)
-                                       []
-                                       (mapv :id fees))}))
+       (assoc db :form {:name          name
+                        :name_internal name_internal
+                        :description   description
+                        :code          code
+                        :active        active
+                        :properties    properties
+                        :catalogs      (map clojure.core/name catalogs)
+                        :type          (if (some? type) type :service)
+                        :price         price
+                        :cost          cost
+                        :billed        billed
+                        :rental        (if (nil? rental)
+                                         false
+                                         rental)
+                        :fields        (if (nil? fields)
+                                         []
+                                         (vecify-fields fields))
+                        :fees          (if (nil? fees)
+                                         []
+                                         (mapv :id fees))}))
      (assoc db :form db/form-defaults))))
 
 

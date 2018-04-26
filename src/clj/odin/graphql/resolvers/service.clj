@@ -271,6 +271,9 @@
       (and (not= (:service/name existing) (:name updated)) (some? (:name updated)))
       (conj [:db/add id :service/name (:name updated)])
 
+      (and (not= (:service/name-internal existing) (:name_internal updated)) (some? (:name_internal updated)))
+      (conj [:db/add id :service/name-internal (:name_internal updated)])
+
       (and (not= (:service/desc existing) (:description updated)) (some? (:description updated)))
       (conj [:db/add id :service/desc (:description updated)])
 
