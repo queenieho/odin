@@ -161,7 +161,9 @@
       [:div.column.is-half.cart-item-info
        [:span
         [:p.fs2.bold label]]
-       [field-value (keyword (name type)) value options]])
+       (if (some? value)
+         [field-value (keyword (name type)) value options]
+         [field-value :text "(none provided)"])])
     fields)])
 
 
