@@ -125,33 +125,33 @@
 
 (defmethod field-value :time [k value options]
   [:span
-   [:p.fs3 (format/time-short value)]])
+   [:p.fs2 (format/time-short value)]])
 
 
 (defmethod field-value :date [k value options]
   [:span
-   [:p.fs3 (format/date-short value)]])
+   [:p.fs2 (format/date-short value)]])
 
 
 (defmethod field-value :variants [k value options]
   (let [vlabel (reduce (fn [v option] (if (= (keyword value) (:key option)) (:label option) v)) nil options)]
     [:span
-     [:p.fs3 vlabel]]))
+     [:p.fs2 vlabel]]))
 
 
 (defmethod field-value :text [k value options]
   [:span
-   [:p.fs3 value]])
+   [:p.fs2 value]])
 
 
 (defmethod field-value :number [k value options]
   [:span
-   [:p.fs3 value]])
+   [:p.fs2 value]])
 
 
 (defmethod field-value :dropdown [k value options]
   [:span
-   [:p.fs3 value]])
+   [:p.fs2 value]])
 
 
 (defn fields-data-row [fields]
@@ -161,7 +161,7 @@
       ^{:key i}
       [:div.column.is-half.cart-item-info
        [:span
-        [:p.fs3.bold label]]
+        [:p.fs2.bold label]]
        [field-value (keyword (name type)) value options]])
     fields)])
 
@@ -185,35 +185,52 @@
                       :name        name
                       :description description
                       :price       price}]
-    [ant/card {:style {:margin "10px 0"}}
+    [ant/card
+     {:style {:margin  "0"
+              :padding "0"}}
      [:div.columns
       [:div.column.is-6
-       [:h4.subtitle.is-5 name]
-       (when fee? [:div description])]
-      [:div.column.is-2
+       [:p.bold name]
+       (when fee? [:p.fs2 description])]
+      [:div.column.is-3
        [:p.price (format-price price billed)]]
       (when (not fee?)
-        [:div.column.is-2.align-right
+        [:div.column.is-3.align-right
          [ant/button {:icon     "edit"
+                      :size     "small"
                       :on-click #(dispatch [:services.cart.item/edit service-item fields])}
-          "Edit Item"]])
-      (when (not fee?)
-        [:div.column.is-2
+          "Edit Item"]
          [ant/button
           {:type     "danger"
            :icon     "close"
+           :size     "small"
            :on-click #(dispatch [:services.cart.item/remove index name])}
           "Remove item"]])]
      (when-not (empty? fields)
        [fields-data (sort-by :index fields)])]))
 
 
-(defn shopping-cart-footer [requester]
+(defn- total-prices [orders]
+  (->> orders
+       (map #(* (or (:quantity %) 1) (:price %)))
+       (reduce +)))
+
+
+(defn shopping-cart-footer [orders fees requester]
   (let [has-card   (subscribe [:payment-sources/has-card? (:id requester)])
-        submitting (subscribe [:ui/loading? :services.cart/submit])]
-    [:div.cart-footer.has-text-right
-     [:p
-      [:b "NOTE: "] "Service requests are treated as individual billable items. You will be charged for each service as it is fulfilled."]
+        submitting (subscribe [:ui/loading? :services.cart/submit])
+        grp        (->> orders
+                        (remove (comp nil? :price))
+                        (group-by :billed))]
+    [:div.has-text-right
+     {:style
+      {:padding-right 8
+       :margin-top    "15px"}}
+     [:p.fs2.bold.mb2 "Service requests are treated as individual billable items. You will be charged for each service as it is fulfilled."]
+     [:p {:style {:margin-bottom 0}} "One-time service subtotal: " [:strong "$" (->> grp :once total-prices)]]
+     [:p {:style {:margin-bottom 0}} "Monthly service subtotal: " [:strong "$" (->> grp :monthly total-prices)]]
+     (when (some? fees) [:p {:style {:margin-bottom 0}} "Service fees subtotal: " [:strong "$" (total-prices fees)]])
+
      [ant/button {:class    "ant-btn-xl"
                   :type     "primary"
                   :on-click #(if-not @has-card
@@ -267,12 +284,13 @@
 
 
 (defn shopping-cart-body [cart-items requester]
-  [:div
-   (doall
-    (map-indexed
-     #(with-meta [cart-item %2] {:key %1})
-     (concat cart-items (extract-fees cart-items))))
-   [shopping-cart-footer requester]])
+  (let [fees (extract-fees cart-items)]
+    [:div
+     (doall
+      (map-indexed
+       #(with-meta [cart-item %2] {:key %1})
+       (concat cart-items fees)))
+     [shopping-cart-footer cart-items fees requester]]))
 
 
 ;; add credit card modal ========================================================
