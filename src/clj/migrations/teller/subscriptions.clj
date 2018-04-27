@@ -10,7 +10,8 @@
             [teller.plan :as tplan]
             [teller.subscription :as tsubscription]
             [toolbelt.datomic :as td]
-            [blueprints.models.member-license :as ml]))
+            [blueprints.models.member-license :as ml]
+            [odin.graphql.resolvers.utils :refer [plan-name]]))
 
 
 (defn- license-query
@@ -25,7 +26,7 @@
 
 (defn migrate-autopay-license
   [teller license]
-  (let [plan-name    (odin.graphql.resolvers.payment-source/plan-name teller license)
+  (let [plan-name    (plan-name teller license)
         license-rate (ml/rate license)
         customer     (tcustomer/by-account teller (ml/account license))
         connect-id   (-> license (ml/property) :property/rent-connect-id)
