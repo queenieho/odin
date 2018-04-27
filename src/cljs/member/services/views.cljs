@@ -102,8 +102,7 @@
 
 
 (defn shopping-cart-button []
-  (let [item-count (subscribe [:services.cart/item-count])
-        total-cost (subscribe [:services.cart/total-cost])]
+  (let [item-count (subscribe [:services.cart/item-count])]
     [ant/affix {:offsetBottom 20}
      [:div.has-text-right
       [ant/button
@@ -111,7 +110,7 @@
         :type :primary
         :class "ant-btn-xl"
         :on-click #(dispatch [:services.section/select "cart"])}
-       "Checkout - $" @total-cost " (" @item-count ")"]]]))
+       "Checkout (" @item-count ")"]]]))
 
 
 ;; ==============================================================================
