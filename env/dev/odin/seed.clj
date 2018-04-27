@@ -1,17 +1,18 @@
 (ns odin.seed
   (:require [blueprints.models.license :as license]
+            [blueprints.models.member-license :as member-license]
             [blueprints.seed.accounts :as accounts]
-            [blueprints.seed.orders :as orders]
             [clj-time.coerce :as c]
             [clj-time.core :as t]
             [datomic.api :as d]
             [io.rkn.conformity :as cf]
+            [teller.core :as teller]
             [teller.customer :as tcustomer]
             [teller.payment :as tpayment]
             [teller.property :as tproperty]
+            [teller.source :as tsource]
             [toolbelt.core :as tb]
-            [toolbelt.date :as date]
-            [teller.source :as tsource]))
+            [toolbelt.date :as date]))
 
 (defn- referrals []
   (let [sources ["craigslist" "word of mouth" "video" "starcity member" "instagram"]
@@ -122,7 +123,8 @@
                                       {:account  [:account/email "member@test.com"]
                                        :source   mock-visa-credit
                                        :property (tproperty/by-id teller "52gilbert")})
-          tz       (t/time-zone-for-id "America/Los_Angeles")]
+          tz       (t/time-zone-for-id "America/Los_Angeles")
+          license (member-license/active (d/db (teller/db teller)) [:account/email "member@test.com"])]
       (tsource/set-default! (first (tcustomer/sources customer)) :payment.type/order)
       (tpayment/create! customer 2000.0 :payment.type/rent
                         {:due    (date/end-of-day (java.util.Date.) tz)

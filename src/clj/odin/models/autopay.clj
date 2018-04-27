@@ -198,7 +198,8 @@
               :source source-id
               :managed-account (member-license/rent-connect-id license)
               :trial-end (c/to-epoch (subscription-start-date license))
-              :fee-percent (-> license member-license/property property/ops-fee)))
+              :fee-percent (or (-> license member-license/property property/ops-fee)
+                               0.)))
 
 
 (defn turn-on-autopay!

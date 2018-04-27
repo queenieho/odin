@@ -33,3 +33,13 @@
                           :ops       ops-id
                           :community cid
                           :fees      fees}))))
+
+
+(comment
+  (do
+    (def conn odin.datomic/conn)
+    (def teller odin.teller/teller))
+
+  (create-teller-properties! teller conn)
+
+  )
