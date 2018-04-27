@@ -83,12 +83,13 @@
          (assert (some? customer)
                  (format "Payment ID: %s\nAccount does not have a customer %s"
                          (td/id payment) (td/id account)))
-         {:db/id            (td/id payment)
-          :payment/customer (td/id customer)
-          :payment/source   source-id}))
+         {:db/id              (td/id payment)
+          :payment/customer   (td/id customer)
+          :payment/source     source-id
+          :payment/charge-id  (:stripe/charge-id payment)
+          :payment/invoice-id (:stripe/invoice-id payment)}))
      payments
      (a/<!! (<fetch-sources teller payments)))))
-
 
 
 (comment
