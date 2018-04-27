@@ -3,7 +3,7 @@
   (:require [blueprints.models.account :as account]
             [clojure.spec.alpha :as s]
             [clojure.string :as string]
-            [odin.graphql.resolvers.utils :refer [error-message]]
+            [odin.graphql.resolvers.utils :refer [error-message plan-name]]
             [com.walmartlabs.lacinia.resolve :as resolve]
             [datomic.api :as d]
             [odin.graphql.authorization :as authorization]
@@ -186,18 +186,6 @@
 (defn- is-bank-id? [source-id]
   (string/starts-with? source-id "ba_"))
 
-;;; plan name
-;; who the plan's for, which unit, which community
-
-(defn plan-name
-  [teller license]
-  (let [account       (member-license/account license)
-        email         (account/email account)
-        unit-name     (unit/code (member-license/unit license))
-        customer      (tcustomer/by-account teller account)
-        property      (tcustomer/property customer)
-        property-name (tproperty/name property)]
-    (str "autopay for " email " @ " property-name " in " unit-name)))
 
 
 (defn autopay-start
