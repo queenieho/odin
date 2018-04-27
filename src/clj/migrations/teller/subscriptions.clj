@@ -1,8 +1,10 @@
 (ns migrations.teller.subscriptions
-  (:require [blueprints.models.order :as order]
+  (:require [blueprints.models.member-license :as ml]
+            [blueprints.models.order :as order]
             [blueprints.models.service :as service]
             [clj-time.coerce :as c]
             [datomic.api :as d]
+            [odin.graphql.resolvers.utils.plans :as plans-utils]
             [stripe.plan :as splan]
             [stripe.subscription :as ssub]
             [teller.core :as teller]
@@ -10,9 +12,7 @@
             [teller.plan :as tplan]
             [teller.subscription :as tsubscription]
             [toolbelt.datomic :as td]
-            [blueprints.models.member-license :as ml]
-            [odin.graphql.resolvers.utils :refer [plan-name]]))
-
+            [odin.graphql.resolvers.utils.autopay :as autopay-utils]))
 
 (defn- license-query
   [db]
@@ -26,7 +26,7 @@
 
 (defn migrate-autopay-license
   [teller license]
-  (let [plan-name    (plan-name teller license)
+  (let [plan-name    (plans-utils/plan-name teller license)
         license-rate (ml/rate license)
         customer     (tcustomer/by-account teller (ml/account license))
         connect-id   (-> license (ml/property) :property/rent-connect-id)
@@ -34,7 +34,7 @@
         source       (first (tcustomer/sources customer :payment-source.type/bank))
         subs         (tsubscription/subscribe! customer plan
                                                {:source   source
-                                                :start-at (odin.graphql.resolvers.payment-source/autopay-start customer)})]
+                                                :start-at (autopay-utils/autopay-start customer)})]
     (ssub/cancel! (:member-license/subscription-id license) {}
                   {:token   (teller/py teller)
                    :account connect-id})

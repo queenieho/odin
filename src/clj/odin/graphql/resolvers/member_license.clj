@@ -1,23 +1,18 @@
 (ns odin.graphql.resolvers.member-license
   (:require [blueprints.models.account :as account]
-            [blueprints.models.customer :as customer]
             [blueprints.models.member-license :as member-license]
-            [blueprints.models.payment :as payment]
             [blueprints.models.source :as source]
             [com.walmartlabs.lacinia.resolve :as resolve]
             [datomic.api :as d]
             [odin.graphql.authorization :as authorization]
-            [odin.models.autopay :as autopay]
+            [odin.graphql.resolvers.utils.autopay :as autopay-utils]
+            [odin.graphql.resolvers.utils.plans :as plans-utils]
             [taoensso.timbre :as timbre]
             [teller.customer :as tcustomer]
             [teller.payment :as tpayment]
-            [toolbelt.async :refer [<!!?]]
-            [toolbelt.date :as date]
-            [teller.property :as tproperty]
+            [teller.plan :as tplan]
             [teller.subscription :as tsubscription]
-            [clj-time.core :as t]
-            [odin.graphql.resolvers.utils :refer [plan-name]]
-            [teller.plan :as tplan]))
+            [toolbelt.date :as date]))
 
 ;; ==============================================================================
 ;; helpers ======================================================================
@@ -105,33 +100,15 @@
               old-sub       (tsubscription/query teller {:customers     [customer]
                                                          :payment-types [:payment.type/rent]})
               old-plan      (tsubscription/plan old-sub)
-              new-plan      (tplan/create! teller (plan-name teller license-after) :payment.type/rent rate)]
+              new-plan      (tplan/create! teller (plans-utils/plan-name teller license-after) :payment.type/rent rate)]
           (tsubscription/cancel! old-sub)
           (tplan/deactivate! old-plan)
-          (tsubscription/subscribe! customer new-plan))
-        (d/entity (d/db conn) license)
+          (tsubscription/subscribe! customer new-plan {:start-on (autopay-utils/autopay-start customer)})
+          (d/entity (d/db conn) license))
         (catch Throwable t
           (timbre/error t ::reassign-room {:license license :unit unit :rate rate})
           (resolve/resolve-as nil {:message "Failed to completely reassign room! Likely to do with autopay..."}))))))
 
-#_(let [license-before (d/entity (d/db conn) license)]
-    @(d/transact conn [{:db/id               license
-                        :member-license/rate rate
-                        :member-license/unit unit}
-                       (source/create requester)])
-    (try
-      (let [license-after (d/entity (d/db conn) license)]
-        (when (and (not= rate (member-license/rate license-before))
-                   (member-license/autopay-on? license-before))
-          (let [account  (member-license/account license-before)
-                customer (customer/by-account (d/db conn) account)]
-            ;; TODO:
-            (<!!? (autopay/turn-off-autopay! conn stripe license-after (customer/bank-token customer)))
-            (<!!? (autopay/turn-on-autopay! conn stripe (d/entity (d/db conn) license) (customer/bank-token customer)))))
-        (d/entity (d/db conn) license))
-      (catch Throwable t
-        (timbre/error t ::reassign-room {:license license :unit unit :rate rate})
-        (resolve/resolve-as nil {:message "Failed to completely reassign room! Likely to do with autopay..."}))))
 
 ;; ==============================================================================
 ;; resolvers --------------------------------------------------------------------

@@ -1,28 +1,23 @@
 (ns odin.graphql.resolvers.payment-source
   (:refer-clojure :exclude [type name])
   (:require [blueprints.models.account :as account]
+            [blueprints.models.member-license :as member-license]
             [clojure.spec.alpha :as s]
             [clojure.string :as string]
-            [odin.graphql.resolvers.utils :refer [error-message plan-name]]
             [com.walmartlabs.lacinia.resolve :as resolve]
             [datomic.api :as d]
             [odin.graphql.authorization :as authorization]
+            [odin.graphql.resolvers.utils :refer [error-message]]
+            [odin.graphql.resolvers.utils.autopay :as autopay-utils]
+            [odin.graphql.resolvers.utils.plans :as plans-utils]
             [odin.models.payment-source :as payment-source]
             [taoensso.timbre :as timbre]
             [teller.customer :as tcustomer]
-            [teller.source :as tsource]
-            [toolbelt.core :as tb]
             [teller.payment :as tpayment]
             [teller.plan :as tplan]
+            [teller.source :as tsource]
             [teller.subscription :as tsubscription]
-            [blueprints.models.member-license :as member-license]
-            [teller.property :as tproperty]
-            [blueprints.models.customer :as customer]
-            [blueprints.models.unit :as unit]
-            [toolbelt.date :as date]
-            [clj-time.core :as t]
-            [clj-time.coerce :as c]))
-
+            [toolbelt.core :as tb]))
 
 ;; =============================================================================
 ;; Fields
@@ -187,15 +182,6 @@
   (string/starts-with? source-id "ba_"))
 
 
-
-(defn autopay-start
-  [customer]
-  (let [property (tcustomer/property customer)
-        tz       (t/time-zone-for-id (tproperty/timezone property))]
-    (-> (c/to-date (t/plus (t/now) (t/months 1)))
-        (date/beginning-of-month tz))))
-
-
 (defn set-autopay!
   "Set a source as the autopay source. Source must be a bank account source."
   [{:keys [conn requester teller] :as ctx} {:keys [id]} _]
@@ -208,9 +194,9 @@
         (let [source  (tsource/by-id teller id)
               license (member-license/active (d/db conn) requester)
               rate    (member-license/rate license)
-              plan    (tplan/create! teller (plan-name teller license) :payment.type/rent rate)]
-          (tsubscription/subscribe! customer plan {:source source
-                                                   :start-at (autopay-start customer)})
+              plan    (tplan/create! teller (plans-utils/plan-name teller license) :payment.type/rent rate)]
+          (tsubscription/subscribe! customer plan {:source   source
+                                                   :start-at (autopay-utils/autopay-start customer)})
           (tsource/by-id teller id))
         (catch Throwable t
           (timbre/error t ::set-autopay! {:email (account/email requester)})
