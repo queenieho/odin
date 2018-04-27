@@ -12,6 +12,17 @@
             [toolbelt.datomic :as td]
             [blueprints.models.member-license :as ml]))
 
+
+(defn- license-query
+  [db]
+  (d/q '[:find [?l ...]
+         :in $
+         :where
+         [?l :member-license/subscription-id _]
+         [?l :member-license/status :member-license.status/active]]
+       db))
+
+
 (defn migrate-autopay-license
   [teller license]
   (let [plan-name    (odin.graphql.resolvers.payment-source/plan-name teller license)
@@ -60,6 +71,13 @@
          (deref))))
 
 
+(defn migrate-all-licenses-on-autopay
+  [teller]
+  (let [licenses (license-query (d/db (teller/db teller)))]
+    (doseq [license licenses]
+      (migrate-autopay-license teller license))))
+
+
 ;; (defn migrate-historical-order-subscriptions
 ;;   [teller]
 ;;   ;; FUTURE
@@ -83,6 +101,8 @@
 
   (migrate-order-subscription teller sample-order)
 
-  (tcustomer/property (tcustomer/by-account teller [:account/email "member@test.com"]))
+  (count (license-query (d/db conn)))
+
+  (migrate-licenses teller)
 
   )
