@@ -15,7 +15,9 @@
             [toolbelt.date :as date]
             [teller.property :as tproperty]
             [teller.subscription :as tsubscription]
-            [clj-time.core :as t]))
+            [clj-time.core :as t]
+            [odin.graphql.resolvers.utils :refer [plan-name]]
+            [teller.plan :as tplan]))
 
 ;; ==============================================================================
 ;; helpers ======================================================================
@@ -88,8 +90,31 @@
 
 (defn reassign!
   "Reassign a the member with license `license` to a new `unit`."
-  [{:keys [conn stripe requester]} {{:keys [license unit rate]} :params} _]
+  [{:keys [conn teller requester]} {{:keys [license unit rate]} :params} _]
   (let [license-before (d/entity (d/db conn) license)]
+    (when (and (not= rate (member-license/rate license-before))
+               (not= unit (member-license/unit license-before)))
+      @(d/transact conn [{:db/id               license
+                          :member-license/rate rate
+                          :member-license/unit unit}
+                         (source/create requester)])
+      (try
+        (let [license-after (d/entity (d/db conn) license)
+              account       (member-license/account license-before)
+              customer      (tcustomer/by-account teller account)
+              old-sub       (tsubscription/query teller {:customers     [customer]
+                                                         :payment-types [:payment.type/rent]})
+              old-plan      (tsubscription/plan old-sub)
+              new-plan      (tplan/create! teller (plan-name teller license-after) :payment.type/rent rate)]
+          (tsubscription/cancel! old-sub)
+          (tplan/deactivate! old-plan)
+          (tsubscription/subscribe! customer new-plan))
+        (d/entity (d/db conn) license)
+        (catch Throwable t
+          (timbre/error t ::reassign-room {:license license :unit unit :rate rate})
+          (resolve/resolve-as nil {:message "Failed to completely reassign room! Likely to do with autopay..."}))))))
+
+#_(let [license-before (d/entity (d/db conn) license)]
     @(d/transact conn [{:db/id               license
                         :member-license/rate rate
                         :member-license/unit unit}
@@ -106,8 +131,7 @@
         (d/entity (d/db conn) license))
       (catch Throwable t
         (timbre/error t ::reassign-room {:license license :unit unit :rate rate})
-        (resolve/resolve-as nil {:message "Failed to completely reassign room! Likely to do with autopay..."})))))
-
+        (resolve/resolve-as nil {:message "Failed to completely reassign room! Likely to do with autopay..."}))))
 
 ;; ==============================================================================
 ;; resolvers --------------------------------------------------------------------
