@@ -92,7 +92,7 @@
   "Reassign a the member with license `license` to a new `unit`."
   [{:keys [conn teller requester]} {{:keys [license unit rate]} :params} _]
   (let [license-before (d/entity (d/db conn) license)]
-    (when (and (not= rate (member-license/rate license-before))
+    (when (or (not= rate (member-license/rate license-before))
                (not= unit (member-license/unit license-before)))
       @(d/transact conn [{:db/id               license
                           :member-license/rate rate
