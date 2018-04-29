@@ -150,11 +150,10 @@
         source   (tcustomer/source customer :payment.type/order)
         payment  (tpayment/create! customer price :payment.type/order
                                    {:source source})]
-    [{:db/id           (td/id order)
-      :order/status    :order.status/charged
-      :order/billed-on (java.util.Date.)
-      :order/payments  (td/id payment)}
-     (source/create requester)]))
+    {:db/id           (td/id order)
+     :order/status    :order.status/charged
+     :order/billed-on (java.util.Date.)
+     :order/payments  (td/id payment)}))
 
 
 (defmethod process-order! :service.billed/monthly
@@ -165,11 +164,10 @@
         source   (tcustomer/source customer :payment.type/order)
         subs     (subscription/subscribe! customer plan {:source source})
         subs-ref [:teller-subscription/id (subscription/id subs)]]
-    [{:db/id              (td/id order)
-      :order/status       :order.status/charged
-      :order/billed-on    (java.util.Date.)
-      :order/subscription subs-ref}
-     (source/create requester)]))
+    {:db/id              (td/id order)
+     :order/status       :order.status/charged
+     :order/billed-on    (java.util.Date.)
+     :order/subscription subs-ref}))
 
 
 (defn- use-order-price? [service {:keys [line_items variant]}]
@@ -371,7 +369,9 @@
                                              [(source/create requester)
                                               (events/order-fulfilled requester order notify)]
                                              (if charge
-                                               (process-order! ctx order)
+                                               [(assoc
+                                                 (process-order! ctx order)
+                                                 :order/fulfilled-on fulfilled_on)]
                                                [(order/is-fulfilled id fulfilled_on)]))))]
         (d/entity db id)))))
 
@@ -402,7 +402,8 @@
 
       :otherwise
       (try
-        (let [db (:db-after @(d/transact conn (process-order! ctx order)))]
+        (let [db (:db-after @(d/transact conn (conj (process-order! ctx order)
+                                                    (source/create requester))))]
           (d/entity db id))
         (catch Throwable t
           (timbre/error t ::order {:order-id id :source source})
