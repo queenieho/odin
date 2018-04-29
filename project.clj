@@ -58,8 +58,8 @@
                  [cljsjs/moment "2.17.1-1"]
                  [akiroz.re-frame/storage "0.1.2"]
                  ;; DB
-                 [starcity/teller "0.1.0-SNAPSHOT"]
-                 [starcity/blueprints "2.5.0-SNAPSHOT"
+                 [starcity/teller "1.0.0"]
+                 [starcity/blueprints "2.5.0"
                   :exclusions [com.datomic/datomic-free
                                com.andrewmcveigh/cljs-time
                                com.google.guava/guava
@@ -77,7 +77,7 @@
                  [com.taoensso/timbre "4.10.0"]
                  [starcity/ribbon "0.11.0"]
                  [starcity/toolbelt-async "0.4.0"]
-                 [starcity/toolbelt-core "0.4.0"]
+                 [starcity/toolbelt-core "0.5.0"]
                  [starcity/toolbelt-date "0.3.0"]
                  [starcity/toolbelt-datomic "0.5.0"]
                  [starcity/toolbelt-re-frame "0.1.0"
