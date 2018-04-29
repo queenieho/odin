@@ -12,7 +12,8 @@
             [teller.payment :as tpayment]
             [teller.plan :as tplan]
             [teller.subscription :as tsubscription]
-            [toolbelt.date :as date]))
+            [toolbelt.date :as date]
+            [toolbelt.core :as tb]))
 
 ;; ==============================================================================
 ;; helpers ======================================================================
@@ -25,6 +26,15 @@
   (tcustomer/by-account teller (member-license/account license)))
 
 
+(defn- autopay-on?
+  [teller license]
+  (let [customer (license-customer teller license)]
+    (-> (tsubscription/query teller {:customers [customer]
+                                     :payment-types   [:payment.type/rent]})
+        seq
+        boolean)))
+
+
 ;; ==============================================================================
 ;; fields -----------------------------------------------------------------------
 ;; ==============================================================================
@@ -33,9 +43,7 @@
 (defn autopay-on
   "Whether or not autopay is active for this license."
   [{teller :teller} _ license]
-  (let [customer (license-customer teller license)]
-    (some? (tsubscription/query teller {:customers [customer]
-                                        :payment-types   [:payment.type/rent]}))))
+  (autopay-on? teller license))
 
 
 (defn- payment-within
@@ -83,9 +91,31 @@
 ;; ==============================================================================
 
 
+(defn- reassign-autopay!
+  [{:keys [conn teller requester]} {:keys [license unit rate]}]
+  (try
+    (let [license-after (d/entity (d/db conn) license)
+          account       (member-license/account license-after)
+          customer      (tcustomer/by-account teller account)
+          old-sub       (->> (tsubscription/query teller {:customers     [customer]
+                                                          :payment-types [:payment.type/rent]})
+                             (tb/find-by tsubscription/active?))
+          old-plan      (tsubscription/plan old-sub)
+          source        (tsubscription/source old-sub)
+          new-plan      (tplan/create! teller (plans-utils/plan-name teller license-after) :payment.type/rent rate)]
+      (tsubscription/cancel! old-sub)
+      (tplan/deactivate! old-plan)
+      (tsubscription/subscribe! customer new-plan {:source   source
+                                                   :start-on (autopay-utils/autopay-start customer)})
+      (d/entity (d/db conn) license))
+    (catch Throwable t
+      (timbre/error t ::reassign-room {:license license :unit unit :rate rate})
+      (resolve/resolve-as nil {:message "Failed to completely reassign room! Likely to do with autopay..."}))))
+
+
 (defn reassign!
   "Reassign a the member with license `license` to a new `unit`."
-  [{:keys [conn teller requester]} {{:keys [license unit rate]} :params} _]
+  [{:keys [conn teller requester] :as ctx} {{:keys [license unit rate] :as params} :params} _]
   (let [license-before (d/entity (d/db conn) license)]
     (when (or (not= rate (member-license/rate license-before))
               (not= unit (member-license/unit license-before)))
@@ -93,23 +123,9 @@
                           :member-license/rate rate
                           :member-license/unit unit}
                          (source/create requester)])
-      (try
-        (let [license-after (d/entity (d/db conn) license)
-              account       (member-license/account license-before)
-              customer      (tcustomer/by-account teller account)
-              old-sub       (tsubscription/query teller {:customers     [customer]
-                                                         :payment-types [:payment.type/rent]})
-              old-plan      (tsubscription/plan old-sub)
-              source        (tsubscription/source old-sub)
-              new-plan      (tplan/create! teller (plans-utils/plan-name teller license-after) :payment.type/rent rate)]
-          (tsubscription/cancel! old-sub)
-          (tplan/deactivate! old-plan)
-          (tsubscription/subscribe! customer new-plan {:source   source
-                                                       :start-on (autopay-utils/autopay-start customer)})
-          (d/entity (d/db conn) license))
-        (catch Throwable t
-          (timbre/error t ::reassign-room {:license license :unit unit :rate rate})
-          (resolve/resolve-as nil {:message "Failed to completely reassign room! Likely to do with autopay..."}))))))
+      (if (autopay-on? teller license-before)
+        (reassign-autopay! ctx params)
+        (d/entity (d/db conn) license)))))
 
 
 ;; ==============================================================================
