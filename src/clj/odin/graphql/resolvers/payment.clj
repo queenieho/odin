@@ -306,13 +306,15 @@
 ;; TODO: We'll need to be able to update the fee amount before we make the
 ;; charge if they're going to be paying with a card
 (defn pay-rent!
-  [{:keys [requester teller] :as ctx} {:keys [id source] :as params} _]
+  [{:keys [requester teller conn] :as ctx} {:keys [id source] :as params} _]
   (let [payment (tpayment/by-id teller id)
         source  (tsource/by-id teller source)]
     (try
       (if-let [error (ensure-payment-allowed payment source)]
         (resolve/resolve-as nil {:message error})
-        (tpayment/charge! payment {:source source}))
+        (let [py (tpayment/charge! payment {:source source})]
+          @(d/transact conn [(events/rent-payment-made requester (td/id py))])
+          py))
       (catch Throwable t
         (timbre/error t ::pay-rent {:payment-id id :source-id source})
         (resolve/resolve-as nil {:message (error-message t)})))))
@@ -339,9 +341,9 @@
           (->> (tb/conj-when
                 [{:db/id            (td/id deposit)
                   :deposit/payments (td/id payment)}]
-                (when is-remainder
-                  ;; issue event when remainder of deposit is made to trigger notification
-                  (events/remainder-deposit-payment-made requester (tpayment/id payment))))
+                (if is-remainder
+                  (events/remainder-deposit-payment-made requester (tpayment/id payment))
+                  (events/deposit-payment-made requester (tpayment/id payment))))
                (d/transact conn)
                (deref))
           (deposit/by-account (d/entity (d/db conn) (td/id requester)))))
