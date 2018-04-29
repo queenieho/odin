@@ -159,12 +159,13 @@
 
   :service_field_object
   {:description "Custom fields to be defined when a new `service` is created."
-   :fields      {:index    {:type (non-null :Long)}
-                 :id       {:type :Long}
-                 :type     {:type (non-null :service_field_type)}
-                 :label    {:type (non-null String)}
-                 :required {:type Boolean}
-                 :options  {:type (list :service_field_option_object)}}}
+   :fields      {:index         {:type (non-null :Long)}
+                 :id            {:type :Long}
+                 :type          {:type (non-null :service_field_type)}
+                 :label         {:type (non-null String)}
+                 :required      {:type Boolean}
+                 :options       {:type (list :service_field_option_object)}
+                 :excluded_days {:type (list :Long)}}}
 
   :services_query_params
   {:description "Parameters to query for services."
@@ -176,7 +177,9 @@
                               :description "List of property IDs"}
                  :billed     {:type (list :service_billed)}
                  :active     {:type        Boolean
-                              :description "Is this service being offered?"}}}
+                              :description "Is this service being offered?"}
+                 :archived   {:type        Boolean
+                              :description "Has this service been archived?"}}}
 
   :service_create_params
   {:description "Parameters to create a new service."
@@ -208,7 +211,8 @@
                  :cost        {:type Float}
                  :billed      {:type :service_billed}
                  :rental      {:type Boolean}
-                 :fees        {:type (list :Long)}}}
+                 :fees        {:type (list :Long)}
+                 :archived    {:type Boolean}}}
 
 
   ;;; Units

@@ -184,6 +184,45 @@
      (str "Menu Options (" (count options) ")")]]])
 
 
+(defn- service-field-date-button
+  [field-index day-of-week day]
+  [ant/button
+   {:type     (if @(subscribe [:service.form.field.date/is-excluded? field-index day-of-week])
+                :default
+                :primary)
+    :on-click #(dispatch [:service.form.field.date/toggle-excluded field-index day-of-week])}
+   day])
+
+
+(defn- service-field-settings-date
+  [{:keys [index] :as field}]
+  (let [days ["Sun" "Mon" "Tue" "Wed" "Thu" "Fri" "Sat"]]
+    [:div.has-text-centered
+     [ant/form-item
+      {:label "Available Days"}
+      [ant/button-group
+       {:size "small"}
+       (map-indexed
+        (fn [i day]
+          (with-meta
+            [service-field-date-button index i day]
+            {:key day}))
+        days)]]]))
+
+
+(defn- service-field-settings-date-container
+  [field]
+  [ant/form-item
+   {:label (when (zero? (:index field)) "Settings")}
+   [ant/popover
+    {:title "Settings"
+     :overlay-style {:width "30%"}
+     :content (r/as-element [service-field-settings-date field])}
+    [ant/button
+     {:style {:width "100%"}}
+     "Settings"]]])
+
+
 (defmulti render-service-field :type)
 
 
@@ -196,6 +235,23 @@
     [service-field-label index label]]
    [:div.column.is-3
     [service-field-options-container field options]]
+   [:div.column.is-1
+    [service-field-required index required]]
+   [:div.column.is-1
+    [service-field-remove index]]
+   [:div.column.is-2
+    [service-field-order index]]])
+
+
+(defmethod render-service-field :date
+  [{:keys [index label required type options] :as field}]
+  [:div.columns
+   [:div.column.is-1
+    [service-field-type index type]]
+   [:div.column.is-5
+    [service-field-label index label]]
+   [:div.column.is-3
+    [service-field-settings-date-container field]]
    [:div.column.is-1
     [service-field-required index required]]
    [:div.column.is-1
@@ -479,8 +535,10 @@
 (defn- path->selected
   [path]
   (case (vec (rest path))
-    [:list]           :services
-    [:orders :list]   :orders
+    [:list]            :services
+    [:orders :list]    :orders
+    [:archived :list]  :archived
+    [:archived :entry] :archived
     :services))
 
 
@@ -492,17 +550,28 @@
      "Service Offerings"]]
    [ant/menu-item {:key :orders}
     [:a {:href (routes/path-for :services.orders/list)}
-     "Manage Orders"]]])
+     "Manage Orders"]]
+   [ant/menu-item {:key :archived}
+    [:a {:href (routes/path-for :services.archived/list)}
+     "Archived Services"]]])
 
 
-(defn- services-list [services]
-  (let [columns     [{:title     "Name"
+(defn- services-list [path services]
+  (let [path        (if (some #{:archived} path)
+                      :services.archived/entry
+                      :services/entry)
+        columns     [{:title     "Name"
                       :dataIndex "name"
                       :key       "name"
                       :render    #(r/as-element
-                                   [:a {:href                    (routes/path-for :services/entry :service-id (aget %2 "id"))
-                                        :dangerouslySetInnerHTML {:__html %1}}])
-                      }]
+                                   [:div
+                                    (when (and (= path :services/entry) (aget %2 "active"))
+                                      [ant/icon {:type  "check-circle"
+                                                 :style {:float        "left"
+                                                         :color        "#1186C9"
+                                                         :margin-right "5px"}}])
+                                    [:a {:href (routes/path-for path :service-id (aget %2 "id"))}
+                                     %1]])}]
         search-text @(subscribe [:services/search-text])
         is-loading  @(subscribe [:ui/loading? :services/query])]
     [ant/table
@@ -517,7 +586,21 @@
 ;; =====================================================
 
 
-(defn- service-entry-field [{:keys [id index type label required options]}]
+(def days-of-week ;; position in vector corresponds to momentjs' numerical indication of the day
+  ["Sun" "Mon" "Tue" "Wed" "Thu" "Fri" "Sat"])
+
+
+(defn- service-entry-field-available-days
+  [excluded]
+  (let [included (clojure.set/difference #{0 1 2 3 4 5 6} excluded)]
+    (reduce
+     (fn [days day]
+       (str days (get days-of-week day) " "))
+     ""
+     (sort included))))
+
+
+(defn- service-entry-field [{:keys [id index type label required options] :as field}]
   [:div
    [:div.columns
     [:div.column.is-1
@@ -530,6 +613,10 @@
        [:p [:b "Label"]])
      [:p label]
      [:div
+      (when (and (= :date type) true #_(not (empty? (:excluded_days field))))
+        [:div
+         [:b "Available Days: "]
+         [:span (service-entry-field-available-days (:excluded_days field))]])
       (when (and (= :dropdown type) (not (empty? options)))
         [:div
          [:b "Options: "]
@@ -559,19 +646,35 @@
     [:p (:name fee)]]])
 
 
-(defn- service-entry [service]
+(defn- service-entry [{:keys [path]} service]
   (let [{:keys [id name description code active price cost billed fees type
                 rental catalogs properties order-count fields]} @service
-        is-loading                                              @(subscribe [:ui/loading? :service/fetch])]
+        toggle-loading                                          @(subscribe [:ui/loading? :service/toggle-archive!])
+        is-loading                                              (or toggle-loading
+                                                                    @(subscribe [:ui/loading? :service/fetch]))]
     [:div
      [:div.mb2
-      [:div
-       [ant/button
-        {:on-click #(dispatch [:service/edit-service @service])}
-        "Edit"]
-       [ant/button
-        {:on-click #(dispatch [:service/copy-service @service])}
-        "Make a Copy"]]]
+      (if (not (some #(= :archived %) path))
+        [:div
+         [ant/button
+          {:on-click #(dispatch [:service/edit-service @service])}
+          "Edit"]
+         [ant/button
+          {:on-click #(dispatch [:service/copy-service @service])}
+          "Make a Copy"]
+         [ant/popconfirm
+          {:title       "Archiving this service will remove it from our current offerings. Are you sure?"
+           :ok-text     "Yes, archive."
+           :cancel-text "Cancel"
+           :on-confirm  #(dispatch [:service/toggle-archive! @service])}
+          [ant/button
+           {:loading toggle-loading}
+           "Archive"]]]
+        [:div
+         [ant/button
+          {:on-click #(dispatch [:service/toggle-archive! @service])
+           :loading  toggle-loading}
+          "Unarchive"]])]
      [ant/card
       {:title   "Service Details"
        :loading is-loading}
@@ -691,25 +794,26 @@
           fields)])]]))
 
 
-(defn services-list-container [services]
+(defn services-list-container [{:keys [page path]} services]
   [:div.column.is-3
-   [:div.mb2
-    [ant/button
-     {:style {:width "100%"}
-      :type  :primary
-      :icon  "plus"
-      :on-click #(dispatch [:service.form/show])}
-     "Create New Service/Fee"]]
+   (when (not (some #(= :archived %) path))
+     [:div.mb2
+      [ant/button
+       {:style {:width "100%"}
+        :type  :primary
+        :icon  "plus"
+        :on-click #(dispatch [:service.form/show])}
+       "Create New Service/Fee"]])
    [:div.mb1
     [service-filter]]
-   [services-list @services]])
+   [services-list path @services]])
 
 
 (defn services-entry-container [route]
   (if (not (nil? (get-in route [:params :service-id])))
     (when-let [service (subscribe [:service (tb/str->int (get-in route [:params :service-id]))])]
       [:div.column.is-9
-       [service-entry service]])
+       [service-entry route service]])
     [:p.mt2.ml2
      "Select a service from the list to see more details."]))
 
@@ -730,13 +834,17 @@
 
 
 (defn services-subview
-  [route]
-  (let [services (subscribe [:services/list])]
-    [:div.columns
-     [services-list-container services]
-     (if @(subscribe [:services/is-editing])
-       [services-editing-container route]
-       [services-entry-container route])]))
+  [route services]
+  [:div.columns
+   [services-list-container route services]
+   (if @(subscribe [:services/is-editing])
+     [services-editing-container route]
+     [services-entry-container route])])
+
+
+(defn services-archived []
+  [:div
+   [:h1 "archived services"]])
 
 
 (defn service-layout [route] ;;receives services, which is obtained from graphql
@@ -751,9 +859,11 @@
 
    ;; render subviews based on the active menu item
    (case (:page route)
-     :services/list          [services-subview route]
-     :services/entry         [services-subview route]
-     :services.orders/list   [orders-views/subview])])
+     :services/list           [services-subview route (subscribe [:services/list])]
+     :services/entry          [services-subview route (subscribe [:services/list])]
+     :services.orders/list    [orders-views/subview]
+     :services.archived/list  [services-subview route (subscribe [:services/archived])]
+     :services.archived/entry [services-subview route (subscribe [:services/archived])])])
 
 
 

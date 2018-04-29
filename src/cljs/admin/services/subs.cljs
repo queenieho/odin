@@ -32,7 +32,16 @@
  :<- [db/path]
  (fn [db _]
    (let [services (norms/denormalize db :services/norms)]
-     (sort-by-name-and-active services))))
+     (->> (remove :archived services)
+          (sort-by-name-and-active)))))
+
+
+(reg-sub
+ :services/archived
+ :<- [db/path]
+ (fn [db _]
+   (let [services (norms/denormalize db :services/norms)]
+     (filter :archived services))))
 
 
 (reg-sub
@@ -95,6 +104,13 @@
  :<- [:services.form/fields]
  (fn [fields [_ {:keys [options]} option-index]]
    (= option-index (dec (count options)))))
+
+(reg-sub
+ :service.form.field.date/is-excluded?
+ :<- [:services.form/fields]
+ (fn [fields [_ index day]]
+   (let [excluded (get-in fields [index :excluded_days])]
+     (contains? excluded day))))
 
 
 (reg-sub

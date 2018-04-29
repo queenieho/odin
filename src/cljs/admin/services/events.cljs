@@ -22,7 +22,7 @@
  (fn [{db :db} [k params]]
    {:dispatch [:ui/loading k true]
     :graphql  {:query      [[:services {:params params}
-                             [:id :name :code :active :catalogs :price :type]]]
+                             [:id :name :code :active :catalogs :price :type :archived]]]
                :on-success [::services-query k params]
                :on-failure [:graphql/failure k]}}))
 
@@ -81,9 +81,9 @@
  (fn [{db :db} [k service-id]]
    {:dispatch [:ui/loading k true]
     :graphql  {:query      [[:service {:id service-id}
-                             [:id :name :description :active :type :code :price :cost :billed :rental :catalogs
+                             [:id :name :description :active :type :code :price :cost :billed :rental :catalogs :archived
                               [:fees [:id :name :price]]
-                              [:fields [:id :index :type :label :required
+                              [:fields [:id :index :type :label :required :excluded_days
                                         [:options [:index :value :label]]]]
                               [:properties [:id]]
                               [:variants [:id :name :cost :price]]]]
@@ -96,9 +96,17 @@
                :on-failure [:graphql/failure k]}}))
 
 
+(defn- parse-excluded-days
+  [{:keys [type excluded_days] :as field}]
+  (if (= type :date)
+    (update field :excluded_days set)
+    (dissoc field :excluded_days)))
+
+
 (defn- parse-field
   [field]
-  (update field :options #(->> % (sort-by :index) vec)))
+  (-> (update field :options #(->> % (sort-by :index) vec))
+      (parse-excluded-days)))
 
 
 (defn- parse-service
@@ -148,6 +156,65 @@
 
 
 ;; ==============================================================================
+;; archive ======================================================================
+;; ==============================================================================
+
+
+(defmethod routes/dispatches :services.archived/list
+  [route]
+  [[:services/query]
+   [:properties/query]])
+
+
+(defmethod routes/dispatches :services.archived/entry
+  [route]
+  (let [service-id (get-in route [:params :service-id])]
+    [[::set-initial-service-id service-id]
+     [:service/fetch (tb/str->int service-id)]
+     [:services/query]
+     [:properties/query]
+     [:service/cancel-edit]]))
+
+
+(reg-event-fx
+ :service/toggle-archive!
+ [(path db/path)]
+ (fn [_ [k {:keys [id name archived]}]]
+   (let [on-success (if archived
+                      [::unarchive-success k]
+                      [::archive-success k])]
+     {:dispatch [:ui/loading k true]
+      :graphql  {:mutation
+                 [[:service_update {:service_id id
+                                    :params     {:archived (not archived)}}
+                   [:id :name]]]
+                 :on-success on-success
+                 :on-failure [:graphql/failure k]}})))
+
+
+(reg-event-fx
+ ::archive-success
+ [(path db/path)]
+ (fn [{db :db} [_ k response]]
+   (let [{:keys [name id]} (get-in response [:data :service_update])]
+     {:dispatch-n   [[:ui/loading k false]
+                     [:services/query]]
+      :notification [:success (str name " has been archived")]
+      :route        (routes/path-for :services.archived/entry :service-id id)})))
+
+
+(reg-event-fx
+ ::unarchive-success
+ [(path db/path)]
+ (fn [{db :db} [_ k response]]
+   (let [{:keys [name id]} (get-in response [:data :service_update])]
+     {:dispatch-n   [[:ui/loading k false]
+                     [:services/query]]
+      :notification [:success (str name " has been unarchived")]
+      :route        (routes/path-for :services/entry :service-id id)})))
+
+
+;; ==============================================================================
 ;; editing ======================================================================
 ;; ==============================================================================
 
@@ -175,11 +242,20 @@
                  [:service/toggle-is-editing false]]}))
 
 
+(defn- prepare-form [form]
+  (let [prepared-fields (map
+                         (fn [field]
+                           (update field :excluded_days vec))
+                         (:fields form))]
+    (assoc form :fields prepared-fields)))
+
+
 (defn prepare-edits
   "ensure form is ready to be sent across to graphql"
   [form]
-  (tb/transform-when-key-exists form
-    {:catalogs #(map clojure.core/name %)}))
+  (-> (prepare-form form)
+      (tb/transform-when-key-exists
+          {:catalogs #(map clojure.core/name %)})))
 
 
 ;; send the entire form to graphql. let the resolver determine which attrs to update
@@ -289,6 +365,14 @@
   (fn [_ type]
     type))
 
+(defmethod construct-field :date
+  [index type]
+  {:index         index
+   :type          type
+   :label         ""
+   :required      false
+   :excluded_days #{0 6}})
+
 
 (defmethod construct-field :default
   [index type]
@@ -322,6 +406,16 @@
    (update-in db [:form :fields] #(->> (tb/remove-at % index)
                                        (map-indexed (fn [i f] (assoc f :index i)))
                                        vec))))
+
+
+(reg-event-db
+ :service.form.field.date/toggle-excluded
+ [(path db/path)]
+ (fn [db [_ index day]]
+   (let [excluded (get-in db [:form :fields index :excluded_days])]
+     (if (contains? excluded day)
+       (update-in db [:form :fields index :excluded_days] disj day)
+       (update-in db [:form :fields index :excluded_days] conj day)))))
 
 
 (reg-event-db
@@ -434,7 +528,7 @@
  [(path db/path)]
  (fn [{db :db} [_ form]]
    (when (not-any? false? (vals (:form-validation db)))
-     {:dispatch [:service/create! form]})))
+     {:dispatch [:service/create! (prepare-form form)]})))
 
 
 (reg-event-fx
@@ -461,7 +555,6 @@
  :service/create!
  [(path db/path)]
  (fn [{db :db} [k form]]
-   (js/console.log form)
    {:graphql {:mutation [[:service_create {:params form}
                           [:id]]]
               :on-success [::create-success k]
