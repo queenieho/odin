@@ -210,7 +210,8 @@
 (defn- parse-gql-params
   [{:keys [teller] :as ctx}
    {:keys [account property source source_types types
-           from to statuses currencies datekey] :as params}]
+           from to statuses currencies datekey]
+    :as   params}]
   (tb/assoc-when
    params
    :customers (when-some [a account]
@@ -222,11 +223,14 @@
    :source-types (when-some [xs source_types]
                    (map #(keyword "payment-source.type" (name %)) xs))
    :types (when-some [xs types]
-            (map #(keyword "payment.type" (name %)) xs))
+            (map #(keyword "payment.type" (string/replace (name %) #"-" "_")) xs))
    :statuses (when-some [xs statuses]
                (map #(keyword "payment.status" (name %)) xs))
-   :currency (when-let [c (first currencies)]
-               (name c))))
+   ;; NOTE: These don't get set on payments! Not necessary to use for the time
+   ;; being...
+   ;; :currency (when-let [c (first currencies)]
+   ;;             (name c))
+   ))
 
 
 (s/fdef parse-gql-params
