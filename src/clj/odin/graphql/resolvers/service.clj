@@ -123,11 +123,10 @@
         params'                                (parse-mutate-params params)
         service-tx                             (service/create code name description params')]
     (if (= billed :monthly)
-      (let [plan (tplan/create! teller code :payment.type/order :service/price)]
-        @(d/transact (d/db conn)
+      (let [plan (tplan/create! teller name :payment.type/order (service/price service-tx))]
+        @(d/transact conn
                      [(assoc service-tx :service/plan (td/id plan)) (source/create requester)]))
-      @(d/transact (d/db conn)
-                   [service-tx (source/create requester)]))
+      @(d/transact conn [service-tx (source/create requester)]))
     (d/entity (d/db conn) [:service/code code])))
 
 
