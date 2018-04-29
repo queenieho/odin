@@ -69,6 +69,7 @@
                  [cljs-ajax "0.7.3"
                   :exclusions [org.clojure/core.async]]
                  ;; Util
+                 [clj-time "0.14.3"]
                  [com.cemerick/url "0.1.1"]
                  [mount "0.1.11"]
                  [aero "1.1.2"]
