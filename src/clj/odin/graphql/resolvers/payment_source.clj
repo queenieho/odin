@@ -186,9 +186,10 @@
   "Set a source as the autopay source. Source must be a bank account source."
   [{:keys [conn requester teller] :as ctx} {:keys [id]} _]
   (let [customer (tcustomer/by-account teller requester)
-        subs     (tsubscription/query teller {:customers     [customer]
-                                              :payment-types [:payment.type/rent]})]
-    (if (not (empty? subs))
+        subs     (->> (tsubscription/query teller {:customers     [customer]
+                                                   :payment-types [:payment.type/rent]})
+                      (tb/find-by tsubscription/active?))]
+    (if (some? subs)
       (resolve/resolve-as nil {:message "You're already subscribed to autopay."})
       (try
         (let [source  (tsource/by-id teller id)
@@ -212,13 +213,13 @@
   autopay."
   [{:keys [conn requester teller] :as ctx} {:keys [id]} _]
   (let [customer (tcustomer/by-account teller requester)
-        subs (tsubscription/query teller {:customers [customer]
-                                          :payment-types [:payment.type/rent]})
-        active-sub (tb/find-by #(not (tsubscription/canceled? %)) subs)]
-    (if (empty? active-sub)
+        subs     (->> (tsubscription/query teller {:customers     [customer]
+                                                   :payment-types [:payment.type/rent]})
+                      (tb/find-by tsubscription/active?))]
+    (if (nil? subs)
       (resolve/resolve-as nil {:message "You're already unsubscribed to autopay."})
       (try
-        (tsubscription/cancel! active-sub)
+        (tsubscription/cancel! subs)
         (tsource/by-id teller id)
         (catch Throwable t
           (timbre/error t ::set-autopay! {:email (account/email requester)})
