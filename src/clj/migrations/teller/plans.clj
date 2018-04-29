@@ -13,7 +13,7 @@
 
 
 (defn- create-plan! [teller service]
-  (plan/create! teller (service/code service) :payment.type/order (service/price service)))
+  (plan/create! teller (service/name service) :payment.type/order (service/price service)))
 
 
 (defn- attach-plans [teller services]
