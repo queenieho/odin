@@ -388,11 +388,21 @@
 (reg-event-fx
  ::services-create-card-source-success
  (fn [{:keys [db]} [_ k response]]
-   {:dispatch-n   [[:ui/loading k false]
-                   [:services.cart/submit (:account db)]
-                   [:modal/hide :payment.source/add]]
-    :notification [:success "Payment method added!" {:description "You can now pay for services with your credit card on file"}]
-    :route        (routes/path-for :services/cart)}))
+   (let [source-id (get-in response [:data :add_payment_source :id])]
+     {:dispatch-n   [[:ui/loading k false]
+                     [:services.cart/submit (:account db)]
+                     [:modal/hide :payment.source/add]]
+      :graphql      {:mutation   [[:set_default_source {:id source-id} [:id]]]
+                     :on-success [::services-add-default-source-success]
+                     :on-failure [:graphql/failure k]}
+      :notification [:success "Payment method added!" {:description "You can now pay for services with your credit card on file"}]
+      :route        (routes/path-for :services/cart)})))
+
+
+(reg-event-fx
+ ::services-add-default-source-success
+ (fn [_ _]
+   (println "successfully set as default")))
 
 
 ;; ==============================================================================
