@@ -316,7 +316,11 @@
 
 (defmethod complete? :deposit/pay
   [_ account _]
-  (not (empty? (tpayment/query teller {:payment-types [:payment.type/deposit]}))))
+  (let [customer (tcustomer/by-account teller account)]
+    (-> (tpayment/query teller {:payment-types [:payment.type/deposit]
+                                :customers     [customer]})
+        seq
+        boolean)))
 
 
 (defmethod complete? :services/moving
@@ -621,7 +625,7 @@
       (do
         (when-not (tcustomer/connected? customer property)
           (tcustomer/add-property! customer property))
-        (tsource/add-source! teller customer token))
+        (tsource/add-source! customer token))
       (tcustomer/create! teller (account/email account)
                          {:source   token
                           :account  account
@@ -635,7 +639,7 @@
 (defmethod save! :deposit.method/verify
   [conn account _ {:keys [amount-1 amount-2]}]
   (let [customer (tcustomer/by-account teller account)
-        source   (first (tcustomer/sources customer))]
+        source   (first (tcustomer/sources customer :payment-source.type/bank))]
     (try
       (tsource/verify-bank-account! source [amount-1 amount-2])
       (catch clojure.lang.ExceptionInfo t
@@ -667,7 +671,7 @@
                     {:account (:db/id account)}))
     (let [customer (tcustomer/by-account teller account)
           deposit  (deposit/by-account account)
-          source   (tb/find-by tsource/bank-account? (tcustomer/sources customer))
+          source   (first (tcustomer/sources customer :payment-source.type/bank))
           payment  (tpayment/create! customer (charge-amount method deposit) :payment.type/deposit
                                      {:source source})]
       @(d/transact conn [{:db/id            (td/id deposit)
