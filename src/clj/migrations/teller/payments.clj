@@ -39,20 +39,6 @@
          (deref))))
 
 
-(defn add-payment-types
-  [conn]
-  (let [eids (d/q '[:find ?e ?f
-                    :in $
-                    :where
-                    [?e :payment/amount _]
-                    [?e :payment/for ?f]
-                    [(missing? $ ?e :payment/type)]]
-                  (d/db conn))]
-    (->> (map #(vector :db/add (first %) :payment/type (second %)) eids)
-         (d/transact conn)
-         (deref))))
-
-
 (defn all-payments-not-checks [db]
   (->> (d/q '[:find [?e ...]
               :in $
@@ -133,9 +119,7 @@
 
   (do
     (add-payment-method-other-to-missing-method-payments conn)
-    ;; (add-payment-types conn)
-    (add-ids-to-payments conn)
-    )
+    (add-ids-to-payments conn))
 
   (time
    (enrich-payments-with-teller-stuff teller conn))
