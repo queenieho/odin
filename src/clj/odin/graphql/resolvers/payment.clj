@@ -21,7 +21,8 @@
             [toolbelt.core :as tb]
             [toolbelt.date :as date]
             [toolbelt.datomic :as td]
-            [blueprints.models.events :as events]))
+            [blueprints.models.events :as events]
+            [blueprints.models.source :as source]))
 
 ;; ==============================================================================
 ;; fields =======================================================================
@@ -295,10 +296,58 @@
 ;; create =======================================================================
 
 
+;; =============================================================================
+;; Create Payments
+
+
+(defmulti create-payment!* (fn [_ params] (:type params)))
+
+
+(defmethod create-payment!* :default [{teller :teller} {:keys [amount type account]}]
+  (resolve/resolve-as nil {:message (format "Payment creation of type %s not yet supported." type)}))
+
+
+(defn- default-due-date
+  "The default due date is the fifth day of the same month as `start` date.
+  Preserves the original year, month, hour, minute and second of `start` date."
+  [start]
+  (let [st (c/to-date-time start)]
+    (c/to-date (t/date-time (t/year st)
+                            (t/month st)
+                            5
+                            (t/hour st)
+                            (t/minute st)
+                            (t/second st)))))
+
+
+(defmethod create-payment!* :rent
+  [{:keys [teller conn]} {:keys [month amount account]}]
+  (when (nil? month)
+    (resolve/resolve-as nil {:message "When payment type is rent, month must be specified."}))
+  (let [account  (d/entity (d/db conn) account)
+        customer (tcustomer/by-account teller account)
+        property (tcustomer/property customer)
+        tz       (t/time-zone-for-id (tproperty/timezone property))
+        start    (date/beginning-of-month month tz)]
+    (tpayment/create! customer amount :payment.type/rent
+                      {:period [start (date/end-of-month month tz)]
+                       :due    (-> (default-due-date start) (date/end-of-day tz))})))
+
+
+(defmethod create-payment!* :deposit
+  [{:keys [conn teller requester]} {:keys [amount account]}]
+  (let [account  (d/entity (d/db conn) account)
+        deposit  (deposit/by-account account)
+        customer (tcustomer/by-account teller account)
+        payment  (tpayment/create! customer amount :payment.type/deposit)]
+    @(d/transact conn [[:db/add (td/id deposit) :deposit/payments (td/id payment)]
+                       (source/create requester)])
+    (tpayment/by-id teller (tpayment/id payment))))
+
+
 (defn create-payment!
-  "TODO: FIXME"
-  [_ _ _]
-  )
+  [{:keys [conn] :as ctx} {params :params} _]
+  (create-payment!* ctx params))
 
 
 ;; make payments ===============================================================

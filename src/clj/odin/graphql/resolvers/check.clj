@@ -52,14 +52,14 @@
 (defn create!
   [{:keys [teller]}
    {{:keys [payment amount name received_date check_date bank number]} :params} _]
-  (if-let [payment'   (tpayment/by-id teller payment)
-           check-data (tb/assoc-when
-                       {:amount      amount
-                        :name        name
-                        :received-on received_date
-                        :date        check_date}
-                       :number      number
-                       :bank        bank)]
+  (let [payment'   (tpayment/by-id teller payment)
+        check-data (tb/assoc-when
+                    {:amount      amount
+                     :name        name
+                     :received-on received_date
+                     :date        check_date}
+                    :number      number
+                    :bank        bank)]
     (tpayment/add-check! payment' check-data)))
 
 
