@@ -24,8 +24,6 @@
             [odin.datomic :refer [conn]]
             [odin.routes.util :refer :all]
             [odin.teller :refer [teller]]
-            [ribbon.charge :as rc]
-            [ribbon.customer :as rcu]
             [ring.util.response :as resp]
             [taoensso.timbre :as timbre]
             [teller.customer :as tcustomer]
