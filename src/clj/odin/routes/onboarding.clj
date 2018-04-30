@@ -624,7 +624,7 @@
     (if-some [customer (tcustomer/by-account teller account)]
       (do
         (when-not (tcustomer/connected? customer property)
-          (tcustomer/add-property! customer property))
+          (tcustomer/set-property! customer property))
         (tsource/add-source! customer token))
       (tcustomer/create! teller (account/email account)
                          {:source   token
