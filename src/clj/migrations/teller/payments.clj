@@ -119,10 +119,12 @@
 
   (do
     (add-payment-method-other-to-missing-method-payments conn)
-    (add-ids-to-payments conn))
 
-  (time
-   (enrich-payments-with-teller-stuff teller conn))
+    (add-ids-to-payments conn)
+
+    )
+
+  (enrich-payments-with-teller-stuff teller conn)
 
 
   ;; any without ids?

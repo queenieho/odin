@@ -20,19 +20,10 @@
               :where
               [?e :stripe-customer/customer-id _]
               [(missing? $ ?e :stripe-customer/managed)]
+              ;; allows us to re-run this
               [(missing? $ ?e :customer/id)]]
             db)
        (map (partial d/entity db))))
-
-
-;; (defn autopay-customers [db]
-;;   (->> (d/q '[:find [?e ...]
-;;               :in $
-;;               :where
-;;               [?e :stripe-customer/customer-id _]
-;;               [?e :stripe-customer/managed _]]
-;;             db)
-;;        (map (partial d/entity db))))
 
 
 (defn- create-source-token!
@@ -79,10 +70,14 @@
     (doseq [source sources]
       (timbre/infof "\ncreating deposit source! autopay-customer-id: %s\n connect-id: %s\n customer-id: %s\n customer-email: %s\n source-id: %s"
                     customer-id deposit-id (customer/id customer) (account/email (customer/account customer)) (:id source))
-      (create-connect-source! (customer/id customer)
-                              customer-id
-                              deposit-id
-                              (:id source)))
+      (try
+        (create-connect-source! (customer/id customer)
+                                customer-id
+                                deposit-id
+                                (:id source))
+        (catch Throwable t
+          (timbre/error t "failed to create connect source! customer-id: %s\n connect-id: %s\n email: %s\n source-id: %s"
+                        customer-id deposit-id (account/email (customer/account customer)) (:id source)))))
     [{:connected-customer/customer-id       (customer/id autopay)
       :connected-customer/connected-account [:connect-account/id ops-id]}
      {:connected-customer/customer-id       customer-id
@@ -126,31 +121,35 @@
                          (get-in [:sources :data]))]
       (doseq [source (sources-to-propagate platform-sources csources)]
         (timbre/infof "\ncreating ops source! autopay-customer-id: %s\n connect-id: %s\n customer-id: %s\n customer-email: %s\n source-id: %s" (customer/id autopay) connect-id (customer/id customer) (account/email (customer/account customer)) (:id source))
-        (create-connect-source! (customer/id customer)
-                                (customer/id autopay)
-                                connect-id
-                                (:id source))))))
+        (try
+          (create-connect-source! (customer/id customer)
+                                  (customer/id autopay)
+                                  connect-id
+                                  (:id source))
+          (catch Throwable t
+            (timbre/error t "failed to create ops source! customer-id: %s\n connect-id: %s\n email: %s\n source-id: %s"
+                          (customer/id autopay) connect-id (account/email (customer/account customer)) (:id source))))))))
 
 
 (defn- customer-sources-txdata
   [db customer scustomer]
   (let [sources (get-in scustomer [:sources :data])
-        txdata (map
-                (fn [{:keys [id fingerprint object]}]
-                  (tb/assoc-when
-                   {:payment-source/id          id
-                    :payment-source/fingerprint fingerprint
-                    :payment-source/type        (->source-type object)
-                    :payment-source/active      true}
-                   :payment-source/payment-types
-                   (cond
-                     (= object "bank_account")
-                     [:payment.type/rent
-                      :payment.type/deposit]
-                     (and (= object "card")
-                          (= id (:default_source scustomer)))
-                     :payment.type/order)))
-                sources)]
+        txdata  (map
+                 (fn [{:keys [id fingerprint object]}]
+                   (tb/assoc-when
+                    {:payment-source/id          id
+                     :payment-source/fingerprint fingerprint
+                     :payment-source/type        (->source-type object)
+                     :payment-source/active      true}
+                    :payment-source/payment-types
+                    (cond
+                      (= object "bank_account")
+                      [:payment.type/rent
+                       :payment.type/deposit]
+                      (and (= object "card")
+                           (= id (:default_source scustomer)))
+                      :payment.type/order)))
+                 sources)]
     (propagate-ops-customer! db customer sources)
     txdata))
 
@@ -160,13 +159,12 @@
   (h/with-token (config/stripe-secret-key config)
     (let [db        (d/db conn)
           customers (non-autopay-customers db)]
-      (->> (mapv
-            (fn [customer]
-              (let [account   (customer/account customer)
-                    autopay   (customer/autopay db account)
-                    community (community-for-account db account)
-                    scustomer (scustomer/fetch (customer/id customer))]
-                (cond-> {:db/id (td/id customer)
+      (doseq [customer customers]
+        (let [account   (customer/account customer)
+              autopay   (customer/autopay db account)
+              community (community-for-account db account)
+              scustomer (scustomer/fetch (customer/id customer))]
+          (->> [(cond-> {:db/id (td/id customer)
                          :customer/id (d/squuid)
                          :customer/email (account/email account)}
 
@@ -180,10 +178,9 @@
 
                   true
                   (assoc :customer/payment-sources
-                         (customer-sources-txdata db customer scustomer)))))
-            customers)
-           (d/transact conn)
-           (deref)))))
+                         (customer-sources-txdata db customer scustomer)))]
+               (d/transact conn)
+               (deref)))))))
 
 
 (comment
@@ -194,14 +191,6 @@
 
 
   (enrich-existing-customers-with-teller-stuff teller conn)
-
-
-  (d/q '[:find ?e
-         :in $
-         :where
-         [?e :customer/platform-id _]
-         [(missing? $ ?e :customer/account)]]
-       (d/db conn))
 
 
   )
