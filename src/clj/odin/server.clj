@@ -7,6 +7,7 @@
             [odin.config :as config :refer [config]]
             [odin.datomic :refer [conn]]
             [odin.routes :as routes]
+            [odin.teller :refer [teller]]
             [optimus.assets :as assets]
             [optimus.optimizations :as optimizations]
             [optimus.prime :as optimus]
@@ -37,14 +38,13 @@
     (try
       (handler req)
       (catch Throwable t
-        (do
-          (timbre/error t ::error (tb/assoc-when
-                                   {:uri         uri
-                                    :method      request-method
-                                    :remote-addr remote-addr}
-                                   :user (get-in session [:identity :account/email])))
-          {:status 500
-           :body   "Unexpected server error!"})))))
+        (timbre/error t ::error (tb/assoc-when
+                                 {:uri         uri
+                                  :method      request-method
+                                  :remote-addr remote-addr}
+                                 :user (get-in session [:identity :account/email])))
+        {:status 500
+         :body   "Unexpected server error!"}))))
 
 
 (defn wrap-logging
@@ -149,8 +149,9 @@
 
 
 (defstate web-server
-  :start (->> (app-handler {:conn    conn
-                            :config  config
-                            :stripe  (config/stripe-secret-key config)})
+  :start (->> (app-handler {:conn   conn
+                            :config config
+                            :stripe (config/stripe-secret-key config)
+                            :teller teller})
               (start-server (config/webserver-port config)))
   :stop (stop-server web-server))

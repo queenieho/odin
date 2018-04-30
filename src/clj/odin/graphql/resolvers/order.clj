@@ -8,6 +8,7 @@
             [clj-time.coerce :as c]
             [com.walmartlabs.lacinia.resolve :as resolve]
             [datomic.api :as d]
+            [odin.graphql.resolvers.utils :refer [error-message]]
             [odin.graphql.authorization :as authorization]
             [taoensso.timbre :as timbre]
             [toolbelt.core :as tb]
@@ -15,8 +16,12 @@
             [toolbelt.async :refer [<!!?]]
             [odin.models.payment-source :as payment-source]
             [clojure.set :as set]
-            [blueprints.models.service :as service]
-            [blueprints.seed.orders :as orders]))
+            [teller.payment :as tpayment]
+            [teller.source :as tsource]
+            [teller.customer :as tcustomer]
+            [teller.plan :as plan]
+            [teller.subscription :as subscription]
+            [blueprints.models.service :as service]))
 
 ;; =============================================================================
 ;; Fields
@@ -54,6 +59,12 @@
   "Date that `order` was fulfilled."
   [{conn :conn} _ order]
   (order/fulfilled-on order))
+
+
+(defn payments
+  "The payments made towards this `order`."
+  [{teller :teller} _ order]
+  (map (partial tpayment/by-entity teller) (order/payments order)))
 
 
 (defn- property-for-account [db account]
@@ -109,7 +120,7 @@
     (query-orders (d/db conn) params)
     (catch Throwable t
       (timbre/error t "error querying orders")
-      (resolve/resolve-as nil {:message  (.getMessage t)
+      (resolve/resolve-as nil {:message  (error-message t)
                                :err-data (ex-data t)}))))
 
 
@@ -123,6 +134,42 @@
 ;; =============================================================================
 
 
+;; helpers ======================================================================
+
+
+(defmulti ^:private process-order!
+  (fn [_ order]
+    (service/billed (order/service order))))
+
+
+(defmethod process-order! :service.billed/once
+  [{:keys [teller conn requester]} order]
+  (let [account  (order/account order)
+        customer (tcustomer/by-account teller account)
+        price    (order/computed-price order)
+        source   (tcustomer/source customer :payment.type/order)
+        payment  (tpayment/create! customer price :payment.type/order
+                                   {:source source})]
+    {:db/id           (td/id order)
+     :order/status    :order.status/charged
+     :order/billed-on (java.util.Date.)
+     :order/payments  (td/id payment)}))
+
+
+(defmethod process-order! :service.billed/monthly
+  [{:keys [teller conn requester]} order]
+  (let [service  (order/service order)
+        plan     (plan/by-entity teller (service/plan service))
+        customer (tcustomer/by-account teller (order/account order))
+        source   (tcustomer/source customer :payment.type/order)
+        subs     (subscription/subscribe! customer plan {:source source})
+        subs-ref [:teller-subscription/id (subscription/id subs)]]
+    {:db/id              (td/id order)
+     :order/status       :order.status/charged
+     :order/billed-on    (java.util.Date.)
+     :order/subscription subs-ref}))
+
+
 (defn- use-order-price? [service {:keys [line_items variant]}]
   (let [vprice (:price (tb/find-by (comp (partial = variant) :db/id) (:service/variants service)))]
     (and (empty? line_items) (nil? vprice))))
@@ -132,6 +179,9 @@
   (let [vcost (:cost (tb/find-by (comp (partial = variant) :db/id) (:service/variants service)))
         lcost (->> line_items (map (fnil :cost 0)) (apply +))]
     (and (zero? lcost) (nil? vcost))))
+
+
+;; resolvers ====================================================================
 
 
 (defn parse-params
@@ -307,9 +357,10 @@
 
 (defn fulfill!
   "Fulfill an order."
-  [{:keys [conn requester stripe]} {:keys [id fulfilled_on charge notify]} _]
-  (let [order  (d/entity (d/db conn) id)
-        source (<!!? (payment-source/service-source (d/db conn) stripe (order/account order)))]
+  [{:keys [conn requester teller] :as ctx} {:keys [id fulfilled_on charge notify]} _]
+  (let [order    (d/entity (d/db conn) id)
+        customer (tcustomer/by-account teller (order/account order))
+        source   (tcustomer/source customer :payment.type/order)]
     (cond
       (not (or (order/pending? order) (order/placed? order)))
       (resolve/resolve-as nil {:message  "Order must be in pending or placed status!"
@@ -325,23 +376,27 @@
                                :err-data {:order-id id}})
 
       :otherwise
-      (do
-        @(d/transact conn (concat
-                           [(source/create requester)
-                            (events/order-fulfilled requester order notify)]
-                           (if charge
-                             [(events/process-order requester order)
-                              [:db/add id :order/fulfilled-on fulfilled_on]
-                              [:db/add id :order/status :order.status/processing]]
-                             [(order/is-fulfilled id fulfilled_on)])))
-        (d/entity (d/db conn) id)))))
+      (let [db (:db-after @(d/transact conn (concat
+                                             [(source/create requester)
+                                              (events/order-fulfilled requester order notify)]
+                                             (if charge
+                                               [(assoc
+                                                 (process-order! ctx order)
+                                                 :order/fulfilled-on fulfilled_on)]
+                                               [(order/is-fulfilled id fulfilled_on)]))))]
+        (d/entity db id)))))
+
+
+;; charge ===============================
 
 
 (defn charge!
   "Charge an order."
-  [{:keys [conn requester stripe]} {:keys [id]} _]
-  (let [order  (d/entity (d/db conn) id)
-        source (<!!? (payment-source/service-source (d/db conn) stripe (order/account order)))]
+  [{:keys [teller requester conn] :as ctx} {:keys [id]} _]
+  (let [order    (d/entity (d/db conn) id)
+        customer (tcustomer/by-account teller (order/account order))
+        price    (order/computed-price order)
+        source   (tcustomer/source customer :payment.type/order)]
     (cond
       (nil? source)
       (resolve/resolve-as nil {:message  "Cannot charge order; no service source linked!"
@@ -352,16 +407,19 @@
                                :err-data {:order-id       id
                                           :current-status (order/status order)}})
 
-      (nil? (order/computed-price order))
+      (nil? price)
       (resolve/resolve-as nil {:message  "Cannot charge order without a price!"
                                :err-data {:order-id id}})
 
       :otherwise
-      (do
-        @(d/transact conn [[:db/add id :order/status :order.status/processing]
-                           (source/create requester)
-                           (events/process-order requester order)])
-        (d/entity (d/db conn) id)))))
+      (try
+        (let [db (:db-after @(d/transact conn (conj (process-order! ctx order)
+                                                    (source/create requester))))]
+          (d/entity db id))
+        (catch Throwable t
+          (timbre/error t ::order {:order-id id :source source})
+          (resolve/resolve-as nil {:message  (error-message t)
+                                   :err-data {:order-id id}}))))))
 
 
 (defn calculate-fee-price [order]
@@ -448,6 +506,7 @@
    :order/status       status
    :order/billed-on    billed-on
    :order/fulfilled-on fulfilled-on
+   :order/payments     payments
    :order/property     property
    :order-field/value  field-value
    ;; queries

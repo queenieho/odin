@@ -1,4 +1,4 @@
-(defproject odin "1.9.3-SNAPSHOT"
+(defproject odin "1.10.1-SNAPSHOT"
   :description "The all-dashboard."
   :url "http://my.starcity.com"
   :license {:name "Eclipse Public License"
@@ -11,6 +11,7 @@
                  [org.clojure/core.match "0.3.0-alpha5"]
                  [org.clojure/test.check "0.9.0"]
                  ;; Web
+                 [bouncer "1.0.1"]
                  [bidi "2.1.3"]
                  [ring "1.6.3"]
                  [starcity/facade "0.4.0"
@@ -26,7 +27,7 @@
                  [ring-middleware-format "0.7.2"
                   :exclusions [ring/ring-core]]
                  ;; Other
-                 [kami "0.1.0" :exclusions [starcity/blueprints]]
+                 [kami "0.1.0" :exclusions [starcity/toolbelt]]
                  ;; GraphQL
                  [com.walmartlabs/lacinia "0.25.0"]
                  [vincit/venia "0.2.3"]
@@ -57,14 +58,18 @@
                  [cljsjs/moment "2.17.1-1"]
                  [akiroz.re-frame/storage "0.1.2"]
                  ;; DB
-                 [starcity/blueprints "2.4.6-SNAPSHOT"
+                 [starcity/teller "1.0.2"]
+                 [starcity/blueprints "2.5.0"
                   :exclusions [com.datomic/datomic-free
-                               com.google.guava/guava]]
+                               com.andrewmcveigh/cljs-time
+                               com.google.guava/guava
+                               starcity/toolbelt-datomic]]
                  ;; dep resolution
                  [com.google.guava/guava "21.0"]
                  [cljs-ajax "0.7.3"
                   :exclusions [org.clojure/core.async]]
                  ;; Util
+                 [clj-time "0.14.3"]
                  [com.cemerick/url "0.1.1"]
                  [mount "0.1.11"]
                  [aero "1.1.2"]
@@ -73,7 +78,7 @@
                  [com.taoensso/timbre "4.10.0"]
                  [starcity/ribbon "0.11.0"]
                  [starcity/toolbelt-async "0.4.0"]
-                 [starcity/toolbelt-core "0.4.0"]
+                 [starcity/toolbelt-core "0.5.0"]
                  [starcity/toolbelt-date "0.3.0"]
                  [starcity/toolbelt-datomic "0.5.0"]
                  [starcity/toolbelt-re-frame "0.1.0"

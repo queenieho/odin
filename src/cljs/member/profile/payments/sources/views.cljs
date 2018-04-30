@@ -154,24 +154,25 @@
   (let [is-visible (subscribe [:modal/visible? :payment.source/autopay-enable])
         banks      (subscribe [:payment/sources :bank])
         selected   (r/atom (-> @banks first :id))]
-    [ant/modal {:title     "Autopay your rent?"
-                :visible   @is-visible
-                :on-cancel #(dispatch [:modal/hide :payment.source/autopay-enable])
-                :footer    (r/as-element [modal-enable-autopay-footer @selected])}
-     [:div
-      [:p "Autopay automatically transfers your rent payment each month. We
+    (fn []
+      [ant/modal {:title     "Autopay your rent?"
+                  :visible   @is-visible
+                  :on-cancel #(dispatch [:modal/hide :payment.source/autopay-enable])
+                  :footer    (r/as-element [modal-enable-autopay-footer @selected])}
+       [:div
+        [:p "Autopay automatically transfers your rent payment each month. We
           recommend enabling this feature, so you never need to worry about
           making rent on time."]
-      [:p.bold "Choose a bank account to use for Autopay:"]
-      [ant/radio-group {:default-value @selected
-                        :class         "vertical-radio"
-                        :disabled      (< (count @banks) 2)
-                        :on-change     #(reset! selected (.. % -target -value))}
-       (map-indexed
-        (fn [idx {key :key :as item}]
-          (-> (bank-radio-option item)
-              (with-meta {:key idx})))
-        @banks)]]]))
+        [:p.bold "Choose a bank account to use for Autopay:"]
+        [ant/radio-group {:default-value @selected
+                          :class         "vertical-radio"
+                          :disabled      (< (count @banks) 2)
+                          :on-change     #(reset! selected (.. % -target -value))}
+         (map-indexed
+          (fn [idx {key :key :as item}]
+            (-> (bank-radio-option item)
+                (with-meta {:key idx})))
+          @banks)]]])))
 
 
 
@@ -189,7 +190,7 @@
 (defn modal-confirm-disable-autopay []
   (let [is-visible     (subscribe [:modal/visible? :payment.source/autopay-disable])
         autopay-source (subscribe [:payment.sources/autopay-source])]
-    [ant/modal {:title     (l10n/translate :confirm-unlink-autopay)
+    [ant/modal {:title     "Turn off autopay?"
                 :visible   @is-visible
                 :footer    (r/as-element [modal-disable-autopay-footer (:id @autopay-source)])
                 :on-ok     #(dispatch [:payment.sources.autopay/disable! (:id @autopay-source)])

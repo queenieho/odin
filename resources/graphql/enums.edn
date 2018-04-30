@@ -1,7 +1,7 @@
 {:enums
  {:role
   {:description "Account roles."
-   :values      [:member :onboarding :applicant :admin]}
+   :values      [:member :onboarding :applicant :admin :collaborator]}
 
   :application_status
   {:description "Application statuses."
@@ -10,6 +10,10 @@
   :application_pet_type
   {:description "Allowed types of pets."
    :values      [:cat :dog]}
+
+  :currencies
+  {:description "Currencies to make payments."
+   :values [:usd]}
 
   :deposit_status
   {:description "Security deposit statuses."
@@ -33,7 +37,7 @@
 
   :payment_type
   {:description "Different types of payment."
-   :values      [:order :rent :deposit]}
+   :values      [:order :rent :deposit :application_fee :guest_booking :late_fee]}
 
   :payments_date_key
   {:description "Allowed keys for date-based payment queries."

@@ -16,7 +16,6 @@
 
 (defn- column-fields [fields component-fn]
   [:div
-   (.log js/console "date: " fields)
    (map-indexed
     (fn [i row]
       ^{:key i}
