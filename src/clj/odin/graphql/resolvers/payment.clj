@@ -214,7 +214,7 @@
            from to statuses currencies datekey]
     :as   params}]
   (tb/assoc-when
-   params
+   (assoc params :limit 100)
    :customers (when-some [a account]
                 [(tcustomer/by-account teller a)])
    :properties (when-some [p property]
