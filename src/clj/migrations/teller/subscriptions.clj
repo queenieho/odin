@@ -44,7 +44,9 @@
     (->> [{:db/id                        (td/id subs)
            :teller-subscription/payments (->> (ml/payments license)
                                               (filter :stripe/invoice-id)
-                                              (map td/id))}]
+                                              (map td/id))}
+          [:db/retract (td/id license) :member-license/subscription-id (:member-license/subscription-id license)]
+          [:db/retract (td/id license) :member-license/plan-id (:member-license/plan-id license)]]
          (d/transact (teller/db teller))
          (deref))))
 
@@ -73,10 +75,10 @@
 
 
 (defn migrate-all-licenses-on-autopay
-  [teller]
-  (let [licenses (license-query (d/db (teller/db teller)))]
+  [teller conn]
+  (let [licenses (license-query (d/db conn))]
     (doseq [license licenses]
-      (migrate-autopay-license teller license))))
+      (migrate-autopay-license teller (d/entity (d/db conn) license)))))
 
 
 ;; (defn migrate-historical-order-subscriptions
@@ -95,15 +97,10 @@
       (d/touch (d/entity (d/db conn) id))))
 
 
-  (def sample-order
-    (t [:stripe/subs-id "sub_CiBg9xObE9e6bE"]))
+  (migrate-all-licenses-on-autopay teller conn)
 
-  (migrations.teller.plans/attach-plans-to-subscription-services teller conn)
 
   (migrate-order-subscription teller sample-order)
 
-  (count (license-query (d/db conn)))
-
-  (migrate-licenses teller)
 
   )

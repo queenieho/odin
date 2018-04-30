@@ -46,6 +46,6 @@
   (def sample-mlicense
     (ml/active (d/db conn) [:account/email "member@test.com"]))
 
-  (migrate-autopay-license teller sample-mlicense)
+  (attach-plans-to-subscription-services teller conn)
 
   )

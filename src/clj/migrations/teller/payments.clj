@@ -12,6 +12,19 @@
             [taoensso.timbre :as timbre]))
 
 
+(defn add-ids-to-payments
+  [conn]
+  (let [eids (d/q '[:find [?e ...]
+                    :in $
+                    :where
+                    [?e :payment/amount _]
+                    [(missing? $ ?e :payment/id)]]
+                  (d/db conn))]
+    (->> (map #(vector :db/add % :payment/id (d/squuid)) eids)
+         (d/transact conn)
+         (deref))))
+
+
 (defn add-payment-method-other-to-missing-method-payments
   [conn]
   (let [eids (d/q '[:find [?e ...]
@@ -22,6 +35,20 @@
                     [(missing? $ ?e :payment/check)]]
                   (d/db conn))]
     (->> (map #(vector :db/add % :payment/method :payment.method/other) eids)
+         (d/transact conn)
+         (deref))))
+
+
+(defn add-payment-types
+  [conn]
+  (let [eids (d/q '[:find ?e ?f
+                    :in $
+                    :where
+                    [?e :payment/amount _]
+                    [?e :payment/for ?f]
+                    [(missing? $ ?e :payment/type)]]
+                  (d/db conn))]
+    (->> (map #(vector :db/add (first %) :payment/type (second %)) eids)
          (d/transact conn)
          (deref))))
 
@@ -39,10 +66,10 @@
 
 (defn source-for-payment
   [teller payment out-ch]
-  (let [account  (:payment/account payment)
-        customer (:entity (tcustomer/by-account teller account))
-        type     (:payment/for payment)]
-    (go
+  (go
+    (let [account  (:payment/account payment)
+          customer (:entity (tcustomer/by-account teller account))
+          type     (:payment/for payment)]
       (try
         (if (#{:payment.type/deposit :payment.type/rent} type)
           (>! out-ch
@@ -57,13 +84,13 @@
             (>! out-ch [:payment-source/id source-id])))
         (catch Throwable t
           (timbre/error t "Yikes!")
-          :nada))
-      (a/close! out-ch))))
+          :nada)))
+    (a/close! out-ch)))
 
 
 (defn- <fetch-sources
   [teller payments]
-  (let [concurrency 500
+  (let [concurrency 10
         in          (chan)
         out         (chan)]
     (a/pipeline-async concurrency out (partial source-for-payment teller) in)
@@ -74,22 +101,25 @@
 (defn enrich-payments-with-teller-stuff
   [teller conn]
   (let [payments (all-payments-not-checks (d/db conn))]
-    (mapv
-     (fn [payment source-id]
-       (let [account  (:payment/account payment)
-             customer (:entity (tcustomer/by-account teller account))]
-         (assert (some? account)
-                 (format "Payment does not have an account %s" (td/id payment)))
-         (assert (some? customer)
-                 (format "Payment ID: %s\nAccount does not have a customer %s"
-                         (td/id payment) (td/id account)))
-         {:db/id              (td/id payment)
-          :payment/customer   (td/id customer)
-          :payment/source     source-id
-          :payment/charge-id  (:stripe/charge-id payment)
-          :payment/invoice-id (:stripe/invoice-id payment)}))
-     payments
-     (a/<!! (<fetch-sources teller payments)))))
+    (->> (mapv
+          (fn [payment source-id]
+            (let [account  (:payment/account payment)
+                  customer (:entity (tcustomer/by-account teller account))]
+              (assert (some? account)
+                      (format "Payment does not have an account %s" (td/id payment)))
+              (assert (some? customer)
+                      (format "Payment ID: %s\nAccount does not have a customer %s"
+                              (td/id payment) (td/id account)))
+              (tb/assoc-when
+               {:db/id            (td/id payment)
+                :payment/customer (td/id customer)
+                :payment/source   source-id}
+               :payment/charge-id  (:stripe/charge-id payment)
+               :payment/invoice-id (:stripe/invoice-id payment))))
+          payments
+          (a/<!! (<fetch-sources teller payments)))
+         (d/transact conn)
+         (deref))))
 
 
 (comment
@@ -101,10 +131,31 @@
     (def conn odin.datomic/conn)
     (def teller odin.teller/teller))
 
-  (add-payment-method-other-to-missing-method-payments conn)
+  (do
+    (add-payment-method-other-to-missing-method-payments conn)
+    ;; (add-payment-types conn)
+    (add-ids-to-payments conn)
+    )
 
   (time
    (enrich-payments-with-teller-stuff teller conn))
+
+
+  ;; any without ids?
+  (d/q '[:find ?p
+         :in $
+         :where
+         [?p :payment/amount _]
+         [(missing? $ ?p :payment/id)]]
+       (d/db conn))
+
+  ;; without types?
+  (d/q '[:find ?p
+         :in $
+         :where
+         [?p :payment/amount _]
+         [(missing? $ ?p :payment/type)]]
+       (d/db conn))
 
 
   )

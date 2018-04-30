@@ -19,7 +19,8 @@
               :in $
               :where
               [?e :stripe-customer/customer-id _]
-              [(missing? $ ?e :stripe-customer/managed)]]
+              [(missing? $ ?e :stripe-customer/managed)]
+              [(missing? $ ?e :customer/id)]]
             db)
        (map (partial d/entity db))))
 
@@ -32,6 +33,21 @@
 ;;               [?e :stripe-customer/managed _]]
 ;;             db)
 ;;        (map (partial d/entity db))))
+
+
+(defn- create-source-token!
+  [source-id customer-id]
+  (let [f (if (string/starts-with? source-id "card")
+            token/create-card-token!
+            token/create-bank-token!)]
+    (:id (f source-id {:params {:customer customer-id}}))))
+
+
+(defn- create-connect-source!
+  [platform-customer-id connect-customer-id account-id source-id]
+  (h/with-connect-account account-id
+    (let [token (create-source-token! source-id platform-customer-id)]
+      (scustomer/add-source! connect-customer-id token))))
 
 
 (defn- community-for-account
@@ -56,17 +72,20 @@
         deposit-id  (-> autopay
                         customer/managing-property
                         :property/deposit-connect-id)
-        customer-id (str (d/squuid))
-        #_(:id (scustomer/create!
-                {:email (account/email (customer/account autopay))}
+        customer-id (:id (scustomer/create!
+                          {:email (account/email (customer/account autopay))}
 
-                {:account deposit-id}))]
+                          {:account deposit-id}))]
     (doseq [source sources]
-      (timbre/infof "\ncreating deposit source! autopay-customer-id: %s\n connect-id: %s\n customer-id: %s\n customer-email: %s\n source-id: %s" customer-id deposit-id (customer/id customer) (account/email (customer/account customer)) (:id source))
-      #_(create-connect-source! (customer/id customer)
-                                (customer/id autopay)
-                                connect-id
-                                (:id source)))
+      (try
+        (timbre/infof "\ncreating deposit source! autopay-customer-id: %s\n connect-id: %s\n customer-id: %s\n customer-email: %s\n source-id: %s"
+                      customer-id deposit-id (customer/id customer) (account/email (customer/account customer)) (:id source))
+        (create-connect-source! (customer/id customer)
+                                customer-id
+                                deposit-id
+                                (:id source))
+        (catch Throwable t
+          (timbre/errorf t "failed to create source '%s' on account '%s' for customer '%s'" (:id source) deposit-id (customer/id customer)))))
     [{:connected-customer/customer-id       (customer/id autopay)
       :connected-customer/connected-account [:connect-account/id ops-id]}
      {:connected-customer/customer-id       customer-id
@@ -91,21 +110,6 @@
      (:bank_name source)]))
 
 
-(defn- create-source-token!
-  [source-id customer-id]
-  (let [f (if (string/starts-with? source-id "card")
-            token/create-card-token!
-            token/create-bank-token!)]
-    (:id (f source-id {:params {:customer customer-id}}))))
-
-
-(defn- create-connect-source!
-  [platform-customer-id connect-customer-id account-id source-id]
-  (h/with-connect-account account-id
-    (let [token (create-source-token! source-id platform-customer-id)]
-      (scustomer/add-source! connect-customer-id token))))
-
-
 (defn- sources-to-propagate
   [platform-sources connect-sources]
   (let [diff (set/difference
@@ -125,10 +129,10 @@
                          (get-in [:sources :data]))]
       (doseq [source (sources-to-propagate platform-sources csources)]
         (timbre/infof "\ncreating ops source! autopay-customer-id: %s\n connect-id: %s\n customer-id: %s\n customer-email: %s\n source-id: %s" (customer/id autopay) connect-id (customer/id customer) (account/email (customer/account customer)) (:id source))
-        #_(create-connect-source! (customer/id customer)
-                                  (customer/id autopay)
-                                  connect-id
-                                  (:id source))))))
+        (create-connect-source! (customer/id customer)
+                                (customer/id autopay)
+                                connect-id
+                                (:id source))))))
 
 
 (defn- customer-sources-txdata
@@ -193,6 +197,14 @@
 
 
   (enrich-existing-customers-with-teller-stuff teller conn)
+
+
+  (d/q '[:find ?e
+         :in $
+         :where
+         [?e :customer/platform-id _]
+         [(missing? $ ?e :customer/account)]]
+       (d/db conn))
 
 
   )
