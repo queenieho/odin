@@ -28,13 +28,13 @@
   ;;; Check
   :create_check_params
   {:description "Inputs to create a check."
-   :fields      {:payment       {:type (non-null :Long)}
+   :fields      {:payment       {:type (non-null :ID)}
                  :amount        {:type (non-null Float)}
                  :name          {:type (non-null String)}
                  :received_date {:type (non-null :Instant)}
                  :check_date    {:type (non-null :Instant)}
-                 :bank          {:type (non-null String)}
-                 :number        {:type (non-null :Long)}}}
+                 :bank          {:type String}
+                 :number        {:type Int}}}
 
 
   ;;; License
