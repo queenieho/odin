@@ -77,15 +77,12 @@
 
                           {:account deposit-id}))]
     (doseq [source sources]
-      (try
-        (timbre/infof "\ncreating deposit source! autopay-customer-id: %s\n connect-id: %s\n customer-id: %s\n customer-email: %s\n source-id: %s"
-                      customer-id deposit-id (customer/id customer) (account/email (customer/account customer)) (:id source))
-        (create-connect-source! (customer/id customer)
-                                customer-id
-                                deposit-id
-                                (:id source))
-        (catch Throwable t
-          (timbre/errorf t "failed to create source '%s' on account '%s' for customer '%s'" (:id source) deposit-id (customer/id customer)))))
+      (timbre/infof "\ncreating deposit source! autopay-customer-id: %s\n connect-id: %s\n customer-id: %s\n customer-email: %s\n source-id: %s"
+                    customer-id deposit-id (customer/id customer) (account/email (customer/account customer)) (:id source))
+      (create-connect-source! (customer/id customer)
+                              customer-id
+                              deposit-id
+                              (:id source)))
     [{:connected-customer/customer-id       (customer/id autopay)
       :connected-customer/connected-account [:connect-account/id ops-id]}
      {:connected-customer/customer-id       customer-id
