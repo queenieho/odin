@@ -178,8 +178,7 @@
      (throw (ex-info "Please provide an `on-success` event." {})))
    (let [property-id (get-in response [:data :account :property :id])]
      {:graphql {:query      [[:services {:params {:properties [property-id]
-                                                  :active     true
-                                                  :archived   false}}
+                                                  :active     true}}
                               [:id :name :description :price :catalogs :active :archived :billed :updated_at
                                [:fees [:id :name :description :price]]
                                [:fields [:id :index :label :type :required :excluded_days
