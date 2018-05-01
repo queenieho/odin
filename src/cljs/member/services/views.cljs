@@ -213,7 +213,7 @@
 
 (defn- total-prices [orders]
   (->> orders
-       (map #(* (or (:quantity %) 1) (:price %)))
+       (map #(* (:quantity % 1) (:price %)))
        (reduce +)))
 
 
