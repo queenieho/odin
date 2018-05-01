@@ -1,9 +1,11 @@
 (ns odin.graphql.resolvers.payment
   (:require [blueprints.models.account :as account]
+            [blueprints.models.events :as events]
             [blueprints.models.order :as order]
             [blueprints.models.payment :as payment]
             [blueprints.models.security-deposit :as deposit]
             [blueprints.models.service :as service]
+            [blueprints.models.source :as source]
             [clj-time.coerce :as c]
             [clj-time.core :as t]
             [clojure.spec.alpha :as s]
@@ -20,9 +22,7 @@
             [teller.source :as tsource]
             [toolbelt.core :as tb]
             [toolbelt.date :as date]
-            [toolbelt.datomic :as td]
-            [blueprints.models.events :as events]
-            [blueprints.models.source :as source]))
+            [toolbelt.datomic :as td]))
 
 ;; ==============================================================================
 ;; fields =======================================================================
@@ -369,7 +369,7 @@
           @(d/transact conn [(events/rent-payment-made requester (td/id py))])
           py))
       (catch Throwable t
-        (timbre/error t ::pay-rent {:payment-id id :source-id source})
+        (timbre/error t ::pay-rent {:payment-id id :source-id (tsource/id source)})
         (resolve/resolve-as nil {:message (error-message t)})))))
 
 
