@@ -1,4 +1,4 @@
-(defproject odin "1.10.1"
+(defproject odin "1.10.2-SNAPSHOT"
   :description "The all-dashboard."
   :url "http://my.starcity.com"
   :license {:name "Eclipse Public License"
