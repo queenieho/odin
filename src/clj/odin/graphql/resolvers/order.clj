@@ -229,8 +229,17 @@
   (* (/ (:service/price fee) 2) (inc occurences)))
 
 
+(defn- get-attached-orders
+  [db fee-id orders]
+  (->> (filter
+        (fn [order]
+          (let [fees (service/fees (d/entity db (order/service order)))]
+            (contains? fees fee-id)))
+        orders)))
+
+
 (defn- prepare-fees
-  [db params]
+  [db params orders]
   (let [services (map :service params)
         account  ((comp :account first) params)]
     (->> (mapcat (comp :service/fees (partial d/entity db)) services)
@@ -238,10 +247,13 @@
          (group-by identity)
          (reduce-kv
           (fn [m k v]
-            (assoc m k {:fee   (:db/id k)
-                        :price (tally-fees (first v) (count v))})) {})
+            (assoc m k {:fee      (:db/id k)
+                        :attached (get-attached-orders db k orders)
+                        :price    (tally-fees (first v) (count v))})) {})
          vals
-         (map (fn [f] (order/create account (:fee f) {:price (:price f)}))))))
+         (map (fn [f]
+                (order/create account (:fee f) {:price    (:price f)
+                                                :attached (:attached f)}))))))
 
 
 (defn create!
@@ -258,9 +270,8 @@
   "Create many new orders"
   [{:keys [requester conn]} {params :params} _]
   (let [orders          (map (comp (partial prepare-order (d/db conn)) parse-params) params)
-        fees            (prepare-fees (d/db conn) params)
+        fees            (prepare-fees (d/db conn) params orders)
         orders-and-fees (concat orders fees)]
-
     @(d/transact conn (concat
                        (conj orders-and-fees  (source/create requester))
                        (map
@@ -411,13 +422,38 @@
                                    :err-data {:order-id id}}))))))
 
 
+(defn calculate-fee-price [order]
+  (* (count (:order/attached order))
+     (* 0.5 (service/price (order/service order)))))
+
+
+(defn- only-one-order?
+  [order]
+  (= 1 (count (:order/attached order))))
+
+
+(defn- generate-fee-cancellation-tx
+  [order]
+  (let [fee-orders (:order/_attached order)]
+    (mapcat
+     (fn [fee-order]
+       (if (only-one-order? fee-order)
+         [(order/is-canceled (td/id fee-order))]
+         (conj (order/update fee-order {:price (calculate-fee-price fee-order)})
+               [:db/retract (td/id fee-order) :order/attached (td/id order)])))
+     fee-orders)))
+
+
 (defn cancel!
   "Cancel a premium service order."
-  [{:keys [requester conn]} {:keys [id notify]} _]
-  @(d/transact conn [(order/is-canceled id)
-                     (events/order-canceled requester id notify)
-                     (source/create requester)])
-  (d/entity (d/db conn) id))
+  [{:keys [requester conn] :as db} {:keys [id notify]} _]
+  (let [order (d/entity (d/db conn) id)]
+    @(d/transact conn
+                 (concat [(order/is-canceled id)
+                          (events/order-canceled requester id notify)
+                          (source/create requester)]
+                         (generate-fee-cancellation-tx order)))
+    (d/entity (d/db conn) id)))
 
 
 ;; =============================================================================
