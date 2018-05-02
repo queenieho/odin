@@ -110,11 +110,14 @@
 
 (defn- parse-mutate-params
   [params]
-  (tb/transform-when-key-exists params
-    {:billed   make-billed-key
-     :type     make-type-key
-     :catalogs (partial map #(if (string? %) (keyword %) %))
-     :fields   (partial map parse-service-field)}))
+  (-> (tb/assoc-when
+       params
+       :name-internal (:name_internal params))
+      (tb/transform-when-key-exists
+          {:billed   make-billed-key
+           :type     make-type-key
+           :catalogs (partial map #(if (string? %) (keyword %) %))
+           :fields   (partial map parse-service-field)})))
 
 
 (defn create!
@@ -277,6 +280,9 @@
     (cond-> []
       (and (not= (:service/name existing) (:name updated)) (some? (:name updated)))
       (conj [:db/add id :service/name (:name updated)])
+
+      (and (not= (:service/name-internal existing) (:name_internal updated)) (some? (:name_internal updated)))
+      (conj [:db/add id :service/name-internal (:name_internal updated)])
 
       (and (not= (:service/desc existing) (:description updated)) (some? (:description updated)))
       (conj [:db/add id :service/desc (:description updated)])

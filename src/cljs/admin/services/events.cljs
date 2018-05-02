@@ -22,7 +22,7 @@
  (fn [{db :db} [k params]]
    {:dispatch [:ui/loading k true]
     :graphql  {:query      [[:services {:params params}
-                             [:id :name :code :active :catalogs :price :type :archived]]]
+                             [:id :name :name_internal :code :active :catalogs :price :type :archived]]]
                :on-success [::services-query k params]
                :on-failure [:graphql/failure k]}}))
 
@@ -316,6 +316,7 @@
  (fn [_ _]
    {:dispatch [:modal/show :service/create-service-form]}))
 
+
 (defn vecify-fields
   "ensure that the list forms returned from graphql are turned into vecs"
   [fields]
@@ -325,34 +326,20 @@
        (assoc f :options (vec (:options f)))))
    fields))
 
+
 (reg-event-db
  :service.form/populate
  [(path db/path)]
  (fn [db [_ service]]
    (if (some? service)
-     (let [{:keys [name description code active type properties catalogs price cost billed rental fields fees]} service]
-       (dissoc db :form)
-       (assoc db :form {:name        name
-                        :description description
-                        :code        code
-                        :active      active
-                        :properties  properties
-                        :catalogs    (map clojure.core/name catalogs)
-                        :type        (if (some? type) type :service)
-                        :price       price
-                        :cost        cost
-                        :billed      billed
-                        :rental      (if (nil? rental)
-                                       false
-                                       rental)
-                        :fields      (if (nil? fields)
-                                       []
-                                       (vecify-fields fields))
-                        :fees        (if (nil? fees)
-                                       []
-                                       (mapv :id fees))}))
+     (->> (tb/transform-when-key-exists service
+            {:catalogs (partial map clojure.core/name)
+             :type     #(if (some? %) % :service)
+             :rental   #(if (nil? %) false %)
+             :fields   vecify-fields
+             :fees     (partial mapv :id)})
+          (assoc db :form))
      (assoc db :form db/form-defaults))))
-
 
 
 (reg-event-fx

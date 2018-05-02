@@ -337,8 +337,14 @@
       [:div.columns
        [:div.column.is-5
         [ant/form-item
+         {:label "Internal Service Name"}
+         [ant/input
+          {:placeholder "internal service name"
+           :value       (:name_internal @form)
+           :on-change   #(dispatch [:service.form/update :name_internal (.. % -target -value)])}]]
+        [ant/form-item
          (merge
-          {:label "Service Name"
+          {:label "Member Facing Service Name"
            :type  "text"}
           (if @(subscribe [:service.form/is-valid? :name])
             {}
@@ -560,9 +566,12 @@
   (let [path        (if (some #{:archived} path)
                       :services.archived/entry
                       :services/entry)
+        services    (map
+                     #(assoc % :name_internal (or (:name_internal %) (:name %)))
+                     services)
         columns     [{:title     "Name"
-                      :dataIndex "name"
-                      :key       "name"
+                      :dataIndex "name_internal"
+                      :key       "name_internal"
                       :render    #(r/as-element
                                    [:div
                                     (when (and (= path :services/entry) (aget %2 "active"))
@@ -646,35 +655,36 @@
     [:p (:name fee)]]])
 
 
-(defn- service-entry [{:keys [path]} service]
-  (let [{:keys [id name description code active price cost billed fees type
-                rental catalogs properties order-count fields]} @service
-        toggle-loading                                          @(subscribe [:ui/loading? :service/toggle-archive!])
-        is-loading                                              (or toggle-loading
-                                                                    @(subscribe [:ui/loading? :service/fetch]))]
+(defn- service-entry-actions [service toggle-loading path]
+  [:div.mb2
+   (if (not (some #{:archived} path))
+     [:div
+      [ant/button
+       {:on-click #(dispatch [:service/edit-service service])}
+       "Edit"]
+      [ant/button
+       {:on-click #(dispatch [:service/copy-service service])}
+       "Make a Copy"]
+      [ant/popconfirm
+       {:title       "Archiving this service will remove it from our current offerings. Are you sure?"
+        :ok-text     "Yes, archive."
+        :cancel-text "Cancel"
+        :on-confirm  #(dispatch [:service/toggle-archive! service])}
+       [ant/button
+        {:loading toggle-loading}
+        "Archive"]]]
+     [:div
+      [ant/button
+       {:on-click #(dispatch [:service/toggle-archive! service])
+        :loading  toggle-loading}
+       "Unarchive"]])])
+
+
+(defn- service-entry [{:keys [path]} {:keys [id name description code active price cost billed fees type rental catalogs properties order-count fields name_internal] :as service}]
+  (let [toggle-loading @(subscribe [:ui/loading? :service/toggle-archive!])
+        is-loading     (or toggle-loading @(subscribe [:ui/loading? :service/fetch]))]
     [:div
-     [:div.mb2
-      (if (not (some #(= :archived %) path))
-        [:div
-         [ant/button
-          {:on-click #(dispatch [:service/edit-service @service])}
-          "Edit"]
-         [ant/button
-          {:on-click #(dispatch [:service/copy-service @service])}
-          "Make a Copy"]
-         [ant/popconfirm
-          {:title       "Archiving this service will remove it from our current offerings. Are you sure?"
-           :ok-text     "Yes, archive."
-           :cancel-text "Cancel"
-           :on-confirm  #(dispatch [:service/toggle-archive! @service])}
-          [ant/button
-           {:loading toggle-loading}
-           "Archive"]]]
-        [:div
-         [ant/button
-          {:on-click #(dispatch [:service/toggle-archive! @service])
-           :loading  toggle-loading}
-          "Unarchive"]])]
+     [service-entry-actions service toggle-loading path]
      [ant/card
       {:title   "Service Details"
        :loading is-loading}
@@ -687,7 +697,14 @@
            :description "While this service is active, it is not availalbe at any properties and members will not be able to see it. To make this service available to members, add some properties below."}]])
       [:div.columns
        [:div.column.is-6
+        (when (not (nil? name_internal))
+          [:div
+           [:p.fs1 [:b "INTERNAL NAME"]]
+           [:h3 [:b name_internal]]])
+        [:p.fs1 [:b "MEMBER FACING NAME"]]
         [:h3 [:b name]]
+        [:br]
+        [:p.fs1 [:b "DESCRIPTION"]]
         [:p description]]
        [:div.column.is-4
         [:div.mb1
@@ -813,7 +830,7 @@
   (if (not (nil? (get-in route [:params :service-id])))
     (when-let [service (subscribe [:service (tb/str->int (get-in route [:params :service-id]))])]
       [:div.column.is-9
-       [service-entry route service]])
+       [service-entry route @service]])
     [:p.mt2.ml2
      "Select a service from the list to see more details."]))
 

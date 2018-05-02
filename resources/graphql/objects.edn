@@ -426,40 +426,42 @@
 
 
   :service
-  {:fields {:id          {:type    (non-null :Long)
-                          :resolve (:get :db/id)}
-            :name        {:type    (non-null String)
-                          :resolve (:get :service/name)}
-            :description {:type    String
-                          :resolve (:get :service/desc)}
-            :code        {:type    (non-null String)
-                          :resolve (:get :service/code)}
-            :price       {:type    Float
-                          :resolve (:get :service/price)}
-            :cost        {:type    Float
-                          :resolve (:get :service/cost)}
-            :billed      {:type    :service_billed
-                          :resolve :service/billed}
-            :rental      {:type    Boolean
-                          :resolve (:get :service/rental)}
-            :variants    {:type    (list :service_variant)
-                          :resolve (:get :service/variants)}
-            :active      {:type    Boolean
-                          :resolve (:get :service/active)}
-            :catalogs    {:type    (list :Keyword)
-                          :resolve (:get :service/catalogs)}
-            :properties  {:type    (list :property)
-                          :resolve (:get :service/properties)}
-            :fields      {:type    (list :service_field)
-                          :resolve (:get :service/fields)}
-            :fees        {:type    (list :service)
-                          :resolve (:get :service/fees)}
-            :type        {:type    :service_type
-                          :resolve :service/type}
-            :updated_at  {:type    :Instant
-                          :resolve :service/updated}
-            :archived    {:type    Boolean
-                          :resolve (:get :service/archived)}}}
+  {:fields {:id            {:type    (non-null :Long)
+                            :resolve (:get :db/id)}
+            :name          {:type    (non-null String)
+                            :resolve (:get :service/name)}
+            :name_internal {:type    String
+                            :resolve (:get :service/name-internal)}
+            :description   {:type    String
+                            :resolve (:get :service/desc)}
+            :code          {:type    (non-null String)
+                            :resolve (:get :service/code)}
+            :price         {:type    Float
+                            :resolve (:get :service/price)}
+            :cost          {:type    Float
+                            :resolve (:get :service/cost)}
+            :billed        {:type    :service_billed
+                            :resolve :service/billed}
+            :rental        {:type    Boolean
+                            :resolve (:get :service/rental)}
+            :variants      {:type    (list :service_variant)
+                            :resolve (:get :service/variants)}
+            :active        {:type    Boolean
+                            :resolve (:get :service/active)}
+            :catalogs      {:type    (list :Keyword)
+                            :resolve (:get :service/catalogs)}
+            :properties    {:type    (list :property)
+                            :resolve (:get :service/properties)}
+            :fields        {:type    (list :service_field)
+                            :resolve (:get :service/fields)}
+            :fees          {:type    (list :service)
+                            :resolve (:get :service/fees)}
+            :type          {:type    :service_type
+                            :resolve :service/type}
+            :updated_at    {:type    :Instant
+                            :resolve :service/updated}
+            :archived      {:type    Boolean
+                            :resolve (:get :service/archived)}}}
 
 
   :service_field
@@ -475,7 +477,7 @@
                             :resolve (:get :service-field/required)}
             :options       {:type    (list :service_field_option)
                             :resolve (:get :service-field/options)}
-            :excluded_days {:type (list :Long)
+            :excluded_days {:type    (list :Long)
                             :resolve :service-field.date/excluded_days}}}
 
 
