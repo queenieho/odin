@@ -179,7 +179,7 @@
    (let [property-id (get-in response [:data :account :property :id])]
      {:graphql {:query      [[:services {:params {:properties [property-id]
                                                   :active     true}}
-                              [:id :name :description :price :catalogs :active :billed :updated_at
+                              [:id :name :description :price :catalogs :active :archived :billed :updated_at
                                [:fees [:id :name :description :price]]
                                [:fields [:id :index :label :type :required :excluded_days
                                          [:options [:index :label :value]]]]]]]
@@ -195,6 +195,7 @@
 (reg-event-fx
  ::extract-services
  (fn [_ [_ k on-success response]]
+   (.log js/console (get-in response [:data :services]))
    {:dispatch (conj on-success k (get-in response [:data :services]))}))
 
 
