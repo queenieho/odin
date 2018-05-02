@@ -6,19 +6,20 @@
 
 (def path ::path)
 
-(def form-defaults {:name        ""
-                    :description ""
-                    :code        ""
-                    :properties  []
-                    :catalogs    []
-                    :active      false
-                    :type        :service
-                    :price       0.0
-                    :cost        0.0
-                    :billed      :once
-                    :fees        []
-                    :rental      false
-                    :fields      []})
+(def form-defaults {:name          ""
+                    :name_internal ""
+                    :description   ""
+                    :code          ""
+                    :properties    []
+                    :catalogs      []
+                    :active        false
+                    :type          :service
+                    :price         0.0
+                    :cost          0.0
+                    :billed        :once
+                    :fees          []
+                    :rental        false
+                    :fields        []})
 
 
 (def form-validation-defaults

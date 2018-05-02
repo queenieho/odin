@@ -566,10 +566,9 @@
   (let [path        (if (some #{:archived} path)
                       :services.archived/entry
                       :services/entry)
-        services    (map #(if (nil? (:name_internal %))
-                            (assoc % :name_internal (:name %))
-                            %)
-                         services)
+        services    (map
+                     #(assoc % :name_internal (or (:name_internal %) (:name %)))
+                     services)
         columns     [{:title     "Name"
                       :dataIndex "name_internal"
                       :key       "name_internal"
@@ -658,7 +657,7 @@
 
 (defn- service-entry-actions [service toggle-loading path]
   [:div.mb2
-   (if (not (some #(= :archived %) path))
+   (if (not (some #{:archived} path))
      [:div
       [ant/button
        {:on-click #(dispatch [:service/edit-service service])}
