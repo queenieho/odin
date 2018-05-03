@@ -316,7 +316,7 @@
 
 (defmethod complete? :deposit/pay
   [_ account _]
-  (let [customer (tcustomer/by-account teller account)]
+  (when-let [customer (tcustomer/by-account teller account)]
     (-> (tpayment/query teller {:payment-types [:payment.type/deposit]
                                 :customers     [customer]})
         seq
