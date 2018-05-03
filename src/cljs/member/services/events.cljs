@@ -195,7 +195,6 @@
 (reg-event-fx
  ::extract-services
  (fn [_ [_ k on-success response]]
-   (.log js/console (get-in response [:data :services]))
    {:dispatch (conj on-success k (get-in response [:data :services]))}))
 
 
