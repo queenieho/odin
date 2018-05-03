@@ -413,8 +413,8 @@
 
       :otherwise
       (try
-        (let [db (:db-after @(d/transact conn (conj (process-order! ctx order)
-                                                    (source/create requester))))]
+        (let [db (:db-after @(d/transact conn [(process-order! ctx order)
+                                               (source/create requester)]))]
           (d/entity db id))
         (catch Throwable t
           (timbre/error t ::order {:order-id id :source source})
