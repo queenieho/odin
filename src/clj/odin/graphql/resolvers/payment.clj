@@ -215,8 +215,9 @@
     :as   params}]
   (tb/assoc-when
    (assoc params :limit 100)
-   :customers (when-some [a account]
-                [(tcustomer/by-account teller a)])
+   :customers (when-some [c (and (some? account)
+                                 (tcustomer/by-account teller account))]
+                [c])
    :properties (when-some [p property]
                  [(tproperty/by-community teller p)])
    :sources (when-some [s source]
