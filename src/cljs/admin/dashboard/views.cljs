@@ -6,7 +6,7 @@
             [clojure.string :as string]
             [iface.loading :as loading]
             [iface.components.typography :as typography]
-            [iface.components.payments :as payments]
+            [iface.modules.payments]
             [iface.utils.formatters :as format]
             [re-frame.core :refer [subscribe dispatch]]
             [reagent.core :as r]
@@ -14,17 +14,23 @@
 
 
 (defn notifications-modules []
-  [:div
-   [:div.columns
-    [:div.column.is-half
-     [:h1 "Helping Hands Orders"]]
-    [:div.column.is-half
-     [:h1 "Payments"]]]
-   [:div.columns
-    [:div.column.is-half
-     [:h1 "45 days"]]
-    [:div.column.is-half
-     [:h1 "Moving out"]]]])
+  (let [payments (subscribe [:payments/by-statuses [:due :pending :failed]])
+        orders (subscribe [:orders])]
+    #_[:div
+     [:h1 "test"]]
+    [:div
+     (.log js/console  "payments" @payments)
+     (.log js/console  "orders" @orders)
+     [:div.columns
+      [:div.column.is-half
+       [:h1 "Helping Hands Orders"]]
+      [:div.column.is-half
+       [:h1 "Payments"]]]
+     [:div.columns
+      [:div.column.is-half
+       [:h1 "45 days"]]
+      [:div.column.is-half
+       [:h1 "Moving out"]]]]))
 
 
 (defn dashboard-content []

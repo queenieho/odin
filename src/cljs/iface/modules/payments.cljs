@@ -74,6 +74,15 @@
    (filter #(= account-id (get-in % [:account :id])) payments)))
 
 
+;; given a list of statuses (stati?)
+;; get all the payments with one of the statuses
+(reg-sub
+ :payments/by-statuses
+ :<-[:payments]
+ (fn [payments [_ statuses]]
+   (filter #(some (fn [status] (= status (:status %))) statuses) payments)))
+
+
 ;; ==============================================================================
 ;; payment sources ==============================================================
 ;; ==============================================================================
