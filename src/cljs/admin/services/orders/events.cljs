@@ -193,7 +193,8 @@
                     (if (not= v (get order k))
                       (assoc acc k v)
                       acc))
-                  {}
+                  {:service (get-in order [:service :id])
+                   :account (get-in order [:account :id])}
                   params)]
      {:dispatch [:ui/loading k true]
       :graphql  {:mutation
