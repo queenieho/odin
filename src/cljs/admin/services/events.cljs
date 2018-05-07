@@ -85,8 +85,7 @@
                               [:fees [:id :name :price]]
                               [:fields [:id :index :type :label :required :excluded_days
                                         [:options [:index :value :label]]]]
-                              [:properties [:id]]
-                              [:variants [:id :name :cost :price]]]]
+                              [:properties [:id]]]]
                             [:orders {:params {:services [service-id]
                                                :datekey  :created
                                                :from     (:from db)
@@ -289,13 +288,15 @@
 
 (defn copy-service-data
   [service]
-  (tb/transform-when-key-exists service
-    {:name     #(str % " - copy")
-     :code     #(str % ",copy")
-     :catalogs (partial mapv clojure.core/name)
-     :fields   (partial mapv #(-> (dissoc % :id)
-                            (update :options vec)
-                            (update :required boolean)))}))
+  (-> (tb/transform-when-key-exists service
+        {:name     #(str % " - copy")
+         :code     #(str % ",copy")
+         :catalogs (partial mapv clojure.core/name)
+         :fields   (partial mapv #(-> (dissoc % :id)
+                                (update :options vec)
+                                (update :required boolean)))})
+      (select-keys [:name :name_internal :code :description :catalogs :active :type
+                    :fields :properties :price :cost :billed :rental :fees])))
 
 
 (reg-event-fx
