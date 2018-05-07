@@ -242,20 +242,19 @@
                  [:service/toggle-is-editing false]]}))
 
 
-(defn- prepare-form [form]
-  (let [prepared-fields (map
-                         (fn [field]
-                           (update field :excluded_days vec))
-                         (:fields form))]
-    (assoc form :fields prepared-fields)))
+(defn- prepare-fields
+  [fields]
+  (map (fn [field] (update field :excluded_days vec)) fields))
 
 
 (defn prepare-edits
   "ensure form is ready to be sent across to graphql"
   [form]
-  (-> (prepare-form form)
-      (tb/transform-when-key-exists
-          {:catalogs #(map clojure.core/name %)})))
+  (-> (tb/transform-when-key-exists form
+        {:catalogs #(map clojure.core/name %)
+         :fields   prepare-fields})
+      (select-keys [:name :name_internal :description :catalogs :active :type :fields
+                    :properties :price :cost :billed :rental :fees :archived])))
 
 
 ;; send the entire form to graphql. let the resolver determine which attrs to update
@@ -515,7 +514,7 @@
  [(path db/path)]
  (fn [{db :db} [_ form]]
    (when (not-any? false? (vals (:form-validation db)))
-     {:dispatch [:service/create! (prepare-form form)]})))
+     {:dispatch [:service/create! (tb/update-in-when form [:fields] prepare-fields)]})))
 
 
 (reg-event-fx
