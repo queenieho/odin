@@ -1,5 +1,6 @@
 (ns admin.accounts.views.application
-  (:require [antizer.reagent :as ant]
+  (:require [admin.routes :as routes]
+            [antizer.reagent :as ant]
             [iface.utils.formatters :as format]
             [iface.utils.log :as l]
             [re-frame.core :refer [subscribe dispatch]]
@@ -198,7 +199,7 @@
      [:p (if (empty? communities)
            "N/A"
            (->> (for [c communities]
-                  [:a {:href ""} (:name c)])
+                  [:a {:href (routes/path-for :properties/entry :property-id (:id c))} (:name c)])
                 (interpose ", ")
                 (into [:span])))]]
     [:div.column
