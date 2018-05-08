@@ -106,6 +106,7 @@
               (or (when-let [d (order/summary order)]
                     (format "%s (%s)" d service-desc))
                   service-desc)))]
+    (println (tpayment/customer payment) "\n\n")
     (case (tpayment/type payment)
       :payment.type/rent    (-rent-desc payment)
       :payment.type/order   (-order-desc payment)
@@ -191,6 +192,12 @@
       keyword))
 
 
+(defn subtypes
+  "More details for the payment-type of this `payment`."
+  [_ _ payment]
+  (tpayment/subtypes payment))
+
+
 ;; =============================================================================
 ;; Queries
 ;; =============================================================================
@@ -204,6 +211,7 @@
 (s/def :gql/from inst?)
 (s/def :gql/to inst?)
 (s/def :gql/statuses vector?)
+(s/def :gql/subtypes vector?)
 (s/def :gql/currencies vector?)
 (s/def :gql/datekey keyword?)
 
@@ -211,7 +219,7 @@
 (defn- parse-gql-params
   [{:keys [teller] :as ctx}
    {:keys [account property source source_types types
-           from to statuses currencies datekey]
+           subtypes from to statuses currencies datekey]
     :as   params}]
   (tb/assoc-when
    (assoc params :limit 100)
@@ -227,6 +235,8 @@
             (map #(keyword "payment.type" (string/replace (name %) #"-" "_")) xs))
    :statuses (when-some [xs statuses]
                (map #(keyword "payment.status" (name %)) xs))
+   :subtypes (when-some [xs subtypes]
+               (map #(keyword "payment.subtype" (string/replace (name %) #"-" "_")) xs))
    ;; NOTE: These don't get set on payments! Not necessary to use for the time
    ;; being...
    ;; :currency (when-let [c (first currencies)]
@@ -236,8 +246,9 @@
 
 (s/fdef parse-gql-params
         :args (s/cat :ctx map?
-                     :params (s/keys :opt-un [:gql/account :gql/property :gql/source :gql/source-types :gql/types
-                                              :gql/from :gql/to :gql/statuses :gql/currencies :gql/datekey]))
+                     :params (s/keys :opt-un [:gql/account :gql/property :gql/source :gql/source-types
+                                              :gql/types :gql/from :gql/to :gql/statuses :gql/subtypes
+                                              :gql/currencies :gql/datekey]))
         :ret :teller.payment/query-params)
 
 
@@ -442,6 +453,7 @@
    :payment/property     property
    :payment/source       source
    :payment/status       status
+   :payment/subtypes     subtypes
    :payment/type         payment-type
    ;; queries
    :payment/list         payments

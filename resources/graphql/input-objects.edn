@@ -99,10 +99,11 @@
   ;;; Payment
   :create_payment_params
   {:description "Inputs to create a payment."
-   :fields      {:account {:type (non-null :Long)}
-                 :type    {:type (non-null :payment_type)}
-                 :month   {:type :Instant}
-                 :amount  {:type (non-null Float)}}}
+   :fields      {:account  {:type (non-null :Long)}
+                 :amount   {:type (non-null Float)}
+                 :month    {:type :Instant}
+                 :subtypes {:type (list :Keyword)}
+                 :type     {:type (non-null :payment_type)}}}
 
   :payments_query_params
   {:description "Parameters to query for payments."
@@ -115,6 +116,8 @@
                  :source_types {:type          (list :payment_source_type)
                                 :default-value [:bank :card]
                                 :description   "List of payment source types."}
+                 :subtypes     {:type        (list :Keyword)
+                                :description "List of payment subtypes."}
                  :types        {:type          (list :payment_type)
                                 :default-value [:deposit :order :rent]
                                 :description   "List of payment types to query."}

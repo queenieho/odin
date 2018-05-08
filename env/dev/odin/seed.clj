@@ -127,7 +127,8 @@
           license (member-license/active (d/db (teller/db teller)) [:account/email "member@test.com"])]
       (tsource/set-default! (first (tcustomer/sources customer)) :payment.type/order)
       (tpayment/create! customer 2000.0 :payment.type/rent
-                        {:due    (date/end-of-day (java.util.Date.) tz)
+                        {:subtypes :redicuous-fee
+                         :due    (date/end-of-day (java.util.Date.) tz)
                          :period [(date/beginning-of-month (java.util.Date.) tz)
                                   (date/end-of-month (java.util.Date.) tz)]}))))
 

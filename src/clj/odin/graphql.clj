@@ -79,10 +79,22 @@
     (def source "ba_1AwfkJIvRccmW9nOoEbGvWZn")
 
     (def ctx {:conn      conn
+              :teller    odin.teller/teller
               :stripe    (odin.config/stripe-secret-key odin.config/config)
               :requester (d/entity (d/db conn) [:account/email "member@test.com"])})
 
     )
+
+
+  (let [account (d/entity (d/db conn) [:account/email "member@test.com"])]
+    (pretty
+     (execute schema
+              (venia/graphql-query
+               {:venia/queries
+                [[:payments {:params {:account (:db/id account)}}
+                  [:id :type :subtypes [:order [:id]] [:property [:name]]]]]})
+              nil
+              ctx)))
 
 
   (let [account (d/entity (d/db conn) [:account/email "member@test.com"])]
