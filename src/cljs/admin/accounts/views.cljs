@@ -48,7 +48,9 @@
 (def render-property
   (table/wrap-cljs
    (fn [_ {property :property}]
-     [:a {:href ""} (:name property)])))
+     [:a
+      {:href (routes/path-for :properties/entry :property-id (:id property))}
+      (:name property)])))
 
 
 (def render-unit
@@ -101,7 +103,7 @@
   (table/wrap-cljs
    (fn [_ account]
      (->> (for [c (get-in account [:application :communities])]
-            [:small.fs1 [:a {:href ""} (:name c)]])
+            [:small.fs1 [:a {:href (routes/path-for :properties/entry :property-id (:id c))} (:name c)]])
           (interpose ", ")
           (into [:div.has-text-right])))))
 
@@ -234,7 +236,7 @@
   (let [{:keys [status property unit]} (most-current-license account)]
     [:span
      (if (= status :active) "Lives" [:i "Lived"])
-     " in " [:a {:href ""} (:name property)]
+     " in " [:a {:href (routes/path-for :properties/entry :property-id (:id property))} (:name property)]
      " in room #"
      [:b (:number unit)]]))
 

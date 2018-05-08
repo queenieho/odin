@@ -227,12 +227,13 @@
 
 
 (defn- subheader [order]
-  (let [account  (:account order)
-        property (get-in order [:property :name])]
+  (let [account     (:account order)
+        property    (get-in order [:property :name])
+        property-id (get-in order [:property :id])]
     [:span "for "
      [:a {:href (routes/path-for :accounts/entry :account-id (:id account))}
       (:name account)]
-     " at " [:a property]]))
+     " at " [:a {:href (routes/path-for :properties/entry :property-id property-id)} property]]))
 
 
 (defmethod content/view :services.orders/entry
