@@ -87,14 +87,13 @@
 
 
   (let [account (d/entity (d/db conn) [:account/email "member@test.com"])]
-    (pretty
-     (execute schema
-              (venia/graphql-query
-               {:venia/queries
-                [[:payments {:params {:account (:db/id account)}}
-                  [:id :type :subtypes [:order [:id]] [:property [:name]]]]]})
-              nil
-              ctx)))
+    (execute schema
+             (venia/graphql-query
+              {:venia/queries
+               [[:payments {:params {:account (:db/id account)}}
+                 [:id :type :subtypes [:order [:id]] [:property [:name]]]]]})
+             nil
+             ctx))
 
 
   (let [account (d/entity (d/db conn) [:account/email "member@test.com"])]
