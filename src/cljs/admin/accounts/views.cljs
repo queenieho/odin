@@ -35,8 +35,7 @@
 
 (def render-name
   (table/wrap-cljs
-   (fn [_ {:keys [name id] :as member}]
-     (.log js/console member)
+   (fn [_ {:keys [name id]}]
      [:a {:href (routes/path-for :accounts/entry :account-id id)} name])))
 
 

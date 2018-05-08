@@ -36,16 +36,17 @@
  :payments/fetch
  [(rf/path path)]
  (fn [{:keys [db]} [k account-id]]
-   {:dispatch [:ui/loading k true]
-    :graphql  {:query
-               [[:payments {:params {:account (tb/str->int account-id)}}
-                 [:id :method :type :autopay :amount :status :description
-                  :pstart :pend :paid_on :created
-                  [:check [:id]]
-                  [:source [:id :name :type :last4]]
-                  [:account [:id]]]]]
-               :on-success [:payments/fetch-success k]
-               :on-failure [:graphql/failure k]}}))
+   (let [params (tb/assoc-when {} :account (when (some? account-id) (tb/str->int account-id)))]
+     {:dispatch [:ui/loading k true]
+      :graphql   {:query
+                  [[:payments {:params params}
+                    [:id :method :type :autopay :amount :status :description
+                     :pstart :pend :paid_on :created
+                     [:check [:id]]
+                     [:source [:id :name :type :last4]]
+                     [:account [:id :name]]]]]
+                  :on-success [:payments/fetch-success k]
+                  :on-failure [:graphql/failure k]}})))
 
 
 (reg-event-fx
@@ -74,13 +75,13 @@
    (filter #(= account-id (get-in % [:account :id])) payments)))
 
 
-;; given a list of statuses (stati?)
-;; get all the payments with one of the statuses
+;; given a list of status
+;; get all the payments with one of the status
 (reg-sub
- :payments/by-statuses
+ :payments/by-status
  :<-[:payments]
- (fn [payments [_ statuses]]
-   (filter #(some (fn [status] (= status (:status %))) statuses) payments)))
+ (fn [payments [_ status]]
+   (filter #(some (fn [s] (= s (:status %))) status) payments)))
 
 
 ;; ==============================================================================

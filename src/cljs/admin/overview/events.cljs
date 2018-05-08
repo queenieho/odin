@@ -9,11 +9,10 @@
 
 (defmethod routes/dispatches :overview
   [{:keys [params] :as route}]
-  (.log js/console "params" params)
   [;; get all `active` orders
    #_[:dashboard.orders/fetch]
    [:services.orders/query {:statuses [:pending :placed]}]
-   ;; [:payments/fetch]
+   [:payments/fetch]
    #_[:dashboard.payments/fetch]
    #_[:dashboard.members/fetch]])
 
