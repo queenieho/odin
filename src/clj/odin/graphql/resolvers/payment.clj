@@ -106,7 +106,6 @@
               (or (when-let [d (order/summary order)]
                     (format "%s (%s)" d service-desc))
                   service-desc)))]
-    (println (tpayment/customer payment) "\n\n")
     (case (tpayment/type payment)
       :payment.type/rent    (-rent-desc payment)
       :payment.type/order   (-order-desc payment)
@@ -235,9 +234,7 @@
             (map #(keyword "payment.type" (string/replace (name %) #"-" "_")) xs))
    :statuses (when-some [xs statuses]
                (map #(keyword "payment.status" (name %)) xs))
-   :subtypes (when-some [xs subtypes]
-               (map #(keyword "payment.subtype" (string/replace (name %) #"-" "_")) xs))
-   ;; NOTE: These don't get set on payments! Not necessary to use for the time
+;; NOTE: These don't get set on payments! Not necessary to use for the time
    ;; being...
    ;; :currency (when-let [c (first currencies)]
    ;;             (name c))
