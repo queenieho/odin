@@ -354,6 +354,8 @@
                           :resolve :payment/source}
             :status      {:type    :payment_status
                           :resolve :payment/status}
+            :subtypes    {:type    (list :Keyword)
+                          :resolve :payment/subtypes}
             :type        {:type    :payment_type
                           :resolve :payment/type}
             :uuid        {:type    (non-null String)
