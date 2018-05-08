@@ -1,5 +1,5 @@
-(ns admin.dashboard.views
-  (:require [admin.dashboard.db :as db]
+(ns admin.overview.views
+  (:require [admin.overview.db :as db]
             [admin.content :as content]
             [admin.routes :as routes]
             [antizer.reagent :as ant]
@@ -16,8 +16,6 @@
 (defn notifications-modules []
   (let [payments (subscribe [:payments/by-statuses [:due :pending :failed]])
         orders (subscribe [:orders])]
-    #_[:div
-     [:h1 "test"]]
     [:div
      (.log js/console  "payments" @payments)
      (.log js/console  "orders" @orders)
@@ -33,9 +31,9 @@
        [:h1 "Moving out"]]]]))
 
 
-(defn dashboard-content []
+(defn overview-content []
   [:div
-   (typography/view-header "Dashboard" "Important updates on our communities")
+   (typography/view-header "Overview" "Important updates on our communities")
    [notifications-modules]])
 
 
@@ -43,5 +41,5 @@
 ;; entry ========================================================================
 ;; ==============================================================================
 
-(defmethod content/view :dashboard [route]
-  [dashboard-content])
+(defmethod content/view :overview [route]
+  [overview-content])

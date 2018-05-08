@@ -1,13 +1,13 @@
-(ns admin.dashboard.events
+(ns admin.overview.events
   (:require [admin.routes :as routes]
             [admin.services.orders.events]
-            [admin.dashboard.db :as db]
+            [admin.overview.db :as db]
             [re-frame.core :refer [reg-event-db
                                    reg-event-fx
                                    path]]
             [toolbelt.core :as tb]))
 
-(defmethod routes/dispatches :dashboard
+(defmethod routes/dispatches :overview
   [{:keys [params] :as route}]
   (.log js/console "params" params)
   [;; get all `active` orders
@@ -19,7 +19,7 @@
 
 
 (reg-event-fx
- :dashboard.orders/fetch
+ :overview.orders/fetch
  [(path db/path)]
  (fn [{db :db} k]
    {:graphql {:query [[:orders {:params {:statuses [:pending :placed]}}
