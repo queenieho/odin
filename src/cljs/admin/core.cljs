@@ -2,6 +2,7 @@
   (:require [accountant.core :as accountant]
             [admin.accounts.views]
             [admin.content :as content]
+            [admin.dashboard.views]
             [admin.events]
             [admin.fx]
             [admin.history]

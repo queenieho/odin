@@ -1,6 +1,7 @@
 (ns admin.events
   (:require [admin.db :as db]
             [admin.accounts.events]
+            [admin.dashboard.events]
             [admin.kami.events]
             [admin.metrics.events]
             [admin.profile.events]

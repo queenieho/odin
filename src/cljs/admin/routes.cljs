@@ -5,7 +5,9 @@
 
 (def app-routes
   [""
-   [["/accounts" [["" :accounts/list]
+   [["/dashboard" :dashboard]
+
+    ["/accounts" [["" :accounts/list]
                   [["/" :account-id] :accounts/entry]]]
 
     ["/properties" [["" :properties/list]
@@ -69,4 +71,4 @@
 (reg-event-fx
  ::home
  (fn [_ _]
-   {:route (path-for :accounts/list)}))
+   {:route (path-for :dashboard)}))
