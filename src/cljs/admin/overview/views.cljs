@@ -15,7 +15,7 @@
             [toolbelt.core :as tb]))
 
 
-(def render-name
+(def render-name-from-account
   (table/wrap-cljs
    (fn [_ {{name :name} :account}]
      [:p.fs3 (subs name 0 (if (< 18 (count name)) 18 (count name)))])))
@@ -52,13 +52,37 @@
      [:p.fs3 (format/currency amount)])))
 
 
+(def render-name
+  (table/wrap-cljs
+   (fn [_ {name :name}]
+     [:p.fs3 (subs name 0 (if (< 18 (count name)) 18 (count name)))])))
+
+
+(def render-property
+  (table/wrap-cljs
+   (fn [_ {{name :name} :property}]
+     [:p.fs3 name])))
+
+
+(def render-days-left
+  (table/wrap-cljs
+   (fn [_ {{ends :ends} :active_license}]
+     [:p.fs3.align-center (time/days-between ends)])))
+
+
+(def render-end-of-term
+  (table/wrap-cljs
+   (fn [_ {{ends :ends} :active_license}]
+     [:p.fs3 (format/date-short-num ends)])))
+
+
 (defmulti columns (fn [role] role))
 
 
 (defmethod columns :orders [_]
   [{:title "Member"
     :dataIndex :member
-    :render render-name}
+    :render render-name-from-account}
    {:title "Order"
     :dataIndex :order
     :render render-order-name}
@@ -71,18 +95,33 @@
 
 
 (defmethod columns :payments [_]
-  [{:title "Member"
-    :dataIndex :member
-    :render render-name}
-   {:title "Payment description"
-    :dataIndex :description
+  [{:title "member"
+    :dataindex :member
+    :render render-name-from-account}
+   {:title "payment description"
+    :dataindex :description
     :render render-payment-description}
-   {:title "Amount"
-    :dataIndex :amount
+   {:title "amount"
+    :dataindex :amount
     :render render-amount}
-   {:title "Status"
-    :dataIndex :status
+   {:title "status"
+    :dataindex :status
     :render render-status}])
+
+
+(defmethod columns :end-of-term [_]
+  [{:title "member"
+    :dataindex :member
+    :render render-name}
+   {:title "Property"
+    :dataindex :property
+    :render render-property}
+   {:title "End of Term"
+    :dataIndex :date
+    :render render-end-of-term}
+   {:title "Days Left"
+    :dataindex :days-left
+    :render render-days-left}])
 
 
 (defn- notifications-table [type items title]
@@ -96,14 +135,15 @@
 
 (defn notifications []
   (let [payments (subscribe [:payments/by-status [:due :pending :failed]])
-        orders (subscribe [:orders])]
+        orders   (subscribe [:orders])
+        members  (subscribe [:overview.accounts/end-of-term])]
     [:div
+     (.log js/console @members)
      [:div.columns
       [notifications-table :orders (sort-by :created > @orders) "Helping Hands"]
       [notifications-table :payments (sort-by :created > @payments) "Payments"]]
-     #_[:div.columns
-      [orders-table @orders]
-      [orders-table @orders]]]))
+     [:div.columns
+      [notifications-table :end-of-term @members "End of term"]]]))
 
 
 (defn overview-content []
