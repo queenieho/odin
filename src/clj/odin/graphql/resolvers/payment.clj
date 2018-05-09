@@ -234,7 +234,7 @@
             (map #(keyword "payment.type" (string/replace (name %) #"-" "_")) xs))
    :statuses (when-some [xs statuses]
                (map #(keyword "payment.status" (name %)) xs))
-;; NOTE: These don't get set on payments! Not necessary to use for the time
+   ;; NOTE: These don't get set on payments! Not necessary to use for the time
    ;; being...
    ;; :currency (when-let [c (first currencies)]
    ;;             (name c))
@@ -290,7 +290,7 @@
   [payment source]
   (let [retry        (#{:payment.status/due :payment.status/failed}
                       (tpayment/status payment))
-        correct-type (#{:payment.type/rent :payment.type/deposit}
+        correct-type (#{:payment.type/rent :payment.type/deposit :payment.type/fee}
                       (tpayment/type payment))
         bank         (tsource/bank-account? source)]
     (cond
@@ -298,7 +298,7 @@
       (format "This payment has status %s; cannot pay!" (name (tpayment/status payment)))
 
       (not (and correct-type bank))
-      "Only bank accounts can be used to pay rent.")))
+      "Only bank accounts can be used to make this payment.")))
 
 
 ;; create =======================================================================
@@ -326,6 +326,17 @@
                             (t/hour st)
                             (t/minute st)
                             (t/second st)))))
+
+
+;;TODO - consider removing this before shipping
+;; (defmethod create-payment!* :fee
+;;   [{:keys [teller conn]} {:keys [amount account subtype]}]
+;;   (let [account  (d/entity (d/db conn) account)
+;;         customer (tcustomer/by-account teller account)
+;;         property (tcustomer/property customer)
+;;         tz       (t/time-zone-for-id (tproperty/timezone property))]
+;;     (tpayment/create! customer amount :payment.type/fee
+;;                       {:due (-> (t/today) (date/end-of-day tz))})))
 
 
 (defmethod create-payment!* :rent
@@ -413,6 +424,23 @@
         (resolve/resolve-as nil {:message (error-message t)})))))
 
 
+(defn pay-fee!
+  [{:keys [conn requester teller] :as ctx} {:keys [id source] :as params} _]
+  (let [payment (tpayment/by-id teller id)
+        source  (tsource/by-id teller source)]
+    (try
+      (if-let [error (ensure-payment-allowed payment source)]
+        (resolve/resolve-as nil {:message error})
+        (let [py (tpayment/charge! payment {:source source})]
+          ;; TODO - send an event to reactor about this
+          py))
+      (catch Throwable t
+        (timbre/error t ::pay-fee {:payment-id id
+                                   :source-id  (tsource/id source)
+                                   :subtypes   (tpayment/subtypes payment)})
+        (resolve/resolve-as nil {:message (error-message t)})))))
+
+
 ;; =============================================================================
 ;; Resolvers
 ;; =============================================================================
@@ -457,4 +485,5 @@
    ;; mutations
    :payment/create!      create-payment!
    :payment/pay-rent!    pay-rent!
-   :payment/pay-deposit! pay-deposit!})
+   :payment/pay-deposit! pay-deposit!
+   :payment/pay-fee!     pay-fee!})
