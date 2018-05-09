@@ -518,7 +518,10 @@
 
     [:div
      {:style {:margin-bottom "1em"}}
-     [:p.bold "Security Desposit Refund Amount"]
+     [ant/tooltip
+      {:title "To be added after Ops has reviewed the final walkthrough details"
+       :placement "topLeft"}
+      [:p.bold "Security Desposit Refund Amount"]]
      [ant/input-number
       {:style         {:width "50%"}
        :default-value 1500.00}]]]])
@@ -532,6 +535,10 @@
     {:icon     "swap"
      :on-click #(dispatch [:accounts.entry.reassign/show account])}
     "Reassign"]
+   #_[ant/button
+    {:icon     "retweet"
+     :on-click #(js/console.log "coming soon")}
+    "Renew License"]
    [ant/button
     {:icon     "home"
      :type     :danger
