@@ -33,6 +33,7 @@
    (case type
      :rent    "Rent"
      :deposit "Security Deposit"
+     :fee     "Fee"
      "")])
 
 
@@ -47,10 +48,11 @@
               :partial "text-yellow"
               :pending "text-blue"
               :paid    "text-green"
-              "")}
+              "text-yellow")}
     [:i.fa.fa-3x {:class (case type
                            :rent    "fa-home"
                            :deposit "fa-shield"
+                           :fee "fa-exclamation-circle"
                            "")}]]])
 
 
@@ -221,15 +223,73 @@
        :otherwise         [rent-due-cards @payments])]))
 
 
+
+;; ==============================================================================
+;; Other Payments ===============================================================
+;; ==============================================================================
+
+
+(defn- generate-fee-description
+  [{:keys [subtypes] :as payment}]
+  (if (some #{:room-reassignment} subtypes)
+    "Room Reassignment"
+    ""))
+
+
+(defn other-payments-card
+  "Renders a card for payments that are neither rent nor deposits, with a CTA to pay"
+  [sources payment]
+  [ant/card
+   [:div.columns
+    [:div.column.is-2
+     [render-card-icon :fee :unpaid]]
+    [:div.column
+     [payments-ui/make-payment-modal payment
+      :on-confirm (fn [payment-id source-id _]
+                    (dispatch [:member/pay-fee! payment-id source-id]))
+      :loading @(subscribe [:ui/loading? :member/pay-fee!])
+      :sources @sources
+      :desc (generate-fee-description payment)]
+     [:h4.bold "Fee"]
+     [:p.fs2 (generate-fee-description payment)]
+     [ant/tooltip
+      {:title (when (empty? @sources)
+                (r/as-element [link-bank-tooltip-title]))}
+      [ant/button
+       {:type     :primary
+        :size     :large
+        :on-click #(dispatch [:modal/show (:id payment)])
+        :disabled (empty? @sources)}
+       (format/format "Pay Now (%s)" (format/currency (:amount payment)))]]]]])
+
+
+(defn other-payments-cards
+  "Renders cards for payments which are due, and which are neither rent nor deposits"
+  []
+  (let [sources  (subscribe [:payment.sources/verified-banks])
+        payments (subscribe [:member.payments/due])]
+    [:div
+     (map
+      #(with-meta
+         [other-payments-card sources %]
+         {:key (:id %)})
+      @payments)]))
+
+
 ;; =============================================================================
 ;; Membership + License
 ;; =============================================================================
 
 (defn membership-summary []
-  [:div
-   [:h2 "Status"]
-   [deposit-status-card]
-   [rent-status-card]])
+  (let [loading? (subscribe [:ui/loading? :payments/fetch])]
+    (if @loading?
+      [:div.has-text-centered
+       [ant/spin {:size :large :tip "Loading..."}]]
+      [:div
+       [:h2 "Status"]
+       [deposit-status-card]
+       [rent-status-card]
+       [other-payments-cards]])))
 
 
 (defn membership []

@@ -119,7 +119,7 @@
                  :subtypes     {:type        (list :Keyword)
                                 :description "List of payment subtypes."}
                  :types        {:type          (list :payment_type)
-                                :default-value [:deposit :order :rent]
+                                :default-value [:deposit :order :rent :fee]
                                 :description   "List of payment types to query."}
                  :from         {:type        :Instant
                                 :description "Payments after."}
