@@ -15,7 +15,8 @@
             [iface.utils.formatters :as format]
             [re-frame.core :refer [subscribe dispatch]]
             [reagent.core :as r]
-            [toolbelt.core :as tb]))
+            [toolbelt.core :as tb]
+            [iface.components.form :as form]))
 
 
 ;; ==============================================================================
@@ -476,19 +477,93 @@
           :on-change #(dispatch [:accounts.entry.reassign/update :rate %])}])]]))
 
 
+(defn- move-out-confirmation []
+  (ant/modal-confirm
+   {:title   "Confirm Move-Out"
+    :content "Are you sure you want to continue? This action can't easily be undone."
+    :on-ok   #(dispatch [:modal/hide :membership/move-out])
+    :ok-type :danger
+    :ok-text "Yes - Confirm Move-out"}))
+
+
+(defn move-out-modal
+  [account]
+  [ant/modal
+   {:title     (str "Move-out: " (:name account))
+    :visible   @(subscribe [:modal/visible? :membership/move-out])
+    :on-cancel #(dispatch [:modal/hide :membership/move-out])
+    :on-ok     move-out-confirmation
+    :ok-type   :danger}
+
+   [:div
+    [:div
+     {:style {:margin-bottom "1em"}}
+     [:p.bold "What date is the member moving out?"]
+     [form/date-picker
+      {:style {:width "50%"}}]]
+
+    [:div
+     {:style {:margin-bottom "1em"}}
+     [:p.bold "When will we conduct the pre-walkthrough?"]
+     [form/date-picker
+      {:style {:width "50%"}}]]
+
+    [:div
+     {:style {:margin-bottom "1em"}}
+     [:p.bold "Early Termination Fee Amount"]
+     [ant/input-number
+      {:style         {:width "50%"}
+       :default-value 0.00}]]
+
+    [:div
+     {:style {:margin-bottom "1em"}}
+     [:p.bold "Security Desposit Refund Amount"]
+     [ant/input-number
+      {:style         {:width "50%"}
+       :default-value 1500.00}]]]])
+
+
 (defn membership-actions [account]
   [:div
+   [move-out-modal account]
    [reassign-modal account]
    [ant/button
     {:icon     "swap"
      :on-click #(dispatch [:accounts.entry.reassign/show account])}
-    "Reassign"]])
+    "Reassign"]
+   [ant/button
+    {:icon     "home"
+     :type     :danger
+     :ghost    true
+     :on-click #(dispatch [:modal/show :membership/move-out])}
+    "Move-out"]])
 
 
 (defn- render-status [_ {status :status}]
   [ant/tooltip {:title status}
    [ant/icon {:class (order/status-icon-class (keyword status))
               :type  (order/status-icon (keyword status))}]])
+
+
+(defn move-out-status
+  [account]
+  [ant/card
+   {:title (str (format/make-first-name-possessive (:name account)) "Move-out Information")
+    :extra (r/as-element [ant/button {:icon "edit"} "Edit"])}
+   [:div.columns
+    [:div.column
+     [:p.bold "Move-out date"]
+     [:p "July 22, 2018"]
+
+     [:p.bold "Pre-Walkthrough date"]
+     [:p "July 15, 2018"]]
+
+    [:div.column
+     [:p.bold "Early Termination Fee"]
+     [:p "$30.00"]
+
+     [:p.bold "Security Deposit Refund"]
+     [:p "$1500.00"]]]])
 
 
 (defn membership-orders-list [account orders]
@@ -523,6 +598,7 @@
        (when is-active {:content [membership-actions account]})]]
      [:div.column
       (when is-active [status-bar account])
+      (when is-active [move-out-status account])
       (when is-active [membership-orders-list account orders])]]))
 
 
