@@ -493,6 +493,7 @@
     :visible   @(subscribe [:modal/visible? :membership/move-out])
     :on-cancel #(dispatch [:modal/hide :membership/move-out])
     :on-ok     move-out-confirmation
+    :ok-text   "Confirm Move-out"
     :ok-type   :danger}
 
    [:div
