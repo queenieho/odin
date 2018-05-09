@@ -253,9 +253,8 @@
      [:h4.bold "Fee"]
      [:p.fs2 (generate-fee-description payment)]
      [ant/tooltip
-      {:title (if (empty? @sources)
-                (r/as-element [link-bank-tooltip-title])
-                nil)}
+      {:title (when (empty? @sources)
+                (r/as-element [link-bank-tooltip-title]))}
       [ant/button
        {:type     :primary
         :size     :large
