@@ -36,7 +36,6 @@
 
 (defmethod notification :payments [_ {:keys [amount description account status] :as payment}]
   [:div.columns
-   (.log js/console payment)
    [:div.column.is-1
     [ant/avatar (formatters/initials (:name account))]]
    [:div.column.is-11
@@ -51,7 +50,6 @@
 
 (defmethod notification :end-of-term [_ {:keys [id property name active_license] :as member}]
   [:div.columns
-   (.log js/console member)
    [:div.column.is-1
     [ant/avatar (formatters/initials name)]]
    [:div.column.is-11
@@ -103,7 +101,10 @@
                                    (take 5))]
         [:div.column.is-half
          [ant/card
-          {:title title}
+          {:no-hovering true
+           :title       title
+           ;; :extra       (r/as-element [:a [ant/icon {:type "arrows-alt"}]])
+           :loading     @(subscribe [:overview/loading])}
           (if (not-empty items)
             (map #(with-meta [notification type %] {:key (:id %)}) items')
             [empty-view type])

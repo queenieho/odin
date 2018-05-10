@@ -19,3 +19,12 @@
  :<- [:accounts/list]
  (fn [accounts _]
    accounts))
+
+
+(reg-sub
+ :overview/loading
+ :<- [:ui/loading? :services.orders/query]
+ :<- [:ui/loading? :payments/fetch]
+ :<- [:ui/loading? :accounts/query]
+ (fn [loading _]
+   (some true? loading)))
