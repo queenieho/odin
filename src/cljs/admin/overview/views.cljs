@@ -16,162 +16,83 @@
             [iface.utils.formatters :as formatters]))
 
 
-(def render-name-from-account
-  (table/wrap-cljs
-   (fn [_ {{name :name} :account}]
-     [:p.fs3 (subs name 0 (if (< 18 (count name)) 18 (count name)))])))
-
-
-(def render-order-name
-  (table/wrap-cljs
-   (fn [_ {name :name}]
-     [:p.fs3 (subs name 0 (if (< 25 (count name)) 25 (count name)))])))
-
-
-(def render-date
-  (table/wrap-cljs
-   (fn [_ {created :created}]
-     [:p.fs3 (format/date-short-num created)])))
-
-
-(def render-status
-  (table/wrap-cljs
-   (fn [_ {status :status}]
-     [:div.align-right
-      [:span.tag.is-hollow status]])))
-
-
-(def render-payment-description
-  (table/wrap-cljs
-   (fn [_ {description :description}]
-     [:p.fs3 description])))
-
-
-(def render-amount
-  (table/wrap-cljs
-   (fn [_ {amount :amount}]
-     [:p.fs3 (format/currency amount)])))
-
-
-(def render-name
-  (table/wrap-cljs
-   (fn [_ {name :name}]
-     [:p.fs3 (subs name 0 (if (< 18 (count name)) 18 (count name)))])))
-
-
-(def render-property
-  (table/wrap-cljs
-   (fn [_ {{name :name} :property}]
-     [:p.fs3 name])))
-
-
-(def render-days-left
-  (table/wrap-cljs
-   (fn [_ {{ends :ends} :active_license}]
-     [:p.fs3.align-center (time/days-between ends)])))
-
-
-(def render-end-of-term
-  (table/wrap-cljs
-   (fn [_ {{ends :ends} :active_license}]
-     [:p.fs3 (format/date-short-num ends)])))
-
-
-(defmulti columns (fn [role] role))
-
-
-(defmethod columns :orders [_]
-  [{:title "Member"
-    :dataIndex :member
-    :render render-name-from-account}
-   {:title "Order"
-    :dataIndex :order
-    :render render-order-name}
-   {:title "Date"
-    :dataIndex :date
-    :render render-date}
-   {:title "Status"
-    :dataIndex :status
-    :render render-status}])
-
-
-(defmethod columns :payments [_]
-  [{:title "member"
-    :dataindex :member
-    :render render-name-from-account}
-   {:title "payment description"
-    :dataindex :description
-    :render render-payment-description}
-   {:title "amount"
-    :dataindex :amount
-    :render render-amount}
-   {:title "status"
-    :dataindex :status
-    :render render-status}])
-
-
-(defmethod columns :end-of-term [_]
-  [{:title "member"
-    :dataindex :member
-    :render render-name}
-   {:title "Property"
-    :dataindex :property
-    :render render-property}
-   {:title "End of Term"
-    :dataIndex :date
-    :render render-end-of-term}
-   {:title "Days Left"
-    :dataindex :days-left
-    :render render-days-left}])
-
-
 (defmulti notification (fn [type] type))
 
 
-(defmethod notification :orders [_ {:keys [account name status created id] :as order}]
+(defmethod notification :orders [_ {:keys [account status created id] :as order}]
   [:div.columns
-   (.log js/console account)
    [:div.column.is-1
     [ant/avatar (formatters/initials (:name account))]]
    [:div.column.is-11
-    [:p [:a {:href (routes/path-for :accounts/entry :account-id (:id account))}
-         [:b (:name account)]] " ordered "
-     [:a {:href (routes/path-for :services.orders/entry :order-id id)}
-      [:b name]]]
-    [:p.fs1 (format/date-short created) " - " status]]])
+    [:p [:a
+         {:href (routes/path-for :accounts/entry :account-id (:id account))}
+         (:name account)]
+     " ordered "
+     [:a
+      {:href (routes/path-for :services.orders/entry :order-id id)}
+      (:name order)]]
+    [:p.fs1 (format/date-short created) " - " (string/capitalize (name status))]]])
 
 
 (defmethod notification :payments [_ {:keys [amount description account status] :as payment}]
   [:div.columns
+   (.log js/console payment)
    [:div.column.is-1
     [ant/avatar (formatters/initials (:name account))]]
    [:div.column.is-11
-    [:p "Payment of " [:b amount] " for "
+    [:p
+     [:a
+      {:href (routes/path-for :accounts/entry :account-id (:id account))}
+      (:name account)]
+     "'s payment for "
      [:b description] " is " [:b status]]
-    [:p.fs1 (:name account)]]])
+    [:p.fs1 (format/currency amount)]]])
 
 
-(defmethod notification :end-of-term [_ {:keys [property name active_license] :as member}]
+(defmethod notification :end-of-term [_ {:keys [id property name active_license] :as member}]
   [:div.columns
+   (.log js/console member)
    [:div.column.is-1
     [ant/avatar (formatters/initials name)]]
    [:div.column.is-11
-    [:p [:b name] " is " [:b (time/days-between (:ends active_license)) " days"] " from end of term"]
-    [:p.fs1 (:name property) " - End of term: " (format/date-short (:ends active_license))]]])
+    [:p
+     [:a {:href (routes/path-for :accounts/entry :account-id id)} name]
+     " is " [:b (time/days-between (:ends active_license)) " days"] " from end of term"]
+    [:p.fs1
+     [:a
+      {:href (routes/path-for :properties/entry :property-id (:id property))}
+      (:name property)]
+     " - End of term: " (format/date-short (:ends active_license))]]])
 
 
-(defmethod notification :move-out [_ {:keys [property name active_license] :as member}]
+(defmethod notification :move-out [_ {:keys [property name active_license id] :as member}]
   (let [{[date pre_walk] :move_out} active_license]
     [:div.columns
      [:div.column.is-1
       [ant/avatar (formatters/initials name)]]
      [:div.column.is-11
-      [:p [:b name] " is moving out on " [:b (format/date-short (get-in active_license [:move_out :date]))]]
-      [:p.fs1 (:name property) " - Pre-walkthrough " (format/date-short (get-in active_license [:move_out :pre_walk]))]]]))
+      [:p
+       [:a {:href (routes/path-for :accounts/entry :account-id id)} name]
+       " is moving out on " [:b (format/date-short date)]]
+      [:p.fs1
+       [:a
+        {:href (routes/path-for :properties/entry :property-id (:id property))}
+        (:name property)]
+       " - Pre-walkthrough " (format/date-short pre_walk)]]]))
 
 
-(defmethod notification :application [type notification]
-  [:p "Someone has applied"])
+(defn- empty-view-message [type]
+  (case type
+    :orders      "No active orders at the moment"
+    :payments    "Hurray! Everyone's paid!"
+    :end-of-term "No members near their end of term"
+    :move-out    "No members moving out"
+    "Nothing to see here"))
+
+
+(defn- empty-view [type]
+  [:div
+   [:p.fs3 (empty-view-message type)]])
 
 
 (defn- notifications-table [type items title]
@@ -183,7 +104,9 @@
         [:div.column.is-half
          [ant/card
           {:title title}
-          (map #(with-meta [notification type %] {:key (:id %)}) items')
+          (if (not-empty items)
+            (map #(with-meta [notification type %] {:key (:id %)}) items')
+            [empty-view type])
           [ant/pagination {:page-size 5
                            :size      :small
                            :current   current
@@ -197,16 +120,12 @@
         members  (subscribe [:overview.accounts/end-of-term])
         move-out (subscribe [:overview.accounts/move-out])]
     [:div
-     (.log js/console @move-out)
      [:div.columns
       [notifications-table :orders (sort-by :created > @orders) "Helping Hands"]
       [notifications-table :payments (sort-by :created > @payments) "Payments"]]
      [:div.columns
       [notifications-table :end-of-term @members "End of term"]
-      [notifications-table :move-out @move-out "Moving out"]]
-     [:div.columns
-      [notifications-table :application @members "Application"]
-      #_[notifications-table :move-out @move-out "Moving out"]]]))
+      [notifications-table :move-out @move-out "Moving out"]]]))
 
 
 (defn overview-content []
