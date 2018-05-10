@@ -128,13 +128,16 @@
 (defmulti notification (fn [type] type))
 
 
-(defmethod notification :orders [_ {:keys [account name status created] :as order}]
+(defmethod notification :orders [_ {:keys [account name status created id] :as order}]
   [:div.columns
+   (.log js/console account)
    [:div.column.is-1
     [ant/avatar (formatters/initials (:name account))]]
    [:div.column.is-11
-    [:p [:b (:name account)] " ordered "
-     [:b name]]
+    [:p [:a {:href (routes/path-for :accounts/entry :account-id (:id account))}
+         [:b (:name account)]] " ordered "
+     [:a {:href (routes/path-for :services.orders/entry :order-id id)}
+      [:b name]]]
     [:p.fs1 (format/date-short created) " - " status]]])
 
 
@@ -167,6 +170,10 @@
       [:p.fs1 (:name property) " - Pre-walkthrough " (format/date-short (get-in active_license [:move_out :pre_walk]))]]]))
 
 
+(defmethod notification :application [type notification]
+  [:p "Someone has applied"])
+
+
 (defn- notifications-table [type items title]
   (let [state (r/atom {:current 1})]
     (fn [type items]
@@ -196,7 +203,10 @@
       [notifications-table :payments (sort-by :created > @payments) "Payments"]]
      [:div.columns
       [notifications-table :end-of-term @members "End of term"]
-      [notifications-table :move-out @move-out "Moving out"]]]))
+      [notifications-table :move-out @move-out "Moving out"]]
+     [:div.columns
+      [notifications-table :application @members "Application"]
+      #_[notifications-table :move-out @move-out "Moving out"]]]))
 
 
 (defn overview-content []
