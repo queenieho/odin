@@ -93,26 +93,30 @@
    [:p.fs3 (empty-view-message type)]])
 
 
-(defn- notifications-table [type items title]
+(defn- notifications-list [type items]
   (let [state (r/atom {:current 1})]
     (fn [type items]
       (let [{:keys [current]} @state
             items'            (->> (drop (* (dec current) 5) items)
                                    (take 5))]
-        [:div.column.is-half
-         [ant/card
-          {:no-hovering true
-           :title       title
-           ;; :extra       (r/as-element [:a [ant/icon {:type "arrows-alt"}]])
-           :loading     @(subscribe [:overview/loading])}
-          (if (not-empty items)
-            (map #(with-meta [notification type %] {:key (:id %)}) items')
-            [empty-view type])
-          [ant/pagination {:page-size 5
-                           :size      :small
-                           :current   current
-                           :total     (count items)
-                           :on-change #(swap! state assoc :current %)}]]]))))
+        [:div
+         (map #(with-meta [notification type %] {:key (:id %)}) items')
+         [ant/pagination {:page-size 5
+                          :size      :small
+                          :current   current
+                          :total     (count items)
+                          :on-change #(swap! state assoc :current %)}]]))))
+
+
+(defn- notifications-table [type items title]
+  [:div.column.is-half
+   [ant/card
+    {:no-hovering true
+     :title       title
+     :loading     @(subscribe [:overview/loading])}
+    (if (not-empty items)
+      [notifications-list type items]
+      [empty-view type])]])
 
 
 (defn notifications []
@@ -126,7 +130,7 @@
       [notifications-table :payments (sort-by :created > @payments) "Payments"]]
      [:div.columns
       [notifications-table :end-of-term @members "End of term"]
-      [notifications-table :move-out @move-out "Moving out"]]]))
+      #_[notifications-table :move-out @move-out "Moving out"]]]))
 
 
 (defn overview-content []

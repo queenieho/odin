@@ -14,11 +14,12 @@
         (sort-by #(time/days-between (get-in % [:active_license :ends])) <))))
 
 
+;; TODO when move-out is ready, make sure this works properly
 (reg-sub
  :overview.accounts/move-out
  :<- [:accounts/list]
  (fn [accounts _]
-   accounts))
+   (remove #(nil? (:transition %)) accounts)))
 
 
 (reg-sub
