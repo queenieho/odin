@@ -43,6 +43,16 @@
 ;; ==============================================================================
 
 
+(defn- create-note-button []
+  [ant/button
+   {:style    {:margin "auto"}
+    :type     :primary
+    :size     :large
+    :icon     :plus
+    :on-click #(dispatch [:layout.create-note/toggle])}
+   "Create note"])
+
+
 (defn- nav-user-menu []
   [ant/menu
    [ant/menu-item {:key "profile-link"}
@@ -60,12 +70,16 @@
                     :on-menu-click       #(dispatch [:layout.mobile-menu/toggle])}
      [layout/navbar-menu-items @menu-items @active]
      [layout/navbar-menu-profile
-      (:name @account) [nav-user-menu]]]))
+      (:name @account) [nav-user-menu] [create-note-button]]]))
 
 
 (defn layout []
-  (let [route (subscribe [:route/current])]
+  (let [route          (subscribe [:route/current])
+        creating-note? (subscribe [:layout.note/showing?])]
     [layout/layout
+     [ant/modal
+      {:visible @creating-note?
+       :on-cancel #(dispatch [:layout.create-note/toggle])}]
      [navbar]
      [layout/content
       [content/view @route]]]))

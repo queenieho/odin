@@ -26,3 +26,9 @@
  :user/update
  (fn [db [_ data]]
    (update db :account merge data)))
+
+
+(reg-event-db
+ :layout.create-note/toggle
+ (fn [db _]
+   (update-in db [:layout :create-note :showing] not)))
