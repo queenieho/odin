@@ -78,10 +78,10 @@
 ;; given a list of status
 ;; get all the payments with one of the status
 (reg-sub
- :payments/by-status
+ :payments/by-statuses
  :<-[:payments]
- (fn [payments [_ status]]
-   (filter #(some (fn [s] (= s (:status %))) status) payments)))
+ (fn [payments [_ statuses]]
+   (filter #(some (fn [s] (= s (:status %))) statuses) payments)))
 
 
 ;; ==============================================================================
