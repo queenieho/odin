@@ -53,6 +53,12 @@
   "TODO:"
   [user-name menu]
   [:div.navbar-end
+   [ant/button
+    {:style {:margin "auto"}
+     :type :primary
+     :size :large
+     :icon :plus}
+    "Create note"]
    [:div.navbar-item.hoverable
     [ant/dropdown {:trigger   ["click"]
                    :placement "bottomRight"
