@@ -68,7 +68,7 @@
     (resolve/resolve-as nil {:message (format "'%s' is not a valid term length!")
                              :term    term}))
   (let [unit (d/entity (d/db conn) id)]
-    @(d/transact conn [(or (update-existing unit term rate)
+    @(d/transact conn [(or (update-existing (:unit/licenses unit) term rate)
                            (create-new (d/db conn) unit term rate))
                        (source/create requester)])
     (d/entity (d/db conn) id)))
