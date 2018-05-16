@@ -1,5 +1,6 @@
 (ns admin.db
   (:require [admin.accounts.db :as accounts]
+            [admin.overview.db :as overview]
             [admin.kami.db :as kami]
             [admin.metrics.db :as metrics]
             [admin.profile.db :as profile]
@@ -13,7 +14,10 @@
   (merge
    {:lang    :en
     :menu    {:showing false
-              :items   [{:key  :accounts
+              :items   [{:key  :overview
+                         :name "Overview"
+                         :uri  "/overview"}
+                        {:key  :accounts
                          :name "People"
                          :uri  "/accounts"}
                         {:key  :properties
@@ -40,4 +44,5 @@
    payments/default-value
    profile/default-value
    properties/default-value
-   services/default-value))
+   services/default-value
+   overview/default-value))
