@@ -39,7 +39,7 @@
  :property/rates
  :<- [db/path]
  (fn [db [_ property-id]]
-   (get-in db [:property-rates property-id])))
+   (sort-by :term (get-in db [:property-rates property-id]))))
 
 
 (reg-sub
@@ -55,7 +55,7 @@
  :property.unit/rates
  :<- [db/path]
  (fn [db [_ property-id unit-id]]
-   (get-in db [:unit-rates unit-id])))
+   (sort-by :term (get-in db [:unit-rates unit-id]))))
 
 
 (reg-sub
