@@ -27,7 +27,8 @@
             [re-frame.core :as rf :refer [dispatch subscribe]]
             [starcity.re-frame.stripe-fx]
             [toolbelt.re-frame.fx]
-            [taoensso.timbre :as timbre]))
+            [taoensso.timbre :as timbre]
+            [toolbelt.core :as tb]))
 
 
 (enable-console-print!)
@@ -75,26 +76,29 @@
 
 (defn create-note-modal []
   (let [creating-note? (subscribe [:layout.note/showing?])
+        form           (subscribe [:note/form])
         accounts       (subscribe [:accounts])
         properties     (subscribe [:properties/list])]
     [ant/modal
      {:title     "Create a note"
       :visible   @creating-note?
-      :on-cancel #(dispatch [:layout.create-note/toggle])}
+      :on-cancel #(dispatch [:layout.create-note/cancel])}
      [ant/form-item
-      {:label "Members: "}
+      {:label "Members"}
       [ant/select
-       {:style {:width "100%"}
-        :mode  "multiple"
-        :value []}
+       {:style     {:width "100%"}
+        :mode      "multiple"
+        :value     (mapv str (:members @form))
+        :on-change #(let [ids (mapv tb/str->int (js->clj %))]
+                      (dispatch [:note.form/update :members ids]))}
        (map (fn [{:keys [name id]}]
                 [ant/select-option
                  {:value (str id)
                   :key   id}
                  name])
             @accounts)]]
-     [ant/form-item
-      {:label "Community: "}
+     #_[ant/form-item
+        {:label "Community: "}
       [ant/select
        {:style {:width "100%"}
         :mode  "multiple"
@@ -107,10 +111,18 @@
             @properties)]]
      [ant/form-item
       {:label "Subject"}
-      [ant/input]]
+      [ant/input
+       {:placeholder "Note subject"
+        :value       (:subject @form)
+        :on-change   #(dispatch [:note.form/update :subject (.. % -target -value)])}]]
      [ant/form-item
       {:label "Note"}
-      [ant/input]]]))
+      [ant/input
+       {:type        :textarea
+        :rows        10
+        :placeholder "Note body"
+        :value       (:note @form)
+        :on-change   #(dispatch [:note.form/update :note (.. % -target -value)])}]]]))
 
 
 (defn layout []

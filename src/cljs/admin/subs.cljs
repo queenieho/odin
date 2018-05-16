@@ -2,6 +2,7 @@
   (:require [admin.accounts.subs]
             [admin.kami.subs]
             [admin.metrics.subs]
+            [admin.notes.subs]
             [admin.profile.subs]
             [admin.properties.subs]
             [admin.services.subs]
@@ -94,3 +95,10 @@
  :<- [::layout]
  (fn [layout _]
    (get-in layout [:create-note :showing])))
+
+
+(reg-sub
+ :note/form
+ :<- [::layout]
+ (fn [layout _]
+   (get-in layout [:create-note :form])))

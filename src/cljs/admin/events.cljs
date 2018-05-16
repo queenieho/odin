@@ -3,7 +3,7 @@
             [admin.accounts.events]
             [admin.kami.events]
             [admin.metrics.events]
-
+            [admin.notes.events]
             [admin.profile.events]
             [admin.properties.events]
             [admin.services.events]
@@ -39,3 +39,22 @@
  :layout.create-note/open
  (fn [{db :db} _]
    {:dispatch-n [[:layout.create-note/toggle]]}))
+
+
+(reg-event-fx
+ :layout.create-note/cancel
+ (fn [{db :db} _]
+   {:dispatch-n [[:note.form/clear]
+                 [:layout.create-note/toggle]]}))
+
+
+(reg-event-db
+ :note.form/update
+ (fn [db [_ key value]]
+   (assoc-in db [:layout :create-note :form key] value)))
+
+
+(reg-event-db
+ :note.form/clear
+ (fn [db _]
+   (update-in db [:layout :create-note] dissoc :form)))
