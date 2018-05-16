@@ -3,6 +3,7 @@
             [admin.accounts.events]
             [admin.kami.events]
             [admin.metrics.events]
+
             [admin.profile.events]
             [admin.properties.events]
             [admin.services.events]
@@ -32,3 +33,9 @@
  :layout.create-note/toggle
  (fn [db _]
    (update-in db [:layout :create-note :showing] not)))
+
+
+(reg-event-fx
+ :layout.create-note/open
+ (fn [{db :db} _]
+   {:dispatch-n [[:layout.create-note/toggle]]}))

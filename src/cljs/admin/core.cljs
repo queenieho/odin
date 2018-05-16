@@ -49,7 +49,7 @@
     :type     :primary
     :size     :large
     :icon     :plus
-    :on-click #(dispatch [:layout.create-note/toggle])}
+    :on-click #(dispatch [:layout.create-note/open])}
    "Create note"])
 
 
@@ -73,13 +73,50 @@
       (:name @account) [nav-user-menu] [create-note-button]]]))
 
 
+(defn create-note-modal []
+  (let [creating-note? (subscribe [:layout.note/showing?])
+        accounts       (subscribe [:accounts])
+        properties     (subscribe [:properties/list])]
+    [ant/modal
+     {:title     "Create a note"
+      :visible   @creating-note?
+      :on-cancel #(dispatch [:layout.create-note/toggle])}
+     [ant/form-item
+      {:label "Members: "}
+      [ant/select
+       {:style {:width "100%"}
+        :mode  "multiple"
+        :value []}
+       (map (fn [{:keys [name id]}]
+                [ant/select-option
+                 {:value (str id)
+                  :key   id}
+                 name])
+            @accounts)]]
+     [ant/form-item
+      {:label "Community: "}
+      [ant/select
+       {:style {:width "100%"}
+        :mode  "multiple"
+        :value []}
+       (map (fn [{:keys [name id]}]
+              [ant/select-option
+               {:value (str id)
+                :key   id}
+               name])
+            @properties)]]
+     [ant/form-item
+      {:label "Subject"}
+      [ant/input]]
+     [ant/form-item
+      {:label "Note"}
+      [ant/input]]]))
+
+
 (defn layout []
-  (let [route          (subscribe [:route/current])
-        creating-note? (subscribe [:layout.note/showing?])]
+  (let [route          (subscribe [:route/current])]
     [layout/layout
-     [ant/modal
-      {:visible @creating-note?
-       :on-cancel #(dispatch [:layout.create-note/toggle])}]
+     [create-note-modal]
      [navbar]
      [layout/content
       [content/view @route]]]))
