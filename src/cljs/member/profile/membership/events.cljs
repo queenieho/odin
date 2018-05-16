@@ -6,7 +6,8 @@
                                    path]]
             [toolbelt.core :as tb]
             [antizer.reagent :as ant]
-            [taoensso.timbre :as timbre]))
+            [taoensso.timbre :as timbre]
+            [iface.utils.formatters :as format]))
 
 
 ;; =============================================================================
@@ -18,7 +19,8 @@
   (let [account-id (get-in route [:requester :id])]
     [[:profile/fetch-account account-id]
      [:member.license/fetch account-id]
-     [:payment-sources/fetch account-id]]))
+     [:payment-sources/fetch account-id]
+     [:payments/fetch account-id]]))
 
 
 ;; =============================================================================
@@ -104,3 +106,30 @@
                    [:modal/hide modal-id]
                    [:member.license/fetch account-id]
                    [:iface.components.notifications/clear :deposit-overdue]]})))
+
+
+
+;; ==============================================================================
+;; Pay Fee ======================================================================
+;; ==============================================================================
+
+
+(reg-event-fx
+ :member/pay-fee!
+ (fn [_ [k payment-id source-id]]
+   {:dispatch [:ui/loading k true]
+    :graphql {:mutation [[:pay_fee {:id payment-id
+                                    :source source-id}
+                          [:id]]]
+              :on-success [::pay-fee-success k payment-id]
+              :on-failure [:graphql/failure k]}}))
+
+
+(reg-event-fx
+ ::pay-fee-success
+ (fn [{db :db} [_ k modal-id _]]
+   (let [account-id (get-in db [:account :id])]
+     {:dispatch-n [[:ui/loading k false]
+                   [:modal/hide modal-id]
+                   [:member.license/fetch account-id]
+                   [:payments/fetch account-id]]})))

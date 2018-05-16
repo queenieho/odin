@@ -41,7 +41,7 @@
       :graphql   {:query
                   [[:payments {:params params}
                     [:id :method :type :autopay :amount :status :description
-                     :pstart :pend :paid_on :created
+                     :pstart :pend :paid_on :created :subtypes
                      [:check [:id]]
                      [:source [:id :name :type :last4]]
                      [:account [:id :name]]]]]

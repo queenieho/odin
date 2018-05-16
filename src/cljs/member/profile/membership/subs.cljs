@@ -49,6 +49,15 @@
 
 
 (reg-sub
+ :member.payments/due
+ :<- [:payments]
+ (fn [payments _]
+   (filter
+    #(and (= :due (:status %)) (not= :rent (:type %)))
+    payments)))
+
+
+(reg-sub
  :member.deposit/payment
  :<- [:member/deposit]
  (fn [deposit _]

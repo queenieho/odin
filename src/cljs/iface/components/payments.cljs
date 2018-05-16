@@ -31,6 +31,7 @@
         :payment.for/rent    "Rent Payment"
         :payment.for/deposit "Security Deposit"
         :payment.for/order   "Order"
+        :payment.for/fee     "Fee"
         :payment.for/other   "Uncategorized"
 
         :payments            "Payments"
@@ -248,6 +249,7 @@
   (case payment-type
     :deposit "fa-shield"
     :rent    "fa-home"
+    :fee     "fa-exclamation-circle"
     :order   "fa-smile-o"
     ""))
 
@@ -262,7 +264,8 @@
      [:h3 (translate (keyword "payment.for" (name (:type payment))))]
      (when (some? description)
        [:h3 description])
-     [:h4 (string/capitalize (:description payment))]]
+     (when (some? (:description payment))
+       [:h4 (string/capitalize (:description payment))])]
 
     [:div.column.align-right
      [:h3 (format/currency amount)]
