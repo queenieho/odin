@@ -12,6 +12,10 @@
   ::reassign)
 
 
+(def transition-modal-key
+  ::transition)
+
+
 (def default-params
   {:selected-view "member"
    :sort-order    :asc
@@ -30,7 +34,8 @@
          :editing-notes    {}
          :commenting-notes {}
          :create-form      {}
-         :reassign-form    {}}})
+         :reassign-form    {}
+         :transition-form  {}}})
 
 
 ;; entry ========================================================================

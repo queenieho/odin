@@ -89,6 +89,7 @@
  (fn [{db :db} [_ k opts response]]
    (let [account (get-in response [:data :account])
          orders  (get-in response [:data :orders])]
+     (js/console.log account)
      {:db         (->> (assoc account :orders orders)
                        (norms/assoc-norm db :accounts/norms (:id account)))
       :dispatch-n (tb/conj-when
@@ -179,7 +180,6 @@
  ::on-fetch-account
  [(path db/path)]
  (fn [{db :db} [_ account]]
-   (js/console.log account)
    (let [current (:tab db)]
      (when (or (nil? current) (not (db/allowed? (:role account) current)))
        {:dispatch [:accounts.entry/select-tab (tab-for-role (:role account))]}))))
@@ -321,6 +321,36 @@
                    [:modal/hide db/reassign-modal-key]
                    [:payment-sources/fetch account-id]
                    [:account/fetch account-id]]})))
+
+
+;; move-out transition ==========================================================
+
+(reg-event-fx
+ :accounts.entry.transition/show
+ [(path db/path)]
+ (fn [_ [_ account]]
+   {:dispatch [:modal/show db/transition-modal-key]}))
+
+(reg-event-fx
+ :accounts.entry.transition/hide
+ [(path db/path)]
+ (fn [_ [_ account]]
+   {:dispatch [:modal/hide db/transition-modal-key]}))
+
+
+(reg-event-fx
+ :accounts.entry.transition/update
+ [(path db/path)]
+ (fn [db [_ k v]]
+   (assoc-in db [:transition-form k] v)))
+
+
+(reg-event-fx
+ :accounts.entry/move-out!
+ (fn [db [_ [k license-id transition]]]
+   (js/console.log "making a transition now..." transition)
+   {:dispatch [:accounts.entry.transition/hide]}))
+
 
 
 ;; payment ======================================================================

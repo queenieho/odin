@@ -129,6 +129,19 @@
        form))))
 
 
+;; transition ===================================================================
+
+
+(reg-sub
+ :accounts.entry.transition/form-data
+ :<- [db/path]
+ (fn [db [_ k]]
+   (let [form (:transition-form db)]
+     (if (some? k)
+       (get form k)
+       form))))
+
+
 ;; notes ========================================================================
 
 

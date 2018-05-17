@@ -481,7 +481,7 @@
   (ant/modal-confirm
    {:title   "Confirm Move-Out"
     :content "Are you sure you want to continue? This action can't easily be undone."
-    :on-ok   #(dispatch [:modal/hide :membership/move-out])
+    :on-ok   #(dispatch [:accounts.entry/move-out!])
     :ok-type :danger
     :ok-text "Yes - Confirm Move-out"}))
 
@@ -490,8 +490,8 @@
   [account transition]
   [ant/modal
    {:title     (str "Move-out: " (:name account))
-    :visible   @(subscribe [:modal/visible? :membership/move-out])
-    :on-cancel #(dispatch [:modal/hide :membership/move-out])
+    :visible   @(subscribe [:modal/visible? db/transition-modal-key])
+    :on-cancel #(dispatch [:accounts.entry.transition/hide])
     :on-ok     move-out-confirmation
     :ok-text   "Confirm Move-out"
     :ok-type   :danger}
@@ -501,16 +501,17 @@
      {:style {:margin-bottom "1em"}}
      [:p.bold "What date is the member moving out?"]
      [form/date-picker
-      {:style {:width "50%"}}]]
+      {:style     {:width "50%"}
+       :on-change #(dispatch [:accounts.entry.transition/update :date %])}]]
 
-    [:div
-     {:style {:margin-bottom "1em"}}
+    #_[:div
+       {:style {:margin-bottom "1em"}}
      [:p.bold "When will we conduct the pre-walkthrough?"]
      [form/date-picker
       {:style {:width "50%"}}]]
 
-    [:div
-     {:style {:margin-bottom "1em"}}
+    #_[:div
+       {:style {:margin-bottom "1em"}}
      [:p.bold "Early Termination Fee Amount"]
      [ant/input-number
       {:style         {:width "50%"}
@@ -519,14 +520,15 @@
     [:div
      {:style {:margin-bottom "1em"}}
      [ant/tooltip
-      {:title "To be added after Ops has reviewed the final walkthrough details"
+      {:title     "To be added after Ops has reviewed the final walkthrough details"
        :placement "topLeft"}
       [:p.bold "Security Desposit Refund Amount"]]
      [ant/input-number
       {:style         {:width "50%"}
-       :default-value 1500.00}]]
+       :default-value 1500.00
+       :on-change     #(dispatch [:accounts.entry.transition/update :deposit-refund %])}]]
 
-    [:div
+    #_[:div
      {:style {:margin-bottom "1em"}}
      [ant/tooltip
       {:title "Link to Google Drive Doc"}
@@ -534,7 +536,7 @@
      [ant/input
       {:placeholder "paste the google drive link here..."}]]
 
-    [:div
+    #_[:div
      {:style {:margin-bottom "1em"}}
      [ant/tooltip
       {:title "Link to Asana move-out task"}
@@ -559,7 +561,7 @@
     {:icon     "home"
      :type     :danger
      :ghost    true
-     :on-click #(dispatch [:modal/show :membership/move-out])}
+     :on-click #(dispatch [:accounts.entry.transition/show])}
     "Move-out"]])
 
 
@@ -591,7 +593,8 @@
      [:div.column
       [transition-status-item "Early Termination Fee" (format/currency 35.00)]
       [transition-status-item "Security Deposit Refund" (format/currency (:deposit_refund transition))]
-      [:p.bold [:a {:href "https://app.asana.com/0/306571089298787/622139719994873"} (str pname "Move-out Asana Task")]]]]]))
+      [transition-status-item "" [:a {:href "https://app.asana.com/0/306571089298787/622139719994873"} (str pname "Move-out Asana Task")]]
+      #_[:p.bold [:a {:href "https://app.asana.com/0/306571089298787/622139719994873"} (str pname "Move-out Asana Task")]]]]]))
 
 
 (defn membership-orders-list [account orders]
