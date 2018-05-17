@@ -88,17 +88,3 @@
  ::layout
  (fn [db _]
    (:layout db)))
-
-
-(reg-sub
- :layout.note/showing?
- :<- [::layout]
- (fn [layout _]
-   (get-in layout [:create-note :showing])))
-
-
-(reg-sub
- :note/form
- :<- [::layout]
- (fn [layout _]
-   (get-in layout [:create-note :form])))

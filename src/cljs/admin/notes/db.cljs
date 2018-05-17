@@ -1,8 +1,9 @@
 (ns admin.notes.db)
 
 
-(def path ::notes)
+(def path ::path)
 
 
 (def default-value
-  {path {}})
+  {path {:creating false
+         :form     {:notify true}}})
