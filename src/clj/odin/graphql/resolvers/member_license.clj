@@ -1,5 +1,6 @@
 (ns odin.graphql.resolvers.member-license
   (:require [blueprints.models.account :as account]
+            [blueprints.models.license-transition :as license-transition]
             [blueprints.models.member-license :as member-license]
             [blueprints.models.source :as source]
             [com.walmartlabs.lacinia.resolve :as resolve]
@@ -13,7 +14,8 @@
             [teller.plan :as tplan]
             [teller.subscription :as tsubscription]
             [toolbelt.date :as date]
-            [toolbelt.core :as tb]))
+            [toolbelt.core :as tb]
+            [toolbelt.datomic :as td]))
 
 ;; ==============================================================================
 ;; helpers ======================================================================
@@ -86,6 +88,17 @@
                           :payment-types [:payment.type/rent]}))
 
 
+(defn license-transition-type
+  [{:keys [conn] :as ctx} _ transition]
+  (keyword (name (license-transition/type transition))))
+
+
+(defn transition
+  "Retrieves license transition information for current license. If no transition, resolves as an empty map"
+  [{:keys [conn] :as ctx} _ license]
+  (license-transition/by-license-id (d/db conn) (td/id license)))
+
+
 ;; ==============================================================================
 ;; mutations --------------------------------------------------------------------
 ;; ==============================================================================
@@ -143,5 +156,22 @@
    :member-license/autopay-on    autopay-on
    :member-license/rent-payments rent-payments
    :member-license/rent-status   rent-status
+   :member-license/transition    transition
+   :license-transition/type      license-transition-type
    ;; mutations
    :member-license/reassign!     reassign!})
+
+
+(comment
+
+  @(d/transact conn [(license-transition/create (d/entity (d/db conn) 285873023223128) :pending 1500.00)])
+
+  @(d/transact conn [(license-transition/create (d/entity (d/db conn) 285873023223148) :pending 2000.00)])
+
+  (license-transition/by-license-id (d/db conn) 285873023223128)
+
+  (license-transition/by-type (d/db conn) :pending)
+
+  (d/touch (first *1))
+
+  )

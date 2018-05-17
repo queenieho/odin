@@ -187,6 +187,27 @@
                              :resolve (:get :person/phone-number)}}}
 
 
+  :license_transition
+  {:fields {:current_license      {:type    (non-null :license)
+                                   :resolve (:get :license-transition/current-license)}
+            :id                   {:type    (non-null :Long)
+                                   :resolve (:get :db/id)}
+            :type                 {:type    (non-null :license_transition_type)
+                                   :resolve :license-transition/type}
+            :fees                 {:type    (list :payment)
+                                   :resolve (:get :license-transition/fees)}
+            :deposit_refund       {:type    Float
+                                   :resolve (:get :license-transition/deposit-refund)}
+            :room_walkthrough_doc {:type    String
+                                   :resolve (:get :license-transition/room-walkthrough-doc)}
+            :asana_task           {:type    String
+                                   :resolve (:get :asana/task)}
+            :new_license          {:type    :license
+                                   :resolve (:get :license-transition/new-license)}
+            :date                 {:type    :Instant
+                                   :resolve (:get :license-transition/date)}}}
+
+
   :license
   {:fields {:id          {:type    (non-null :Long)
                           :resolve (:get :db/id)}
@@ -217,7 +238,11 @@
                           :resolve :member-license/rent-status}
             :property    {:type        (non-null :property)
                           :description "Property that this license is for."
-                          :resolve     (:get :member-license/unit :property/_units)}}}
+                          :resolve     (:get :member-license/unit :property/_units)}
+            :transition  {:type        :license_transition
+                          :description "Information pertaining to the transition from this license to another (or to no license at all)"
+                          :resolve     :member-license/transition}
+            }}
 
 
   :note

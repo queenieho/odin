@@ -25,7 +25,11 @@
 
   :license_status
   {:description "Possible statuses of a member license."
-   :values      [:active :inactive :canceled :renewal]}
+   :values      [:active :inactive :canceled :renewal :pending]}
+
+  :license_transition_type
+  {:description "Possible kinds of license transitions."
+   :values      [:move_out :intra_xfer :inter_xfer :renewal :pending]}
 
   :order_status
   {:description "Possible statuses of orders."

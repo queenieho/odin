@@ -524,7 +524,23 @@
       [:p.bold "Security Desposit Refund Amount"]]
      [ant/input-number
       {:style         {:width "50%"}
-       :default-value 1500.00}]]]])
+       :default-value 1500.00}]]
+
+    [:div
+     {:style {:margin-bottom "1em"}}
+     [ant/tooltip
+      {:title "Link to Google Drive Doc"}
+      [:p.bold "Final Walkthrough Notes"]]
+     [ant/input
+      {:placeholder "paste the google drive link here..."}]]
+
+    [:div
+     {:style {:margin-bottom "1em"}}
+     [ant/tooltip
+      {:title "Link to Asana move-out task"}
+      [:p.bold "Asana Move-out Task"]]
+     [ant/input
+      {:placeholder "paste the asana link here..."}]]]])
 
 
 (defn membership-actions [account]
@@ -535,7 +551,7 @@
     {:icon     "swap"
      :on-click #(dispatch [:accounts.entry.reassign/show account])}
     "Reassign"]
-   #_[ant/button
+   [ant/button
     {:icon     "retweet"
      :on-click #(js/console.log "coming soon")}
     "Renew License"]
@@ -555,23 +571,28 @@
 
 (defn move-out-status
   [account]
-  [ant/card
-   {:title (str (format/make-first-name-possessive (:name account)) "Move-out Information")
-    :extra (r/as-element [ant/button {:icon "edit"} "Edit"])}
-   [:div.columns
-    [:div.column
-     [:p.bold "Move-out date"]
-     [:p "July 22, 2018"]
+  (let [pname (format/make-first-name-possessive (:name account))]
+   [ant/card
+    {:title (str pname "Move-out Information")
+     :extra (r/as-element [ant/button {:icon "edit"} "Edit"])}
+    [:div.columns
+     [:div.column
+      [:p.bold "Move-out date"]
+      [:p "July 22, 2018"]
 
-     [:p.bold "Pre-Walkthrough date"]
-     [:p "July 15, 2018"]]
+      [:p.bold "Pre-Walkthrough date"]
+      [:p "July 15, 2018"]
 
-    [:div.column
-     [:p.bold "Early Termination Fee"]
-     [:p "$30.00"]
+      [:p "Final Walkthrough Report (not available yet)"]]
 
-     [:p.bold "Security Deposit Refund"]
-     [:p "$1500.00"]]]])
+     [:div.column
+      [:p.bold "Early Termination Fee"]
+      [:p "$30.00"]
+
+      [:p.bold "Security Deposit Refund"]
+      [:p "$1500.00"]
+
+      [:p.bold [:a {:href "https://app.asana.com/0/306571089298787/622139719994873"} (str pname "Move-out Asana Task")]]]]]))
 
 
 (defn membership-orders-list [account orders]
@@ -597,16 +618,17 @@
 
 
 (defn membership-view [account]
-  (let [license   (most-current-license account)
-        is-active (= :active (:status license))
-        orders    @(subscribe [:account/orders (:id account)])]
+  (let [license          (most-current-license account)
+        is-active        (= :active (:status license))
+        is-transitioning (not (nil? (:transition (:active_license account))))
+        orders           @(subscribe [:account/orders (:id account)])]
     [:div.columns
      [:div.column
       [membership/license-summary license
        (when is-active {:content [membership-actions account]})]]
      [:div.column
       (when is-active [status-bar account])
-      (when is-active [move-out-status account])
+      (when is-transitioning [move-out-status account])
       (when is-active [membership-orders-list account orders])]]))
 
 

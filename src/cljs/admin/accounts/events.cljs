@@ -57,7 +57,7 @@
  (fn [{db :db} [k account-id opts]]
    (let [license-selectors [:id :rate :starts :ends :term :status :rent_status
                             [:property [:id :cover_image_url :name]]
-
+                            #_[:transition [:type :deposit_refund :room_walkthrough_doc :asana_task :date]]
                             [:unit [:id :code :number]]]]
      {:dispatch [:ui/loading k true]
       :graphql   {:query
@@ -73,7 +73,8 @@
                                     [:fitness [:experience :skills :free_time :interested :dealbreakers :conflicts]]
                                     [:income [:id :uri :name]]
                                     [:pet [:type :breed :weight :sterile :vaccines :bitten :demeanor :daytime_care]]]]
-                     [:active_license license-selectors]
+                     [:active_license (conj license-selectors
+                                            [:transition [:type :deposit_refund :room_walkthrough_doc :asana_task :date]])]
                      ;; TODO: Move to separate query
                      [:licenses license-selectors]]]
                    [:orders {:params {:accounts [account-id]}}
@@ -178,6 +179,7 @@
  ::on-fetch-account
  [(path db/path)]
  (fn [{db :db} [_ account]]
+   (js/console.log account)
    (let [current (:tab db)]
      (when (or (nil? current) (not (db/allowed? (:role account) current)))
        {:dispatch [:accounts.entry/select-tab (tab-for-role (:role account))]}))))
