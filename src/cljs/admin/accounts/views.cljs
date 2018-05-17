@@ -487,7 +487,7 @@
 
 
 (defn move-out-modal
-  [account]
+  [account transition]
   [ant/modal
    {:title     (str "Move-out: " (:name account))
     :visible   @(subscribe [:modal/visible? :membership/move-out])
@@ -569,29 +569,28 @@
               :type  (order/status-icon (keyword status))}]])
 
 
-(defn move-out-status
-  [account]
+(defn transition-status-item
+  [label value]
+  [:div
+   [:p.bold label]
+   [:p value]])
+
+
+(defn transition-status
+  [account transition]
   (let [pname (format/make-first-name-possessive (:name account))]
    [ant/card
     {:title (str pname "Move-out Information")
      :extra (r/as-element [ant/button {:icon "edit"} "Edit"])}
     [:div.columns
      [:div.column
-      [:p.bold "Move-out date"]
-      [:p "July 22, 2018"]
-
-      [:p.bold "Pre-Walkthrough date"]
-      [:p "July 15, 2018"]
-
-      [:p "Final Walkthrough Report (not available yet)"]]
+      [transition-status-item "Move-out date" (format/date-short (:date transition))]
+      [transition-status-item "Pre-walkthrough date" "--"]
+      [transition-status-item "Final walkthrough date" "--"]]
 
      [:div.column
-      [:p.bold "Early Termination Fee"]
-      [:p "$30.00"]
-
-      [:p.bold "Security Deposit Refund"]
-      [:p "$1500.00"]
-
+      [transition-status-item "Early Termination Fee" (format/currency 35.00)]
+      [transition-status-item "Security Deposit Refund" (format/currency (:deposit_refund transition))]
       [:p.bold [:a {:href "https://app.asana.com/0/306571089298787/622139719994873"} (str pname "Move-out Asana Task")]]]]]))
 
 
@@ -618,17 +617,17 @@
 
 
 (defn membership-view [account]
-  (let [license          (most-current-license account)
-        is-active        (= :active (:status license))
-        is-transitioning (not (nil? (:transition (:active_license account))))
-        orders           @(subscribe [:account/orders (:id account)])]
+  (let [license    (most-current-license account)
+        is-active  (= :active (:status license))
+        transition (:transition (:active_license account))
+        orders     @(subscribe [:account/orders (:id account)])]
     [:div.columns
      [:div.column
       [membership/license-summary license
        (when is-active {:content [membership-actions account]})]]
      [:div.column
       (when is-active [status-bar account])
-      (when is-transitioning [move-out-status account])
+      (when (not (nil? transition)) [transition-status account transition])
       (when is-active [membership-orders-list account orders])]]))
 
 
