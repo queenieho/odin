@@ -477,74 +477,75 @@
           :on-change #(dispatch [:accounts.entry.reassign/update :rate %])}])]]))
 
 
-(defn- move-out-confirmation [account transition]
+(defn- move-out-confirmation [account form]
   (let [license-id (get-in account [:active_license :id])]
     (js/console.log "transition looks like this" license-id)
     (ant/modal-confirm
     {:title   "Confirm Move-Out"
      :content "Are you sure you want to continue? This action can't easily be undone."
-     :on-ok   #(dispatch [:accounts.entry/move-out! license-id]) ;; TODO - you need some arguments here
+     :on-ok   #(dispatch [:accounts.entry/move-out! license-id @form]) ;; TODO - you need some arguments here
      :ok-type :danger
      :ok-text "Yes - Confirm Move-out"})))
 
 
 (defn move-out-modal
-  [account transition]
-  [ant/modal
-   {:title     (str "Move-out: " (:name account))
-    :visible   @(subscribe [:modal/visible? db/transition-modal-key])
-    :on-cancel #(dispatch [:accounts.entry.transition/hide])
-    :on-ok     #(move-out-confirmation account transition)
-    :ok-text   "Confirm Move-out"
-    :ok-type   :danger}
-
-   [:div
-    [:div
-     {:style {:margin-bottom "1em"}}
-     [:p.bold "What date is the member moving out?"]
-     [form/date-picker
-      {:style     {:width "50%"}
-       :on-change #(dispatch [:accounts.entry.transition/update :date %])}]]
-
-    #_[:div
-       {:style {:margin-bottom "1em"}}
-     [:p.bold "When will we conduct the pre-walkthrough?"]
-     [form/date-picker
-      {:style {:width "50%"}}]]
-
-    #_[:div
-       {:style {:margin-bottom "1em"}}
-     [:p.bold "Early Termination Fee Amount"]
-     [ant/input-number
-      {:style         {:width "50%"}
-       :default-value 0.00}]]
-
-    #_[:div
-     {:style {:margin-bottom "1em"}}
-     [ant/tooltip
-      {:title     "To be added after Ops has reviewed the final walkthrough details"
-       :placement "topLeft"}
-      [:p.bold "Security Desposit Refund Amount"]]
-     [ant/input-number
-      {:style         {:width "50%"}
-       :default-value 1500.00
-       :on-change     #(dispatch [:accounts.entry.transition/update :deposit-refund %])}]]
-
-    #_[:div
-     {:style {:margin-bottom "1em"}}
-     [ant/tooltip
-      {:title "Link to Google Drive Doc"}
-      [:p.bold "Final Walkthrough Notes"]]
-     [ant/input
-      {:placeholder "paste the google drive link here..."}]]
+  [account]
+  (let [form (subscribe [:accounts.entry.transition/form-data])]
+   [ant/modal
+    {:title     (str "Move-out: " (:name account))
+     :visible   @(subscribe [:modal/visible? db/transition-modal-key])
+     :on-cancel #(dispatch [:accounts.entry.transition/hide])
+     :on-ok     #(move-out-confirmation account form)
+     :ok-text   "Confirm Move-out"
+     :ok-type   :danger}
 
     [:div
-     {:style {:margin-bottom "1em"}}
-     [ant/tooltip
-      {:title "Link to Asana move-out task"}
-      [:p.bold "Asana Move-out Task"]]
-     [ant/input
-      {:placeholder "paste the asana link here..."}]]]])
+     [:div
+      {:style {:margin-bottom "1em"}}
+      [:p.bold "What date is the member moving out?"]
+      [form/date-picker
+       {:style     {:width "50%"}
+        :on-change #(dispatch [:accounts.entry.transition/update :date %])}]]
+
+     #_[:div
+        {:style {:margin-bottom "1em"}}
+        [:p.bold "When will we conduct the pre-walkthrough?"]
+        [form/date-picker
+         {:style {:width "50%"}}]]
+
+     #_[:div
+        {:style {:margin-bottom "1em"}}
+        [:p.bold "Early Termination Fee Amount"]
+        [ant/input-number
+         {:style         {:width "50%"}
+          :default-value 0.00}]]
+
+     #_[:div
+        {:style {:margin-bottom "1em"}}
+        [ant/tooltip
+         {:title     "To be added after Ops has reviewed the final walkthrough details"
+          :placement "topLeft"}
+         [:p.bold "Security Desposit Refund Amount"]]
+        [ant/input-number
+         {:style         {:width "50%"}
+          :default-value 1500.00
+          :on-change     #(dispatch [:accounts.entry.transition/update :deposit-refund %])}]]
+
+     #_[:div
+        {:style {:margin-bottom "1em"}}
+        [ant/tooltip
+         {:title "Link to Google Drive Doc"}
+         [:p.bold "Final Walkthrough Notes"]]
+        [ant/input
+         {:placeholder "paste the google drive link here..."}]]
+
+     [:div
+      {:style {:margin-bottom "1em"}}
+      [ant/tooltip
+       {:title "Link to Asana move-out task"}
+       [:p.bold "Asana Move-out Task"]]
+      [ant/input
+       {:placeholder "paste the asana link here..."}]]]]))
 
 
 (defn membership-actions [account]

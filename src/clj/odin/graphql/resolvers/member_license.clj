@@ -147,9 +147,8 @@
 (defn create-license-transition!
   "Creates a license transition for a member's license"
   [{:keys [conn requester] :as ctx} {{:keys [current_license type date deposit_refund]} :params} _]
-  (timbre/info "\n\n\n====================> lookit this license" current_license)
   (let [type (keyword (clojure.string/replace (name type) "_" "-"))
-        transition (license-transition/create current_license type #inst"2018-09-04" deposit_refund)]
+        transition (license-transition/create current_license type date deposit_refund)]
     @(d/transact conn [transition
                        (source/create requester)])
     (d/entity (d/db conn) current_license)))

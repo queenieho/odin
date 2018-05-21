@@ -347,15 +347,16 @@
 
 (reg-event-fx
  :accounts.entry/move-out!
- (fn [db [k license-id #_transition]]
+ (fn [db [k license-id {:keys [date] :as form-data}]]
    (js/console.log "making a transition now..." license-id)
+   (js/console.log "form data:" form-data)
    {:dispatch-n [[:ui/loading k true]
                  [:accounts.entry.transition/hide]]
     :graphql    {:mutation
                  [[:move_out_initialize {:params {:current_license license-id
                                                   :type            :move_out
                                                   :deposit_refund  1234.56
-                                                  :date            (.toISOString (js/moment))}}
+                                                  :date            (.toISOString date)}}
                    [:id]]]
                  :on-success [::move-out-success k]
                  :on-failure [:graphql/failure k]}}))
