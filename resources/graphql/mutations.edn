@@ -54,6 +54,13 @@
    :resolve     :member-license/reassign!}
 
 
+  :move_out_initialize
+  {:type        :license
+   :description "Begins the move-out process for a member."
+   :args        {:params {:type :member_license_transition_create_params}}
+   :resolve     :license-transition/create!}
+
+
   ;; notes ========================================================================
 
 
@@ -185,7 +192,7 @@
    :description "Make a fee payment."
    :args        {:id     {:type        (non-null :ID)
                           :description "Id of the payment entity."}
-                 :source {:type (non-null String)
+                 :source {:type        (non-null String)
                           :description "ID of the source to use for the payment. Must be a bank account."}}
    :resolve     :payment/pay-fee!}
 

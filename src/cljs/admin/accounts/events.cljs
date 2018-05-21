@@ -338,7 +338,7 @@
    {:dispatch [:modal/hide db/transition-modal-key]}))
 
 
-(reg-event-fx
+(reg-event-db
  :accounts.entry.transition/update
  [(path db/path)]
  (fn [db [_ k v]]
@@ -347,9 +347,25 @@
 
 (reg-event-fx
  :accounts.entry/move-out!
- (fn [db [_ [k license-id transition]]]
-   (js/console.log "making a transition now..." transition)
-   {:dispatch [:accounts.entry.transition/hide]}))
+ (fn [db [k license-id #_transition]]
+   (js/console.log "making a transition now..." license-id)
+   {:dispatch-n [[:ui/loading k true]
+                 [:accounts.entry.transition/hide]]
+    :graphql    {:mutation
+                 [[:move_out_initialize {:params {:current_license license-id
+                                                  :type            :move_out
+                                                  :deposit_refund  1234.56
+                                                  :date            (.toISOString (js/moment))}}
+                   [:id]]]
+                 :on-success [::move-out-success k]
+                 :on-failure [:graphql/failure k]}}))
+
+
+(reg-event-fx
+ ::move-out-success
+ (fn [db [k]]
+   {:dispatch-n [[:ui/loading k false]
+                 [:notify/success ["Move-out data created!"]]]}))
 
 
 

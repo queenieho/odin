@@ -477,13 +477,15 @@
           :on-change #(dispatch [:accounts.entry.reassign/update :rate %])}])]]))
 
 
-(defn- move-out-confirmation []
-  (ant/modal-confirm
-   {:title   "Confirm Move-Out"
-    :content "Are you sure you want to continue? This action can't easily be undone."
-    :on-ok   #(dispatch [:accounts.entry/move-out!])
-    :ok-type :danger
-    :ok-text "Yes - Confirm Move-out"}))
+(defn- move-out-confirmation [account transition]
+  (let [license-id (get-in account [:active_license :id])]
+    (js/console.log "transition looks like this" license-id)
+    (ant/modal-confirm
+    {:title   "Confirm Move-Out"
+     :content "Are you sure you want to continue? This action can't easily be undone."
+     :on-ok   #(dispatch [:accounts.entry/move-out! license-id]) ;; TODO - you need some arguments here
+     :ok-type :danger
+     :ok-text "Yes - Confirm Move-out"})))
 
 
 (defn move-out-modal
@@ -492,7 +494,7 @@
    {:title     (str "Move-out: " (:name account))
     :visible   @(subscribe [:modal/visible? db/transition-modal-key])
     :on-cancel #(dispatch [:accounts.entry.transition/hide])
-    :on-ok     move-out-confirmation
+    :on-ok     #(move-out-confirmation account transition)
     :ok-text   "Confirm Move-out"
     :ok-type   :danger}
 
@@ -517,7 +519,7 @@
       {:style         {:width "50%"}
        :default-value 0.00}]]
 
-    [:div
+    #_[:div
      {:style {:margin-bottom "1em"}}
      [ant/tooltip
       {:title     "To be added after Ops has reviewed the final walkthrough details"
@@ -536,7 +538,7 @@
      [ant/input
       {:placeholder "paste the google drive link here..."}]]
 
-    #_[:div
+    [:div
      {:style {:margin-bottom "1em"}}
      [ant/tooltip
       {:title "Link to Asana move-out task"}

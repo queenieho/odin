@@ -90,7 +90,10 @@
 
 (defn license-transition-type
   [{:keys [conn] :as ctx} _ transition]
-  (keyword (name (license-transition/type transition))))
+  (-> (license-transition/type transition)
+      (name)
+      (clojure.string/replace "-" "_")
+      (keyword)))
 
 
 (defn transition
@@ -141,6 +144,17 @@
         (d/entity (d/db conn) license)))))
 
 
+(defn create-license-transition!
+  "Creates a license transition for a member's license"
+  [{:keys [conn requester] :as ctx} {{:keys [current_license type date deposit_refund]} :params} _]
+  (timbre/info "\n\n\n====================> lookit this license" current_license)
+  (let [type (keyword (clojure.string/replace (name type) "_" "-"))
+        transition (license-transition/create current_license type #inst"2018-09-04" deposit_refund)]
+    @(d/transact conn [transition
+                       (source/create requester)])
+    (d/entity (d/db conn) current_license)))
+
+
 ;; ==============================================================================
 ;; resolvers --------------------------------------------------------------------
 ;; ==============================================================================
@@ -159,7 +173,8 @@
    :member-license/transition    transition
    :license-transition/type      license-transition-type
    ;; mutations
-   :member-license/reassign!     reassign!})
+   :member-license/reassign!     reassign!
+   :license-transition/create!   create-license-transition!})
 
 
 (comment
