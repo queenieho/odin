@@ -77,7 +77,7 @@
 ;; create note ===================================================================
 
 
-(defn create-note-footer []
+(defn create-note-footer [form]
   [:div
    [ant/button
     {:size     :large
@@ -86,7 +86,7 @@
    [ant/button
     {:type     :primary
      :size     :large
-     :on-click #(dispatch [:note.create/cancel])}
+     :on-click #(dispatch [:note.create/create-note! form])}
     "Create"]])
 
 
@@ -104,15 +104,16 @@
         [ant/modal
          {:title     "Create a note"
           :visible   @creating-note?
-          :footer (r/as-element [create-note-footer])}
+          :on-cancel #(dispatch [:note.create/cancel])
+          :footer    (r/as-element [create-note-footer @form])}
          [ant/form-item
           {:label "Mentions"}
           [ant/select
            {:style     {:width "100%"}
             :mode      "multiple"
-            :value     (mapv str (:members @form))
+            :value     (mapv str (:refs @form))
             :on-change #(let [ids (mapv tb/str->int (js->clj %))]
-                          (dispatch [:note.form/update :members ids]))}
+                          (dispatch [:note.form/update :refs ids]))}
            (map (fn [{:keys [name id]}]
                   [ant/select-option
                    {:value (str id)
@@ -131,11 +132,11 @@
            {:type        :textarea
             :rows        10
             :placeholder "Note body"
-            :value       (:note @form)
-            :on-change   #(dispatch [:note.form/update :note (.. % -target -value)])}]]
+            :value       (:content @form)
+            :on-change   #(dispatch [:note.form/update :content (.. % -target -value)])}]]
          (when (some? (:notify @form))
            [ant/form-item
-            [ant/checkbox {:checked  (:notify @form)
+            [ant/checkbox {:checked   (:notify @form)
                            :on-change #(dispatch [:note.form/update :notify (.. % -target -checked)])}
              "Send Slack notification"]])])})))
 

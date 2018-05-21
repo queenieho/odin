@@ -1,12 +1,13 @@
 (ns odin.graphql.resolvers.note
   (:require [odin.graphql.authorization :as authorization]
             [blueprints.models.account :as account]
+            [blueprints.models.events :as events]
             [blueprints.models.note :as note]
+            [com.walmartlabs.lacinia.resolve :as resolve]
             [datomic.api :as d]
             [blueprints.models.source :as source]
             [taoensso.timbre :as timbre]
-            [toolbelt.core :as tb]
-            [blueprints.models.events :as events]))
+            [toolbelt.core :as tb]))
 
 
 (defn- get-account [note]
@@ -19,6 +20,12 @@
   (get-account note))
 
 
+;; ==============================================================================
+;; mutations ====================================================================
+;; ==============================================================================
+
+
+;; TODO update to work with new model?
 (defn add-comment!
   [{:keys [conn requester]} {:keys [note text]} _]
   (let [parent  (d/entity (d/db conn) note)
@@ -29,7 +36,7 @@
     (note/by-uuid (d/db conn) (note/uuid comment))))
 
 
-(defn create!
+#_(defn create!
   [{:keys [conn requester]} {{:keys [account subject content notify]} :params} _]
   (let [note (note/create subject content :author requester)]
     @(d/transact conn (tb/conj-when
@@ -39,6 +46,17 @@
     (note/by-uuid (d/db conn) (note/uuid note))))
 
 
+(defn create!
+  [{:keys [conn requester]} {{:keys [refs subject content notify]} :params} _]
+  (let [note (note/create subject content refs :author requester)]
+    @(d/transact conn (tb/conj-when
+                       [note
+                        (source/create requester)]
+                       (when notify (events/note-created note))))
+    (note/by-uuid (d/db conn) (note/uuid note))))
+
+
+;; TODO update to work with new model?
 (defn delete!
   [{:keys [conn requester]} {:keys [note]} _]
   @(d/transact conn [[:db.fn/retractEntity note]
@@ -46,6 +64,7 @@
   :ok)
 
 
+;; TODO update to work with new model?
 (defn update!
   [{:keys [conn requester]} {{:keys [note subject content]} :params} _]
   (let [note (d/entity (d/db conn) note)]
@@ -80,4 +99,7 @@
    :note/add-comment! add-comment!
    :note/create!      create!
    :note/delete!      delete!
-   :note/update!      update!})
+   :note/update!      update!
+   ;; queries
+   :note/query        query
+   :note/entry        entry})

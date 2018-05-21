@@ -139,11 +139,10 @@
   ;;; Note
   :create_note_params
   {:description "Parameters to create a new note."
-   :fields      {:account {:type        (non-null :Long)
-                           :description "ID of the account to create this note for."}
-                 :subject {:type (non-null String)}
-                 :content {:type (non-null String)}
-                 :notify  {:type Boolean}}}
+   :fields      {:refs      {:type (list :Long)}
+                 :subject   {:type (non-null String)}
+                 :content   {:type (non-null String)}
+                 :notify    {:type Boolean}}}
 
   :update_note_params
   {:description "Parameters to update a note."

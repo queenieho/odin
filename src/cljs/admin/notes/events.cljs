@@ -1,5 +1,7 @@
 (ns admin.notes.events
   (:require [admin.notes.db :as db]
+            [clojure.string :as string]
+            [iface.utils.formatters :as format]
             [re-frame.core :refer [reg-event-db
                                    reg-event-fx
                                    path]]))
@@ -30,9 +32,26 @@
 (reg-event-fx
  :note.create/create-note!
  [(path db/path)]
- (fn [{db :db} [k]]
+ (fn [{db :db} [k {:keys [refs subject content notify]}]]
    {:dispatch [:ui/loading k true]
-    }))
+    :graphql  {:mutation [[:create_note {:params {:refs    refs
+                                                  :subject subject
+                                                  :content (-> (format/escape-newlines content)
+                                                               (string/replace #"\"" "&quot;")
+                                                               (string/replace #"'" "&#39;"))
+                                                  :notify  notify}}
+                           [:id]]]
+               :on-success [::create-note-success k]
+               :on-failure [:graphql/failure k]}}))
+
+
+(reg-event-fx
+ ::create-note-success
+ [(path db/path)]
+ (fn [_ [_ k response]]
+   {:dispatch-n [[:ui/loading k false]
+                 [:note.form/clear]
+                 [:note.create/toggle]]}))
 
 
 (reg-event-db
