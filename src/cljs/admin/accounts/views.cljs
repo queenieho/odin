@@ -481,91 +481,92 @@
   (let [license-id (get-in account [:active_license :id])]
     (js/console.log "transition looks like this" license-id)
     (ant/modal-confirm
-    {:title   "Confirm Move-Out"
-     :content "Are you sure you want to continue? This action can't easily be undone."
-     :on-ok   #(dispatch [:accounts.entry/move-out! license-id @form]) ;; TODO - you need some arguments here
-     :ok-type :danger
-     :ok-text "Yes - Confirm Move-out"})))
+     {:title   "Confirm Move-Out"
+      :content "Are you sure you want to continue? This action can't easily be undone."
+      :on-ok   #(dispatch [:accounts.entry/move-out! license-id @form]) ;; TODO - you need some arguments here
+      :ok-type :danger
+      :ok-text "Yes - Confirm Move-out"})))
 
 
 (defn move-out-modal
   [account]
   (let [form (subscribe [:accounts.entry.transition/form-data])]
-   [ant/modal
-    {:title     (str "Move-out: " (:name account))
-     :visible   @(subscribe [:modal/visible? db/transition-modal-key])
-     :on-cancel #(dispatch [:accounts.entry.transition/hide])
-     :on-ok     #(move-out-confirmation account form)
-     :ok-text   "Confirm Move-out"
-     :ok-type   :danger}
-
-    [:div
-     [:div
-      {:style {:margin-bottom "1em"}}
-      [:p.bold "What date is the member moving out?"]
-      [form/date-picker
-       {:style     {:width "50%"}
-        :on-change #(dispatch [:accounts.entry.transition/update :date %])}]]
-
-     #_[:div
-        {:style {:margin-bottom "1em"}}
-        [:p.bold "When will we conduct the pre-walkthrough?"]
-        [form/date-picker
-         {:style {:width "50%"}}]]
-
-     #_[:div
-        {:style {:margin-bottom "1em"}}
-        [:p.bold "Early Termination Fee Amount"]
-        [ant/input-number
-         {:style         {:width "50%"}
-          :default-value 0.00}]]
-
-     #_[:div
-        {:style {:margin-bottom "1em"}}
-        [ant/tooltip
-         {:title     "To be added after Ops has reviewed the final walkthrough details"
-          :placement "topLeft"}
-         [:p.bold "Security Desposit Refund Amount"]]
-        [ant/input-number
-         {:style         {:width "50%"}
-          :default-value 1500.00
-          :on-change     #(dispatch [:accounts.entry.transition/update :deposit-refund %])}]]
-
-     #_[:div
-        {:style {:margin-bottom "1em"}}
-        [ant/tooltip
-         {:title "Link to Google Drive Doc"}
-         [:p.bold "Final Walkthrough Notes"]]
-        [ant/input
-         {:placeholder "paste the google drive link here..."}]]
+    [ant/modal
+     {:title     (str "Move-out: " (:name account))
+      :visible   @(subscribe [:modal/visible? db/transition-modal-key])
+      :on-cancel #(dispatch [:accounts.entry.transition/hide])
+      :on-ok     #(move-out-confirmation account form)
+      :ok-text   "Confirm Move-out"
+      :ok-type   :danger}
 
      [:div
-      {:style {:margin-bottom "1em"}}
-      [ant/tooltip
-       {:title "Link to Asana move-out task"}
-       [:p.bold "Asana Move-out Task"]]
-      [ant/input
-       {:placeholder "paste the asana link here..."}]]]]))
+      [:div
+       {:style {:margin-bottom "1em"}}
+       [:p.bold "What date is the member moving out?"]
+       [form/date-picker
+        {:style     {:width "50%"}
+         :on-change #(dispatch [:accounts.entry.transition/update :date %])}]]
+
+      #_[:div
+         {:style {:margin-bottom "1em"}}
+         [:p.bold "When will we conduct the pre-walkthrough?"]
+         [form/date-picker
+          {:style {:width "50%"}}]]
+
+      #_[:div
+         {:style {:margin-bottom "1em"}}
+         [:p.bold "Early Termination Fee Amount"]
+         [ant/input-number
+          {:style         {:width "50%"}
+           :default-value 0.00}]]
+
+      #_[:div
+         {:style {:margin-bottom "1em"}}
+         [ant/tooltip
+          {:title     "To be added after Ops has reviewed the final walkthrough details"
+           :placement "topLeft"}
+          [:p.bold "Security Desposit Refund Amount"]]
+         [ant/input-number
+          {:style         {:width "50%"}
+           :default-value 1500.00
+           :on-change     #(dispatch [:accounts.entry.transition/update :deposit-refund %])}]]
+
+      #_[:div
+         {:style {:margin-bottom "1em"}}
+         [ant/tooltip
+          {:title "Link to Google Drive Doc"}
+          [:p.bold "Final Walkthrough Notes"]]
+         [ant/input
+          {:placeholder "paste the google drive link here..."}]]
+
+      [:div
+       {:style {:margin-bottom "1em"}}
+       [ant/tooltip
+        {:title "Link to Asana move-out task"}
+        [:p.bold "Asana Move-out Task"]]
+       [ant/input
+        {:placeholder "paste the asana link here..."}]]]]))
 
 
 (defn membership-actions [account]
-  [:div
-   [move-out-modal account]
-   [reassign-modal account]
-   [ant/button
-    {:icon     "swap"
-     :on-click #(dispatch [:accounts.entry.reassign/show account])}
-    "Reassign"]
-   [ant/button
-    {:icon     "retweet"
-     :on-click #(js/console.log "coming soon")}
-    "Renew License"]
-   [ant/button
-    {:icon     "home"
-     :type     :danger
-     :ghost    true
-     :on-click #(dispatch [:accounts.entry.transition/show])}
-    "Move-out"]])
+  (when (nil? (:transition (:active_license account)))
+      [:div
+       [move-out-modal account]
+       [reassign-modal account]
+       [ant/button
+        {:icon     "swap"
+         :on-click #(dispatch [:accounts.entry.reassign/show account])}
+        "Reassign"]
+       [ant/button
+        {:icon     "retweet"
+         :on-click #(js/console.log "coming soon")}
+        "Renew License"]
+       [ant/button
+        {:icon     "home"
+         :type     :danger
+         :ghost    true
+         :on-click #(dispatch [:accounts.entry.transition/show])}
+        "Move-out"]]))
 
 
 (defn- render-status [_ {status :status}]
@@ -584,20 +585,20 @@
 (defn transition-status
   [account transition]
   (let [pname (format/make-first-name-possessive (:name account))]
-   [ant/card
-    {:title (str pname "Move-out Information")
-     :extra (r/as-element [ant/button {:icon "edit"} "Edit"])}
-    [:div.columns
-     [:div.column
-      [transition-status-item "Move-out date" (format/date-short (:date transition))]
-      [transition-status-item "Pre-walkthrough date" "--"]
-      [transition-status-item "Final walkthrough date" "--"]]
+    [ant/card
+     {:title (str pname "Move-out Information")
+      :extra (r/as-element [ant/button {:icon "edit"} "Edit"])}
+     [:div.columns
+      [:div.column
+       [transition-status-item "Move-out date" (format/date-short (:date transition))]
+       [transition-status-item "Pre-walkthrough date" "--"]
+       [transition-status-item "Final walkthrough date" "--"]]
 
-     [:div.column
-      [transition-status-item "Early Termination Fee" (format/currency 35.00)]
-      [transition-status-item "Security Deposit Refund" (format/currency (:deposit_refund transition))]
-      [transition-status-item "" [:a {:href "https://app.asana.com/0/306571089298787/622139719994873"} (str pname "Move-out Asana Task")]]
-      #_[:p.bold [:a {:href "https://app.asana.com/0/306571089298787/622139719994873"} (str pname "Move-out Asana Task")]]]]]))
+      [:div.column
+       [transition-status-item "Early Termination Fee" (format/currency 35.00)]
+       [transition-status-item "Security Deposit Refund" (format/currency (:deposit_refund transition))]
+       [transition-status-item "" [:a {:href "https://app.asana.com/0/306571089298787/622139719994873"} (str pname "Move-out Asana Task")]]
+       #_[:p.bold [:a {:href "https://app.asana.com/0/306571089298787/622139719994873"} (str pname "Move-out Asana Task")]]]]]))
 
 
 (defn membership-orders-list [account orders]
