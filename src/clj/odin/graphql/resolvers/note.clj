@@ -21,6 +21,34 @@
 
 
 ;; ==============================================================================
+;; queries ======================================================================
+;; ==============================================================================
+
+
+(defn- query-notes
+  [db params]
+  (->> (tb/transform-when-key-exists params {:refs (partial map (partial d/entity db))})
+       (note/query db)))
+
+
+(defn query
+  "Query notes"
+  [{conn :conn} {params :params} _]
+  (try
+    (query-notes (d/db conn) params)
+    (catch Throwable t
+      (timbre/error t "error querying notes")
+      (resolve/resolve-as nil {:message  (.getMessage t)
+                               :err-data (ex-data t)}))))
+
+
+(defn entry
+  "Get one note by id"
+  [{conn :conn} {id :id}]
+  (d/entity (d/db conn) id))
+
+
+;; ==============================================================================
 ;; mutations ====================================================================
 ;; ==============================================================================
 

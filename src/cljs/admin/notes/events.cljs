@@ -67,3 +67,22 @@
  (fn [db _]
    (-> (dissoc db :form)
        (assoc-in [:form :notify] true))))
+
+
+(reg-event-fx
+ :notes/fetch
+ [(path db/path)]
+ (fn [{db :db} [k params]]
+   {:graphql {:query [[:notes {:params params}
+                       [:id :subject :content
+                        [:author [:id :name]]
+                        #_[:refs [:id :name]]]]]
+              :on-success [::notes-query-success k]
+              :on-failure [:graphql/failure k]}}))
+
+
+(reg-event-fx
+ ::notes-query-success
+ [(path db/path)]
+ (fn [{db :db} [_ k response]]
+   (.log js/console response)))
