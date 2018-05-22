@@ -357,7 +357,6 @@
 (reg-event-fx
  :accounts.entry/move-out!
  (fn [db [k license-id {:keys [date] :as form-data}]]
-   (js/console.log "making a transition now..." license-id)
    (js/console.log "form data:" form-data)
    {:dispatch-n [[:ui/loading k true]
                  [:accounts.entry.transition/hide]]
@@ -375,7 +374,6 @@
  ::move-out-success
  (fn [db [_ k response]]
    (let [account-id (get-in response [:data :move_out_initialize :account :id])]
-     (js/console.log "account id is " account-id)
      {:dispatch-n [[:ui/loading k false]
                    [:notify/success ["Move-out data created!"]]
                    [:account/fetch account-id]]})))
