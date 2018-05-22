@@ -55,6 +55,8 @@
  :account/fetch
  [(path db/path)]
  (fn [{db :db} [k account-id opts]]
+   (js/console.log "fetching account... " account-id)
+   (js/console.log "opts are " opts)
    (let [license-selectors [:id :rate :starts :ends :term :status :rent_status
                             [:property [:id :cover_image_url :name]]
                             #_[:transition [:type :deposit_refund :room_walkthrough_doc :asana_task :date]]
@@ -345,6 +347,13 @@
    (assoc-in db [:transition-form k] v)))
 
 
+(reg-event-db
+ :accounts.entry.transition/clear
+ [(path db/path)]
+ (fn [db _]
+   (assoc db :transition-form {})))
+
+
 (reg-event-fx
  :accounts.entry/move-out!
  (fn [db [k license-id {:keys [date] :as form-data}]]
@@ -357,16 +366,19 @@
                                                   :type            :move_out
                                                   :deposit_refund  1234.56
                                                   :date            (.toISOString date)}}
-                   [:id]]]
+                   [:id [:account [:id]]]]]
                  :on-success [::move-out-success k]
                  :on-failure [:graphql/failure k]}}))
 
 
 (reg-event-fx
  ::move-out-success
- (fn [db [k]]
-   {:dispatch-n [[:ui/loading k false]
-                 [:notify/success ["Move-out data created!"]]]}))
+ (fn [db [_ k response]]
+   (let [account-id (get-in response [:data :move_out_initialize :account :id])]
+     (js/console.log "account id is " account-id)
+     {:dispatch-n [[:ui/loading k false]
+                   [:notify/success ["Move-out data created!"]]
+                   [:account/fetch account-id]]})))
 
 
 

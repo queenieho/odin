@@ -483,7 +483,7 @@
     (ant/modal-confirm
      {:title   "Confirm Move-Out"
       :content "Are you sure you want to continue? This action can't easily be undone."
-      :on-ok   #(dispatch [:accounts.entry/move-out! license-id @form]) ;; TODO - you need some arguments here
+      :on-ok   #(dispatch [:accounts.entry/move-out! license-id form]) ;; TODO - you need some arguments here
       :ok-type :danger
       :ok-text "Yes - Confirm Move-out"})))
 
@@ -509,10 +509,11 @@
   [account]
   (let [form (subscribe [:accounts.entry.transition/form-data])]
     [ant/modal
-     {:title     (str "Move-out: " (:name account))
-      :visible   @(subscribe [:modal/visible? db/transition-modal-key])
-      :on-cancel #(dispatch [:accounts.entry.transition/hide])
-      :footer    (r/as-element [move-out-modal-footer account @form])}
+     {:title       (str "Move-out: " (:name account))
+      :visible     @(subscribe [:modal/visible? db/transition-modal-key])
+      :after-close #(dispatch [:accounts.entry.transition/clear])
+      :on-cancel   #(dispatch [:accounts.entry.transition/hide])
+      :footer      (r/as-element [move-out-modal-footer account @form])}
 
      (if (nil? @(subscribe [:accounts.entry.transition/form-data :written-notice]))
        [:div
@@ -571,7 +572,8 @@
        [:div
         {:style {:margin-bottom "1em"}}
         [ant/tooltip
-         {:title "Link to Asana move-out task"}
+         {:placement "topLeft"
+          :title     "Link to Asana move-out task"}
          [:p.bold "Asana Move-out Task"]]
         [ant/input
          {:placeholder "paste the asana link here..."}]]])]))
