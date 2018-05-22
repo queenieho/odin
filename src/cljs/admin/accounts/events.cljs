@@ -363,7 +363,6 @@
     :graphql    {:mutation
                  [[:move_out_initialize {:params {:current_license license-id
                                                   :type            :move_out
-                                                  :deposit_refund  1234.56
                                                   :date            (.toISOString date)}}
                    [:id [:account [:id]]]]]
                  :on-success [::move-out-success k]

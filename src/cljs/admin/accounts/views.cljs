@@ -482,7 +482,7 @@
     (js/console.log "transition looks like this" license-id)
     (ant/modal-confirm
      {:title   "Confirm Move-Out"
-      :content "Are you sure you want to continue? This action can't easily be undone."
+      :content "Are you sure you want to continue? This action can't easily be undone and will send an email notification to the member."
       :on-ok   #(dispatch [:accounts.entry/move-out! license-id form]) ;; TODO - you need some arguments here
       :ok-type :danger
       :ok-text "Yes - Confirm Move-out"})))
@@ -630,9 +630,9 @@
 
       [:div.column
        [transition-status-item "Early Termination Fee" (format/currency 35.00)]
-       [transition-status-item "Security Deposit Refund" (format/currency (:deposit_refund transition))]
-       [transition-status-item "" [:a {:href "https://app.asana.com/0/306571089298787/622139719994873"} (str pname "Move-out Asana Task")]]
-       #_[:p.bold [:a {:href "https://app.asana.com/0/306571089298787/622139719994873"} (str pname "Move-out Asana Task")]]]]]))
+       (when (some? (:desposit_refund transition))
+         [transition-status-item "Security Deposit Refund" (format/currency (:deposit_refund transition))])
+       [transition-status-item "" [:a {:href "https://app.asana.com/0/306571089298787/622139719994873" :target "_blank"} (str pname "Move-out Asana Task")]]]]]))
 
 
 (defn membership-orders-list [account orders]
