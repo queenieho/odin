@@ -76,7 +76,7 @@
    {:graphql {:query [[:notes {:params params}
                        [:id :subject :content
                         [:author [:id :name]]
-                        #_[:refs [:id :name]]]]]
+                        [:refs [:id :name :type]]]]]
               :on-success [::notes-query-success k]
               :on-failure [:graphql/failure k]}}))
 

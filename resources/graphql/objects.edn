@@ -236,7 +236,18 @@
             :created  {:type    (non-null :Instant)
                        :resolve :entity/created}
             :updated  {:type    (non-null :Instant)
-                       :resolve :entity/updated}}}
+                       :resolve :entity/updated}
+            :refs     {:type    (list :note_ref)
+                       :resolve (:get :note/refs)}}}
+
+
+  :note_ref
+  {:fields {:id   {:type    (non-null :Long)
+                   :resolve (:get :db/id)}
+            :type {:type    :note_ref_type
+                   :resolve :note.ref/type}
+            :name {:type    String
+                   :resolve :note.ref/name}}}
 
 
   :order

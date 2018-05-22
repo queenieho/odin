@@ -3,6 +3,7 @@
             [blueprints.models.account :as account]
             [blueprints.models.events :as events]
             [blueprints.models.note :as note]
+            [blueprints.models.property :as property]
             [com.walmartlabs.lacinia.resolve :as resolve]
             [datomic.api :as d]
             [blueprints.models.source :as source]
@@ -18,6 +19,24 @@
 
 (defn account [_ _ note]
   (get-account note))
+
+
+(defn refs [_ _ note]
+  (note/refs note))
+
+
+(defn note-ref-type [_ _ ref]
+  (cond
+    (account/email ref) :account
+    (property/code ref) :property
+    :otherwise nil))
+
+
+(defn note-ref-name [_ _ ref]
+  (cond
+    (account/email ref) (account/short-name ref)
+    (property/code ref) (property/code ref)
+    :otherwise nil))
 
 
 ;; ==============================================================================
@@ -123,6 +142,9 @@
 (def resolvers
   {;; fields
    :note/account      account
+   :note/refs         refs
+   :note.ref/type     note-ref-type
+   :note.ref/name     note-ref-name
    ;; mutations
    :note/add-comment! add-comment!
    :note/create!      create!
