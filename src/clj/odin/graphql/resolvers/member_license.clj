@@ -150,7 +150,7 @@
   10)
 
 
-(defn- calculate-early-termination-fee
+(defn- calculate-early-termination-fee-amount
   "Calclates an Early Termination Fee for members moving out before the end of their license term."
   [move-out term-end]
   (-> (t/interval move-out term-end)
@@ -158,27 +158,13 @@
       (inc) ;; for some reason `interval` is off-by-one
       (* early-termination-rate)))
 
-(defn- generate-transition-fees
-  "Generates fees that are incurred with certain kinds of license transitions"
-  [license transition-type move-out-date]
-
-  (let [term-end-date (c/from-date (member-license/ends license))
-        move-out-date (c/from-date move-out-date)]
-   (if (and (= transition-type :move-out)
-            (t/before? move-out-date term-end-date))
-     (str "this chump is gonna pay an ETF of "
-          (calculate-early-termination-fee move-out-date term-end-date))
-     "\n\n nope no fees here")))
-
 
 (defn create-license-transition!
   "Creates a license transition for a member's license"
   [{:keys [conn requester] :as ctx} {{:keys [current_license type date deposit_refund]} :params} _]
   (let [type (keyword (clojure.string/replace (name type) "_" "-"))
         license (d/entity (d/db conn) current_license)
-        transition (license-transition/create current_license type date deposit_refund)
-        fees (generate-transition-fees license type date)]
-    (timbre/info "\n\n =======feeeeeeeeeeeeeeeeeeeeeeeeeeeeeeees ================== " fees)
+        transition (license-transition/create current_license type date deposit_refund)]
     @(d/transact conn [transition
                        (source/create requester)])
     (d/entity (d/db conn) current_license)))
