@@ -17,6 +17,7 @@
             [day8.re-frame.http-fx]
             [goog.dom :as gdom]
             [iface.components.layout :as layout]
+            [iface.components.notes :as notes]
             [iface.modules.graphql :as graphql]
             [iface.modules.loading :as loading]
             [iface.modules.modal]
@@ -74,77 +75,17 @@
       (:name @account) [nav-user-menu] [create-note-button]]]))
 
 
-;; create note ===================================================================
-
-
-(defn create-note-footer [form]
-  [:div
-   [ant/button
-    {:size     :large
-     :on-click #(dispatch [:note.create/cancel])}
-    "Cancel"]
-   [ant/button
-    {:type     :primary
-     :size     :large
-     :on-click #(dispatch [:note.create/create-note! form])}
-    "Create"]])
-
-
-(defn create-note-modal []
-  (let [creating-note? (subscribe [:note/showing?])
-        form           (subscribe [:note/form])
-        accounts       (subscribe [:accounts])
-        properties     (subscribe [:properties/list])]
-    (r/create-class
-     {:component-will-mount
-      (fn [_]
-        )
-      :reagent-render
-      (fn [_]
-        [ant/modal
-         {:title     "Create a note"
-          :visible   @creating-note?
-          :on-cancel #(dispatch [:note.create/cancel])
-          :footer    (r/as-element [create-note-footer @form])}
-         [ant/form-item
-          {:label "Mentions"}
-          [ant/select
-           {:style     {:width "100%"}
-            :mode      "multiple"
-            :value     (mapv str (:refs @form))
-            :on-change #(let [ids (mapv tb/str->int (js->clj %))]
-                          (dispatch [:note.form/update :refs ids]))}
-           (map (fn [{:keys [name id]}]
-                  [ant/select-option
-                   {:value (str id)
-                    :key   id}
-                   name])
-                @accounts)]]
-         [ant/form-item
-          {:label "Subject"}
-          [ant/input
-           {:placeholder "Note subject"
-            :value       (:subject @form)
-            :on-change   #(dispatch [:note.form/update :subject (.. % -target -value)])}]]
-         [ant/form-item
-          {:label "Note"}
-          [ant/input
-           {:type        :textarea
-            :rows        10
-            :placeholder "Note body"
-            :value       (:content @form)
-            :on-change   #(dispatch [:note.form/update :content (.. % -target -value)])}]]
-         (when (some? (:notify @form))
-           [ant/form-item
-            [ant/checkbox {:checked   (:notify @form)
-                           :on-change #(dispatch [:note.form/update :notify (.. % -target -checked)])}
-             "Send Slack notification"]])])})))
-
-
 (defn layout []
-  (let [route          (subscribe [:route/current])]
+  (let [route (subscribe [:route/current])]
     [layout/layout
-     [create-note-modal]
+     [notes/create-note-modal
+      {:is-creating @(subscribe [:note/showing?])
+       :form        @(subscribe [:note/form])
+       :accounts    @(subscribe [:accounts])
+       :properties  @(subscribe [:properties/list])
+       :on-cancel   #(dispatch [:note.create/cancel])
+       :on-submit   #(dispatch [:note.create/create-note! %])
+       :on-change   #(dispatch [:note.form/update %1 %2])}]
      [navbar]
      [layout/content
       [content/view @route]]]))
