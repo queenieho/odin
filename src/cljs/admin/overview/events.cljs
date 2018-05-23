@@ -10,5 +10,5 @@
 (defmethod routes/dispatches :overview
   [{:keys [params] :as route}]
   [[:services.orders/query {:statuses [:pending :placed]}]
-   [:payments/query {:statuses [:due :pending :failed]}]
+   [:payments/query {:statuses [:due :failed]}]
    [:accounts/query {:roles [:member]}]])
