@@ -51,7 +51,8 @@
  (fn [_ [_ k response]]
    {:dispatch-n [[:ui/loading k false]
                  [:note.form/clear]
-                 [:note.create/toggle]]}))
+                 [:note.create/toggle]
+                 [:notes/fetch]]}))
 
 
 (reg-event-db
@@ -74,7 +75,8 @@
  [(path db/path)]
  (fn [{db :db} [k params]]
    {:graphql {:query [[:notes {:params params}
-                       [:id :subject :content
+                       [:id :subject :content :created :updated
+                        [:comments [:id :subject :content :created :updated]]
                         [:author [:id :name]]
                         [:refs [:id :name :type]]]]]
               :on-success [::notes-query-success k]
@@ -85,4 +87,4 @@
  ::notes-query-success
  [(path db/path)]
  (fn [{db :db} [_ k response]]
-   (.log js/console response)))
+   {:db (assoc db :notes (get-in response [:data :notes]))}))

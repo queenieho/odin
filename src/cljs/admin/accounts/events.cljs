@@ -164,7 +164,8 @@
     [[:account/fetch account-id {:on-success [::on-fetch-account]}]
      [:payments/fetch account-id]
      [:payment-sources/fetch account-id]
-     [:accounts.entry/fetch-notes account-id]]))
+     [:notes/fetch {:refs [account-id]}]
+     #_[:accounts.entry/fetch-notes account-id]]))
 
 
 (defn- tab-for-role [role]

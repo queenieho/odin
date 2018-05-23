@@ -22,3 +22,16 @@
  :<- [db/path]
  (fn [db _]
    (:form db)))
+
+
+(defn- matching-account [account-id refs]
+  (some #(= account-id (:id %)) refs))
+
+
+(reg-sub
+ :notes/by-account
+ :<- [db/path]
+ (fn [db [_ account-id]]
+   (->> (:notes db)
+        (filter #(matching-account account-id (:refs %)))
+        (sort-by :created >))))
