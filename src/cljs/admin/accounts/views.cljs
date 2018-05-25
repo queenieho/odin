@@ -7,6 +7,7 @@
             [antizer.reagent :as ant]
             [clojure.string :as string]
             [iface.components.membership :as membership]
+            [iface.components.notes :as inotes]
             [iface.components.order :as order]
             [iface.components.table :as table]
             [iface.loading :as loading]
@@ -398,8 +399,24 @@
       [:div.mb2 [notes/new-note-form account]]
       (doall
        (map
-        #(with-meta [notes/note-card %] {:key (:id %)})
+        (fn [note]
+          (with-meta
+           [inotes/note-card
+            {:note          note
+             :is-editing    @(subscribe [:accounts.entry.note/editing (:id note)])
+             :is-commenting @(subscribe [:accounts.entry.note/comment-form-shown? (:id note)])
+             :is-deleting   @(subscribe [:ui/loading? :accounts.entry.note/delete])
+             :account       @(subscribe [:user])
+             :comment-click #(dispatch [:accounts.entry.note/toggle-comment-form %])
+             :edit-click    #(dispatch [:accounts.entry.note/toggle-editing %])
+             :delete-click  #(dispatch [:accounts.entry.note/delete! %])
+             }]
+           {:key (:id note)}))
         @notes))
+      #_(doall
+         (map
+          #(with-meta [notes/note-card %] {:key (:id %)})
+          @notes))
       (when-not (empty? @notes)
         [notes/pagination])]]))
 
