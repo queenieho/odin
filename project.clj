@@ -83,7 +83,8 @@
                  [starcity/toolbelt-datomic "0.5.0"]
                  [starcity/toolbelt-re-frame "0.1.0"
                   :exclusions [org.clojure/clojurescript]]
-                 [enlive "1.1.6"]]
+                 [enlive "1.1.6"]
+                 [amazonica "0.3.127"]]
 
   :jvm-opts ["-server"
              "-Xmx4g"
