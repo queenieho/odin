@@ -192,6 +192,8 @@
                                    :resolve (:get :license-transition/current-license)}
             :id                   {:type    (non-null :Long)
                                    :resolve (:get :db/id)}
+            :uuid                 {:type    (non-null String)
+                                   :resolve (:get :license-transition/uuid)}
             :type                 {:type    (non-null :license_transition_type)
                                    :resolve :license-transition/type}
             :fees                 {:type    (list :payment)

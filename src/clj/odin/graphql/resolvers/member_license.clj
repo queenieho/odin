@@ -3,6 +3,7 @@
             [blueprints.models.license-transition :as license-transition]
             [blueprints.models.member-license :as member-license]
             [blueprints.models.source :as source]
+            [blueprints.models.events :as events]
             [clj-time.core :as t]
             [clj-time.coerce :as c]
             [com.walmartlabs.lacinia.resolve :as resolve]
@@ -166,6 +167,7 @@
         license (d/entity (d/db conn) current_license)
         transition (license-transition/create current_license type date deposit_refund)]
     @(d/transact conn [transition
+                       (events/transition-created transition)
                        (source/create requester)])
     (d/entity (d/db conn) current_license)))
 
