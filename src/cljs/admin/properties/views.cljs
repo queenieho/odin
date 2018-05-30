@@ -280,24 +280,42 @@
 ;; ==============================================================================
 
 
+(defn community-row [communities]
+  [:div.columns
+   (map
+    (fn [{:keys [id name cover_image_url units]}]
+      ^{:key id}
+      [:div.column.is-4
+       [property-card
+        {:name            name
+         :cover-image-url cover_image_url
+         :href            (routes/path-for :properties/entry :property-id id)}]])
+    communities)])
+
+
+(defn communities-list []
+  (let [communities (subscribe [:properties/list])]
+    [:div
+     (map-indexed
+      (fn [i plist]
+        ^{:key i}
+        [community-row plist])
+      (partition 3 3 nil @communities))]))
+
+
 (defmethod content/view :properties/list [_]
-  (let [properties (subscribe [:properties/list])
-        is-loading (subscribe [:ui/loading? :properties/query])]
+  (let [is-loading (subscribe [:ui/loading? :properties/query])]
     [:div
      [create-community-modal]
      (typography/view-header "Communities" "Manage and view our communities.")
      (if @is-loading
        (loading/fullpage "Loading properties...")
-       [:div.columns
-        (doall
-         (for [{:keys [id name cover_image_url units]} @properties]
-           ^{:key id}
-           [:div.column.is-4
-            [property-card
-             {:name            name
-              :cover-image-url cover_image_url
-              :href            (routes/path-for :properties/entry :property-id id)}]]))
+       [:div
         [ant/button
-         {:size "large"
+         {:style    {:margin-bottom "20px"}
+          :icon     "plus"
+          :type     "primary"
+          :size     "large"
           :on-click #(dispatch [:modal/show :communities.create/modal])}
-         "Add New Community"]])]))
+         "Add New Community"]
+        [communities-list]])]))
