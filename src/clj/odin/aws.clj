@@ -5,4 +5,5 @@
 
 (defstate creds
   :start {:access-key (config/aws-access-key config)
-          :secret-key (config/aws-secret-key config)})
+          :secret-key (config/aws-secret-key config)
+          :endpoint   "us-west-2"})

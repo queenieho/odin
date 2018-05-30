@@ -33,6 +33,19 @@
 ;; ==============================================================================
 
 
+(defn create-community-modal
+  []
+  [ant/modal
+   {:title     "Create New Community"
+    :visible   @(subscribe [:modal/visible? :communities.create/modal])
+    :on-ok     #(dispatch [:communities.create/upload-cover-photo!])
+    :on-cancel #(dispatch [:modal/hide :communities.create/modal])}
+
+   [:input {:type      "file"
+            :multiple  true
+            :on-change #(dispatch [:communities.create/cover-image-picked (.. % -currentTarget -files)])}]])
+
+
 (defn property-card
   "Display a property as a card form."
   [{:keys [name cover-image-url href is-loading]
@@ -271,6 +284,7 @@
   (let [properties (subscribe [:properties/list])
         is-loading (subscribe [:ui/loading? :properties/query])]
     [:div
+     [create-community-modal]
      (typography/view-header "Communities" "Manage and view our communities.")
      (if @is-loading
        (loading/fullpage "Loading properties...")
@@ -282,4 +296,8 @@
             [property-card
              {:name            name
               :cover-image-url cover_image_url
-              :href            (routes/path-for :properties/entry :property-id id)}]]))])]))
+              :href            (routes/path-for :properties/entry :property-id id)}]]))
+        [ant/button
+         {:size "large"
+          :on-click #(dispatch [:modal/show :communities.create/modal])}
+         "Add New Community"]])]))

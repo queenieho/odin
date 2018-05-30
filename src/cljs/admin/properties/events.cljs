@@ -6,13 +6,55 @@
                                    path]]
             [toolbelt.core :as tb]
             [admin.routes :as routes]
-            [clojure.set :as set]))
+            [clojure.set :as set]
+            [ajax.core :as ajax]))
 
 
 ;; ==============================================================================
 ;; events =======================================================================
 ;; ==============================================================================
+(defn- files->form-data [files]
+  (let [form-data (js/FormData.)]
+    (doseq [file-key (.keys js/Object files)]
+      (let [file (aget files file-key)]
+        (.append form-data "files[]" file (.-name file))))
+    form-data))
 
+
+;;TODO - write an event handler similar to the one found here:
+;; https://github.com/starcity-properties/member-application/blob/development/src/cljs/apply/prompts/events.cljs#L16
+
+(reg-event-db
+ :communities.create/cover-image-picked
+ [(path db/path)]
+ (fn [{db :db} [k file]]
+   (js/console.log "i just got a " file)
+   (assoc-in db [:new-community :cover-image] (files->form-data file))))
+
+
+(reg-event-fx
+ :communities.create/upload-cover-photo!
+ [(path db/path)]
+ (fn [{db :db} [params on-success on-failure]]
+   (js/console.log "uploading photo...")
+   {:http-xhrio {:uri        "/api/cover-photo"
+                 :params     {}
+                 :method     :post
+                 :format     (ajax/json-request-format)
+                 :response   (ajax/json-response-format {:keywords? true})
+                 :on-success [::upload-cover-success]
+                 :on-failure [::upload-cover-failure]}}))
+
+(reg-event-fx
+ ::upload-cover-success
+ (fn [_ _]
+   (js/console.log "we succeeded")))
+
+
+(reg-event-fx
+ ::upload-cover-failure
+ (fn [_ _]
+   (js/console.log "we failured")))
 
 (reg-event-fx
  :properties/query
