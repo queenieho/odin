@@ -35,3 +35,31 @@
    (->> (:notes db)
         (filter #(matching-account account-id (:refs %)))
         (sort-by :created >))))
+
+
+(reg-sub
+ :note/editing?
+ :<- [db/path]
+ (fn [db [_ note-id]]
+   (get-in db [:editing-notes note-id])))
+
+
+(reg-sub
+ :note/edit-form
+ :<- [db/path]
+ (fn [db _]
+   (:form db)))
+
+
+(reg-sub
+ :note/commenting?
+ :<- [db/path]
+ (fn [db [_ note-id]]
+   (get-in db [:commenting-notes note-id :shown])))
+
+
+(reg-sub
+ :note/comment-text
+ :<- [db/path]
+ (fn [db [_ note-id]]
+   (get-in db [:commenting-notes note-id :text])))

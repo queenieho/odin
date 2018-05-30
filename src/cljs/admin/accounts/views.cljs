@@ -1,7 +1,7 @@
 (ns admin.accounts.views
   (:require [admin.accounts.db :as db]
             [admin.accounts.views.application :as application]
-            [admin.accounts.views.notes :as notes]
+            [admin.notes.views :as notes]
             [admin.content :as content]
             [admin.routes :as routes]
             [antizer.reagent :as ant]
@@ -396,24 +396,7 @@
   (let [notes (subscribe [:notes/by-account (:id account)])]
     [:div.columns
      [:div.column
-      [:div.mb2 [notes/new-note-form account]]
       (doall
-       (map
-        (fn [note]
-          (with-meta
-           [inotes/note-card
-            {:note          note
-             :is-editing    @(subscribe [:accounts.entry.note/editing (:id note)])
-             :is-commenting @(subscribe [:accounts.entry.note/comment-form-shown? (:id note)])
-             :is-deleting   @(subscribe [:ui/loading? :accounts.entry.note/delete])
-             :account       @(subscribe [:user])
-             :comment-click #(dispatch [:accounts.entry.note/toggle-comment-form %])
-             :edit-click    #(dispatch [:accounts.entry.note/toggle-editing %])
-             :delete-click  #(dispatch [:accounts.entry.note/delete! %])
-             }]
-           {:key (:id note)}))
-        @notes))
-      #_(doall
          (map
           #(with-meta [notes/note-card %] {:key (:id %)})
           @notes))
