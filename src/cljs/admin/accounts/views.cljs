@@ -540,6 +540,11 @@
    input])
 
 
+(defn- default-moment
+  [m]
+  (or m (js/moment (.getTime (js/Date.)))))
+
+
 (defn move-out-additional-form
   [form]
   [:div
@@ -549,10 +554,11 @@
      {:style {:width "50%"}}]]
 
    [move-out-form-item
-    [:p.bold "Early Termination Fee Amount"]
-    [ant/input-number
-     {:style         {:width "50%"}
-      :default-value 0.00}]]
+    [ant/tooltip
+     {:title "Link to Google Drive Doc"}
+     [:p.bold "Final Walkthrough Notes"]]
+    [ant/input
+     {:placeholder "paste the google drive link here..."}]]
 
    [move-out-form-item
     [ant/tooltip
@@ -561,15 +567,7 @@
      [:p.bold "Security Desposit Refund Amount"]]
     [ant/input-number
      {:style         {:width "50%"}
-      :default-value 1500.00
-      :on-change     #(dispatch [:accounts.entry.transition/update :deposit-refund %])}]]
-
-   [move-out-form-item
-    [ant/tooltip
-     {:title "Link to Google Drive Doc"}
-     [:p.bold "Final Walkthrough Notes"]]
-    [ant/input
-     {:placeholder "paste the google drive link here..."}]]])
+      :on-change     #(dispatch [:accounts.entry.transition/update :deposit-refund %])}]]])
 
 
 (defn move-out-form [form]
@@ -578,7 +576,7 @@
     [:p.bold "What date is the member moving out?"]
     [form/date-picker
      {:style     {:width "50%"}
-      :value     (or (:date @form) (js/moment (.getTime (js/Date.))))
+      :value     (default-moment (:date @form))
       :on-change #(dispatch [:accounts.entry.transition/update :date %])}]]
 
    [move-out-form-item
@@ -593,8 +591,12 @@
       :value       (:asana-task @form)
       :on-change   #(dispatch [:accounts.entry.transition/update :asana-task (.. % -target -value)])}]]
 
-   (when (:editing @form)
-     [move-out-additional-form form])])
+   (if (:editing @form)
+     [move-out-additional-form form]
+     [ant/alert
+      {:type      :info
+       :show-icon true
+       :message   "You'll have the opportunity to add more information about this move-out later."}])])
 
 
 (defn move-out-modal
@@ -607,7 +609,7 @@
       :on-cancel   #(dispatch [:accounts.entry.transition/hide])
       :footer      (r/as-element [move-out-modal-footer account form])}
 
-     (if (nil? @(subscribe [:accounts.entry.transition/form-data :written-notice]))
+     (if (nil? (:written-notice @form))
        [move-out-start]
        [move-out-form form])]))
 
