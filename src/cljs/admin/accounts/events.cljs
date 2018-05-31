@@ -327,10 +327,41 @@
 
 ;; move-out transition ==========================================================
 
+
+(defn- populate-transition-form
+  [transition]
+  (tb/assoc-when
+   {:editing        true
+    :written-notice true}
+   :date (js/moment (:date transition))
+   :asana-task (:asana_task transition)))
+
+
+(reg-event-fx
+ :accounts.entry.transition/populate-form
+ [(path db/path)]
+ (fn [{db :db} [_ transition]]
+   (js/console.log "populating transition modal...")
+   (js/console.log db)
+   {:db       (assoc db :transition-form (populate-transition-form transition))
+    :dispatch [::show-modal]}))
+
+
 (reg-event-fx
  :accounts.entry.transition/show
  [(path db/path)]
- (fn [_ [_ account]]
+ (fn [_ [_ transition]]
+   (js/console.log "preparing to show transition modal...")
+   (if (some? transition)
+     {:dispatch [:accounts.entry.transition/populate-form transition]}
+     {:dispatch [::show-modal]})))
+
+
+(reg-event-fx
+ ::show-modal
+ [(path db/path)]
+ (fn [_ _]
+   (js/console.log "showing modal..." db/transition-modal-key)
    {:dispatch [:modal/show db/transition-modal-key]}))
 
 (reg-event-fx

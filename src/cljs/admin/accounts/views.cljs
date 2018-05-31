@@ -495,14 +495,106 @@
     {:size     :large
      :on-click #(dispatch [:accounts.entry.transition/hide])}
     "Cancel"]
-   [ant/button
-    {:type     :danger
-     :size     :large
-     :disabled (or
-                (nil? @(subscribe [:accounts.entry.transition/form-data :date]))
-                (nil? @(subscribe [:accounts.entry.transition/form-data :written-notice])))
-     :on-click #(move-out-confirmation account form)}
-    "Begin Move-out Process"]])
+   (if (:editing @form)
+     [ant/button
+      {:type :primary
+       :size :large
+       :on-click #(js/console.log "you saved the form! (except you didnt because i didnt write that code yet)")}
+      "Update Move-out Data"]
+     [ant/button
+      {:type     :danger
+       :size     :large
+       :disabled (or
+                  (nil? (:date @form))
+                  (nil? (:written-notice @form)))
+       :on-click #(move-out-confirmation account form)}
+      "Begin Move-out Process"])])
+
+
+(def asana-transition-templates
+  {:move-out "https://app.asana.com/0/306571089298787/622139719994873"})
+
+
+(defn move-out-start []
+  (js/console.log "i am the move-out start thing")
+  [:div
+   [ant/alert
+    {:type        :warning
+     :show-icon   true
+     :message     "Before you begin:"
+     :description "Ensure that you have received written notice from the member stating their intent to move out."}]
+
+   [:br]
+   [:div.has-text-centered
+    [ant/button
+     {:size     :large
+      :on-click #(dispatch [:accounts.entry.transition/update :written-notice true])}
+     "Written notice has been given"]]])
+
+
+(defn- move-out-form-item
+  [question input]
+  [:div
+   {:style {:margin-bottom "1em"}}
+   question
+   input])
+
+
+(defn move-out-additional-form
+  [form]
+  [:div
+   [move-out-form-item
+    [:p.bold "When will we conduct the pre-walkthrough?"]
+    [form/date-picker
+     {:style {:width "50%"}}]]
+
+   [move-out-form-item
+    [:p.bold "Early Termination Fee Amount"]
+    [ant/input-number
+     {:style         {:width "50%"}
+      :default-value 0.00}]]
+
+   [move-out-form-item
+    [ant/tooltip
+     {:title     "To be added after Ops has reviewed the final walkthrough details"
+      :placement "topLeft"}
+     [:p.bold "Security Desposit Refund Amount"]]
+    [ant/input-number
+     {:style         {:width "50%"}
+      :default-value 1500.00
+      :on-change     #(dispatch [:accounts.entry.transition/update :deposit-refund %])}]]
+
+   [move-out-form-item
+    [ant/tooltip
+     {:title "Link to Google Drive Doc"}
+     [:p.bold "Final Walkthrough Notes"]]
+    [ant/input
+     {:placeholder "paste the google drive link here..."}]]])
+
+
+(defn move-out-form [form]
+  [:div
+   [move-out-form-item
+    [:p.bold "What date is the member moving out?"]
+    [form/date-picker
+     {:style     {:width "50%"}
+      :value     (or (:date @form) (js/moment (.getTime (js/Date.))))
+      :on-change #(dispatch [:accounts.entry.transition/update :date %])}]]
+
+   [move-out-form-item
+    [:span [:span.bold "Asana Move-out Task"]
+     [ant/tooltip
+      {:placement "topLeft"
+       :title     (r/as-element
+                   [:div "Make a copy of the " [:a {:href "https://app.asana.com/0/306571089298787/622139719994873" :target "_blank"} "Member Move Out Template"] " Asana task. Paste the link to your copy of that task in this input."])}
+      [ant/icon {:type "question-circle"}]]]
+    [ant/input
+     {:placeholder "paste the asana link here..."
+      :value       (:asana-task @form)
+      :on-change   #(dispatch [:accounts.entry.transition/update :asana-task (.. % -target -value)])}]]
+
+   (when (:editing @form)
+     [move-out-additional-form form])])
 
 
 (defn move-out-modal
@@ -513,95 +605,31 @@
       :visible     @(subscribe [:modal/visible? db/transition-modal-key])
       :after-close #(dispatch [:accounts.entry.transition/clear])
       :on-cancel   #(dispatch [:accounts.entry.transition/hide])
-      :footer      (r/as-element [move-out-modal-footer account @form])}
+      :footer      (r/as-element [move-out-modal-footer account form])}
 
      (if (nil? @(subscribe [:accounts.entry.transition/form-data :written-notice]))
-       [:div
-        [ant/alert
-         {:type        :warning
-          :show-icon   true
-          :message     "Before you begin:"
-          :description "Ensure that you have received written notice from the member stating their intent to move out."}]
-
-        [:br]
-        [:div.has-text-centered
-         [ant/button
-          {:size     :large
-           :on-click #(dispatch [:accounts.entry.transition/update :written-notice true])}
-          "Written notice has been given"]]]
-      [:div
-       [:div
-        {:style {:margin-bottom "1em"}}
-        [:p.bold "What date is the member moving out?"]
-        [form/date-picker
-         {:style     {:width "50%"}
-          :on-change #(dispatch [:accounts.entry.transition/update :date %])}]]
-
-       #_[:div
-          {:style {:margin-bottom "1em"}}
-          [:p.bold "When will we conduct the pre-walkthrough?"]
-          [form/date-picker
-           {:style {:width "50%"}}]]
-
-       #_[:div
-          {:style {:margin-bottom "1em"}}
-          [:p.bold "Early Termination Fee Amount"]
-          [ant/input-number
-           {:style         {:width "50%"}
-            :default-value 0.00}]]
-
-       #_[:div
-          {:style {:margin-bottom "1em"}}
-          [ant/tooltip
-           {:title     "To be added after Ops has reviewed the final walkthrough details"
-            :placement "topLeft"}
-           [:p.bold "Security Desposit Refund Amount"]]
-          [ant/input-number
-           {:style         {:width "50%"}
-            :default-value 1500.00
-            :on-change     #(dispatch [:accounts.entry.transition/update :deposit-refund %])}]]
-
-       #_[:div
-          {:style {:margin-bottom "1em"}}
-          [ant/tooltip
-           {:title "Link to Google Drive Doc"}
-           [:p.bold "Final Walkthrough Notes"]]
-          [ant/input
-           {:placeholder "paste the google drive link here..."}]]
-
-       [:div
-        {:style {:margin-bottom "1em"}}
-        [:span.bold "Asana Move-out Task"]
-        [ant/tooltip
-         {:placement "topLeft"
-          :title     (r/as-element
-                      [:div "Make a copy of the " [:a {:href "https://app.asana.com/0/306571089298787/622139719994873" :target "_blank"} "Member Move Out Template"] " Asana task. Paste the link to your copy of that task in this input."])}
-         [ant/icon {:type "question-circle"}]]
-        [ant/input
-         {:placeholder "paste the asana link here..."
-          :value       @(subscribe [:accounts.entry.transition/form-data :asana-task])
-          :on-change   #(dispatch [:accounts.entry.transition/update :asana-task (.. % -target -value)])}]]])]))
+       [move-out-start]
+       [move-out-form form])]))
 
 
 (defn membership-actions [account]
   (when (nil? (:transition (:active_license account)))
-      [:div
-       [move-out-modal account]
-       [reassign-modal account]
-       [ant/button
-        {:icon     "swap"
-         :on-click #(dispatch [:accounts.entry.reassign/show account])}
-        "Reassign"]
-       [ant/button
-        {:icon     "retweet"
-         :on-click #(js/console.log "coming soon")}
-        "Renew License"]
-       [ant/button
-        {:icon     "home"
-         :type     :danger
-         :ghost    true
-         :on-click #(dispatch [:accounts.entry.transition/show])}
-        "Move-out"]]))
+    [:div
+     [reassign-modal account]
+     [ant/button
+      {:icon     "swap"
+       :on-click #(dispatch [:accounts.entry.reassign/show account])}
+      "Reassign"]
+     [ant/button
+      {:icon     "retweet"
+       :on-click #(js/console.log "coming soon")}
+      "Renew License"]
+     [ant/button
+      {:icon     "home"
+       :type     :danger
+       :ghost    true
+       :on-click #(dispatch [:accounts.entry.transition/show (get-in account [:active_license :transition])])}
+      "Move-out"]]))
 
 
 (defn- render-status [_ {status :status}]
@@ -617,12 +645,25 @@
    [:p value]])
 
 
+(defn transition-status-asana-link
+  [asana-task pname]
+  (if (some? asana-task)
+    [transition-status-item "" [:a {:href asana-task :target "_blank"} (str pname "Move-out Asana Task")]]
+    [transition-status-item
+     "Asana Move-out Task"
+     [:span "Create a copy of this " [:a {:href (:move-out asana-transition-templates)} "template task"] ", then add it here."]]))
+
+
 (defn transition-status
   [account transition]
   (let [pname (format/make-first-name-possessive (:name account))]
     [ant/card
      {:title (str pname "Move-out Information")
-      :extra (r/as-element [ant/button {:icon "edit"} "Edit"])}
+      :extra (r/as-element
+              [ant/button
+               {:icon     "edit"
+                :on-click #(dispatch [:accounts.entry.transition/show transition])}
+               "Edit"])}
      [:div.columns
       [:div.column
        [transition-status-item "Move-out date" (format/date-short (:date transition))]
@@ -634,7 +675,7 @@
        (when (some? (:desposit_refund transition))
          [transition-status-item "Security Deposit Refund" (format/currency (:deposit_refund transition))])
        ;; TODO - this asana link has not been validated yet. we should probably get on that soon, but i'm moving on for time.
-       [transition-status-item "" [:a {:href (:asana_task transition) :target "_blank"} (str pname "Move-out Asana Task")]]]]]))
+       [transition-status-asana-link (:asana_task transition) pname]]]]))
 
 
 (defn membership-orders-list [account orders]
@@ -665,6 +706,7 @@
         transition (:transition (:active_license account))
         orders     @(subscribe [:account/orders (:id account)])]
     [:div.columns
+     [move-out-modal account]
      [:div.column
       [membership/license-summary license
        (when is-active {:content [membership-actions account]})]]
