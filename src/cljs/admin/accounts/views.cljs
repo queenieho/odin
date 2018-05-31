@@ -672,11 +672,10 @@
          [transition-status-item "Final Walkthrough Notes" (:room_walkthrough_doc transition)])]
 
       [:div.column
-       [transition-status-item "Early Termination Fee" (format/currency 35.00)]
+       [transition-status-item "Early Termination Fee Amount" (format/currency 35.00)]
        (when (some? (:desposit_refund transition))
-         [transition-status-item "Security Deposit Refund" (format/currency (:deposit_refund transition))])
-       ]]
-     (when (nil? (:asana_link transition))
+         [transition-status-item "Security Deposit Refund Amount" (format/currency (:deposit_refund transition))])]]
+     (when (empty? (:asana_task transition))
        [ant/alert
         {:type      :warning
          :show-icon true
