@@ -483,7 +483,7 @@
     (ant/modal-confirm
      {:title   "Confirm Move-Out"
       :content "Are you sure you want to continue? This action can't easily be undone and will send an email notification to the member."
-      :on-ok   #(dispatch [:accounts.entry/move-out! license-id form]) ;; TODO - you need some arguments here
+      :on-ok   #(dispatch [:accounts.entry/move-out! license-id @form]) ;; TODO - you need some arguments here
       :ok-type :danger
       :ok-text "Yes - Confirm Move-out"})))
 
@@ -499,7 +499,7 @@
      [ant/button
       {:type :primary
        :size :large
-       :on-click #(js/console.log "you saved the form! (except you didnt because i didnt write that code yet)")}
+       :on-click #(dispatch [:accounts.entry/update-move-out! (get-in account [:active_license :id]) @form])}
       "Update Move-out Data"]
      [ant/button
       {:type     :danger
@@ -548,17 +548,15 @@
 (defn move-out-additional-form
   [form]
   [:div
-   [move-out-form-item
-    [:p.bold "When will we conduct the pre-walkthrough?"]
-    [form/date-picker
-     {:style {:width "50%"}}]]
-
+   ;; TODO - validate/sanitize this link.
    [move-out-form-item
     [ant/tooltip
      {:title "Link to Google Drive Doc"}
      [:p.bold "Final Walkthrough Notes"]]
     [ant/input
-     {:placeholder "paste the google drive link here..."}]]
+     {:placeholder "paste the google drive link here..."
+      :value       (:room-walkthrough-doc @form)
+      :on-change   #(dispatch [:accounts.entry.transition/update :room-walkthrough-doc (.. % -target -value)])}]]
 
    [move-out-form-item
     [ant/tooltip
@@ -566,8 +564,9 @@
       :placement "topLeft"}
      [:p.bold "Security Desposit Refund Amount"]]
     [ant/input-number
-     {:style         {:width "50%"}
-      :on-change     #(dispatch [:accounts.entry.transition/update :deposit-refund %])}]]])
+     {:style     {:width "50%"}
+      :value     (:deposit-refund @form)
+      :on-change #(dispatch [:accounts.entry.transition/update :deposit-refund %])}]]])
 
 
 (defn move-out-form [form]
@@ -579,6 +578,7 @@
       :value     (default-moment (:date @form))
       :on-change #(dispatch [:accounts.entry.transition/update :date %])}]]
 
+   ;; TODO - validate/sanitize this link.
    [move-out-form-item
     [:span [:span.bold "Asana Move-out Task"]
      [ant/tooltip
@@ -622,10 +622,10 @@
       {:icon     "swap"
        :on-click #(dispatch [:accounts.entry.reassign/show account])}
       "Reassign"]
-     [ant/button
-      {:icon     "retweet"
-       :on-click #(js/console.log "coming soon")}
-      "Renew License"]
+     #_[ant/button
+        {:icon     "retweet"
+         :on-click #(js/console.log "coming soon")}
+        "Renew License"]
      [ant/button
       {:icon     "home"
        :type     :danger
@@ -647,37 +647,40 @@
    [:p value]])
 
 
-(defn transition-status-asana-link
-  [asana-task pname]
-  (if (some? asana-task)
-    [transition-status-item "" [:a {:href asana-task :target "_blank"} (str pname "Move-out Asana Task")]]
-    [transition-status-item
-     "Asana Move-out Task"
-     [:span "Create a copy of this " [:a {:href (:move-out asana-transition-templates)} "template task"] ", then add it here."]]))
-
-
 (defn transition-status
   [account transition]
   (let [pname (format/make-first-name-possessive (:name account))]
     [ant/card
      {:title (str pname "Move-out Information")
       :extra (r/as-element
-              [ant/button
-               {:icon     "edit"
-                :on-click #(dispatch [:accounts.entry.transition/show transition])}
-               "Edit"])}
+              [:div
+               (when (some? (:asana_task transition))
+                 [:a
+                  {:href (:asana_task transition)
+                   :target "_blank"}
+                  [ant/button
+                   {:icon "check-square-o"}
+                   "Open in Asana"]]) " "
+               [ant/button
+                {:icon     "edit"
+                 :on-click #(dispatch [:accounts.entry.transition/show transition])}
+                "Edit"]])}
      [:div.columns
       [:div.column
        [transition-status-item "Move-out date" (format/date-short (:date transition))]
-       [transition-status-item "Pre-walkthrough date" "--"]
-       [transition-status-item "Final walkthrough date" "--"]]
+       (when (some? (:room_walkthrough_doc transition))
+         [transition-status-item "Final Walkthrough Notes" (:room_walkthrough_doc transition)])]
 
       [:div.column
        [transition-status-item "Early Termination Fee" (format/currency 35.00)]
        (when (some? (:desposit_refund transition))
          [transition-status-item "Security Deposit Refund" (format/currency (:deposit_refund transition))])
-       ;; TODO - this asana link has not been validated yet. we should probably get on that soon, but i'm moving on for time.
-       [transition-status-asana-link (:asana_task transition) pname]]]]))
+       ]]
+     (when (nil? (:asana_link transition))
+       [ant/alert
+        {:type      :warning
+         :show-icon true
+         :message   "Please add a link to this member's copy of the Member Move Out Template task in Asana."}])]))
 
 
 (defn membership-orders-list [account orders]

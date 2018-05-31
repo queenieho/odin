@@ -407,6 +407,11 @@
                    [:account/fetch account-id]]})))
 
 
+(reg-event-fx
+ :accounts.entry/update-move-out!
+ (fn [db [k license-id form-data]]
+   (js/console.log "you saved the form! (except you didnt because i didnt write that code yet)")))
+
 
 ;; payment ======================================================================
 
