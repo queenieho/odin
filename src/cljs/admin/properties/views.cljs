@@ -1,15 +1,16 @@
 (ns admin.properties.views
   (:require [admin.content :as content]
+            [admin.routes :as routes]
             [antizer.reagent :as ant]
             [cljs.core.match :refer-macros [match]]
             [clojure.string :as string]
+            [iface.components.typography :as typography]
+            [iface.loading :as loading]
             [iface.utils.formatters :as format]
+            [iface.utils.time :as time]
             [reagent.core :as r]
             [re-frame.core :refer [subscribe dispatch]]
-            [toolbelt.core :as tb]
-            [iface.components.typography :as typography]
-            [admin.routes :as routes]
-            [iface.loading :as loading]))
+            [toolbelt.core :as tb]))
 
 ;; What do we want to be able to see in a property's detail view?
 
@@ -33,147 +34,227 @@
 ;; ==============================================================================
 
 
-(defn address-input []
-  [:div
-   [:p.fs2.bold "Address"]
-   [ant/form-item
-    [ant/input
-     {:default-value "Line 1"}]]
-   [ant/form-item
-    [ant/input
-     {:default-value "Line 2"}]]
-   [:div.columns
-    [:div.column.is-4
+(defn address-input [{:keys [address]}]
+  (let [on-change #(dispatch [:community.create.form.address/update %1 %2])]
+    [:div
+     [:p.fs2.bold "Address"]
      [ant/form-item
       [ant/input
-       {:default-value "City/town"}]]]
-    [:div.column.is-4
+       {:placeholder "Line 1"
+        :value       (:line-1 address)
+        :on-change   #(on-change :line-1 (.. % -target -value))}]]
      [ant/form-item
       [ant/input
-       {:default-value "State/province/region"}]]]
-    [:div.column.is-4
-     [ant/form-item
-      [ant/input
-       {:default-value "Postal code"}]]]]])
+       {:placeholder "Line 2"
+        :value       (:line-2 address)
+        :on-change   #(on-change :line-1 (.. % -target -value))}]]
+     [:div.columns
+      [:div.column.is-6
+       [ant/form-item
+        [ant/input
+         {:placeholder "City/town"
+          :value       (:city address)
+          :on-change   #(on-change :city (.. % -target -value))}]]]
+      [:div.column.is-6
+       [ant/form-item
+        [ant/input
+         {:placeholder "State/province/region"
+          :value       (:region address)
+          :on-change   #(on-change :region (.. % -target -value))}]]]]
+     [:div.columns
+      [:div.column.is-6
+       [ant/form-item
+        [ant/input
+         {:placeholder "Country"
+          :value       (:country address)
+          :on-change   #(on-change :country (.. % -target -value))}]]]
+      [:div.column.is-6
+       [ant/form-item
+        [ant/input
+         {:placeholder "Postal code"
+          :value       (:postal-code address)
+          :on-change   #(on-change :postal-code (.. % -target -value))}]]]]]))
 
 
-(defn create-community-modal
-  []
-  [ant/modal
-   {:title     "Create New Community"
-    :width     "60%"
-    :visible   @(subscribe [:modal/visible? :communities.create/modal])
-    :on-ok     #(dispatch [:communities.create/upload-cover-photo!])
-    :on-cancel #(dispatch [:modal/hide :communities.create/modal])}
-
-   [ant/card
-    {:title "General information"}
-    [ant/form-item
-     {:style {:width "50%"}
-      :label "Community name"}
-     [ant/input
-      {:default-value "Community name"}]]
-    [address-input]
-    [:hr]
-    [:div.columns
-     [:div.column.is-6
-      [ant/form-item
-       {:label "Number of units"}
-       [ant/input-number]]]
-     [:div.column.is-6
-      [ant/form-item
-       {:label "When will it be available?"}
-       [ant/date-picker]]]]]
-
-   [ant/card
-    {:title "License prices"}
+(defn license-prices-input [{:keys [lprice]}]
+  (let [on-change #(dispatch [:community.create.form.license-price/update %1 %2])]
     [:div.columns
      [:div.column.is-4
       [ant/form-item
        {:label "3 months"}
-       [ant/input-number]]]
+       [ant/input-number
+        {:value     (:three lprice)
+         :on-change #(on-change :three %)}]]]
      [:div.column.is-4
       [ant/form-item
        {:label "6 months"}
-       [ant/input-number]]]
+       [ant/input-number
+        {:value     (:six lprice)
+         :on-change #(on-change :six %)}]]]
      [:div.column.is-4
       [ant/form-item
        {:label "12 months"}
-       [ant/input-number]]]]]
-
-   [ant/card
-    {:title "Community cover photo"}
-    [ant/form-item
-     {:label "Upload cover photo"}
-     [:input
-      {:type      "file"
-       :multiple  true
-       :on-change #(dispatch [:communities.create/cover-image-picked (.. % -currentTarget -files)])}]]]])
+       [ant/input-number
+        {:value     (:twelve lprice)
+         :on-change #(on-change :twelve %)}]]]]))
 
 
-(defn create-teller-community-modal
-  []
-  [ant/modal
-   {:title     "Create New Teller Property"
-    :width     "60%"
-    :visible   @(subscribe [:modal/visible? :communities.teller.create/modal])
-    :on-cancel #(dispatch [:modal/hide :communities.teller.create/modal])}
+(defn create-community-modal []
+  (let [form      @(subscribe [:community.create/form :community])
+        on-change #(dispatch [:community.create.form/update %1 %2])]
+    [ant/modal
+     {:title     "Create New Community"
+      :width     "60%"
+      :visible   @(subscribe [:modal/visible? :communities.create/modal])
+      :on-ok     #(dispatch [:communities.create/upload-cover-photo!])
+      :on-cancel #(dispatch [:modal/hide :communities.create/modal])}
 
-   [ant/card
-    {:title "Deposit Account Information"}
-    [:div.columns
-     [:div.column.is-6
-      [ant/form-item
-       {:label "Account Number"}
-       [ant/input]]]
-     [:div.column.is-6
-      [ant/form-item
-       {:label "Routing Number"}
-       [ant/input]]]]
-    [:div.columns
-     [:div.column.is-6
-      [ant/form-item
-       {:label "Account holder name"}
-       [ant/input]]]
-     [:div.column.is-6
-      [ant/form-item
-       {:label "Last 4 SSN"}
-       [ant/input]]]]
-    [:div.columns
-     [:div.column.is-6
-      [ant/form-item
-       {:label "Account holder date of birth"}
-       [ant/date-picker]]]]]
+     [ant/card
+      {:title "General information"}
+      [:div.columns
+       [:div.column.is-6
+        [ant/form-item
+         {:label "Community name"}
+         [ant/input
+          {:placeholder "Community name"
+           :value       (:name form)
+           :on-change   #(on-change :name (.. % -target -value))}]]]
+       [:div.column.is-6
+        [ant/form-item
+         {:label "Code"}
+         [ant/input
+          {:placeholder "ex. 52-gilbert"
+           :value       (:code form)
+           :on-change   #(on-change :code (.. % -target -value))}]]]]
+      [address-input form]
+      [:hr]
+      [:div.columns
+       [:div.column.is-6
+        [ant/form-item
+         {:label "Number of units"}
+         [ant/input-number
+          {:value     (:units form)
+           :on-change #(on-change :units %)}]]]
+       [:div.column.is-6
+        [ant/form-item
+         {:label "When will it be available?"}
+         [ant/date-picker
+          ;; when i delete the date i get NaN
+          {:value     (when (:date form)
+                        (time/iso->moment (:date form)))
+           :on-change #(on-change :date (time/moment->iso %))}]]]]]
 
-   [ant/card
-    {:title "Ops Account Information"}
-    [:div.columns
-     [:div.column.is-6
-      [ant/form-item
-       {:label "Account Number"}
-       [ant/input]]]
-     [:div.column.is-6
-      [ant/form-item
-       {:label "Routing Number"}
-       [ant/input]]]]
-    [ant/form-item
-     [ant/checkbox "Same account holder as deposit account"]]
-    [:div.columns
-     [:div.column.is-6
-      [ant/form-item
-       {:label "Account holder name"}
-       [ant/input]]]
-     [:div.column.is-6
-      [ant/form-item
-       {:label "Last 4 SSN"}
-       [ant/input]]]]
-    [:div.columns
-     [:div.column.is-6
-      [ant/form-item
-       {:label "Account holder date of birth"}
-       [ant/date-picker]]]]]
+     [ant/card
+      {:title "License prices"}
+      [license-prices-input form]]
 
-   ])
+     [ant/card
+      {:title "Community cover photo"}
+      [ant/form-item
+       {:label "Upload cover photo"}
+       [:input
+        {:type      "file"
+         :multiple  true
+         :on-change #(dispatch [:communities.create/cover-image-picked (.. % -currentTarget -files)])}]]]]))
+
+
+(defn create-teller-community-modal []
+  (let [{:keys [deposit ops]} @(subscribe [:community.create/form :teller])
+        on-change             #(dispatch [:community.create.form.teller/update %1 %2])]
+    [ant/modal
+     {:title     "Create New Teller Property"
+      :width     "60%"
+      :visible   @(subscribe [:modal/visible? :communities.teller.create/modal])
+      :on-cancel #(dispatch [:modal/hide :communities.teller.create/modal])}
+
+     [ant/card
+      {:title "Deposit Account Information"}
+      [:div.columns
+       [:div.column.is-6
+        [ant/form-item
+         {:label "Account Number"}
+         [ant/input
+          {:placeholder "account number"
+           :value       (:account deposit)
+           :on-change   #(on-change [:deposit :account] (.. % -target -value))}]]]
+       [:div.column.is-6
+        [ant/form-item
+         {:label "Routing Number"}
+         [ant/input
+          {:placeholder "routing number"
+           :value       (:routing deposit)
+           :on-change   #(on-change [:deposit :routing] (.. % -target -value))}]]]]
+      [:div.columns
+       [:div.column.is-6
+        [ant/form-item
+         {:label "Account holder name"}
+         [ant/input
+          {:placeholder "John Doe"
+           :value       (:name deposit)
+           :on-change   #(on-change [:deposit :name] (.. % -target -value))}]]]
+       [:div.column.is-6
+        [ant/form-item
+         {:label "Last 4 SSN"}
+         [ant/input
+          {:placeholder "0000"
+           :value       (:ssn deposit)
+           :on-change   #(on-change [:deposit :ssn] (.. % -target -value))}]]]]
+      [:div.columns
+       [:div.column.is-6
+        [ant/form-item
+         {:label "Account holder date of birth"}
+         [ant/date-picker
+          {:value     (when (:dob deposit)
+                        (time/iso->moment (:dob deposit)))
+           :on-change #(on-change [:deposit :dob] (time/moment->iso %))}]]]]]
+
+     [ant/card
+      {:title "Ops Account Information"}
+      [:div.columns
+       [:div.column.is-6
+        [ant/form-item
+         {:label "Account Number"}
+         [ant/input
+          {:placeholder "account number"
+           :value       (:account ops)
+           :on-change   #(on-change [:ops :account] (.. % -target -value))}]]]
+       [:div.column.is-6
+        [ant/form-item
+         {:label "Routing Number"}
+         [ant/input
+          {:placeholder "routing number"
+           :value       (:routing ops)
+           :on-change   #(on-change [:ops :routing] (.. % -target -value))}]]]]
+      [ant/form-item
+       [ant/checkbox
+        {:checked   (:same ops true)
+         :on-change #(on-change [:ops :same] (.. % -target -checked))}
+        "Same account holder as deposit account"]]
+      (when (= false (:same ops))
+        [:div
+         [:div.columns
+          [:div.column.is-6
+           [ant/form-item
+            {:label "Account holder name"}
+            [ant/input
+             {:placeholder "John Doe"
+              :value       (:name ops)
+              :on-change   #(on-change [:ops :name] (.. % -target -value))}]]]
+          [:div.column.is-6
+           [ant/form-item
+            {:label "Last 4 SSN"}
+            [ant/input
+             {:placeholder "0000"
+              :value       (:ssn ops)
+              :on-change   #(on-change [:ops :ssn] (.. % -target -value))}]]]]
+         [:div.columns
+          [:div.column.is-6
+           [ant/form-item
+            {:label "Account holder date of birth"}
+            [ant/date-picker
+             {:value     (when (:dob ops)
+                           (time/iso->moment (:dob ops)))
+              :on-change #(on-change [:ops :dob] (time/moment->iso %))}]]]]])]]))
 
 
 (defn property-card

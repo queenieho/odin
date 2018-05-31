@@ -65,3 +65,10 @@
    (let [unit (db/unit db property-id unit-id)]
      (not= (set (get-in db [:unit-rates unit-id]))
            (set (db/unit-rates unit))))))
+
+
+(reg-sub
+ :community.create/form
+ :<- [db/path]
+ (fn [db [_ form-key]]
+   (get-in db [:form form-key])))
