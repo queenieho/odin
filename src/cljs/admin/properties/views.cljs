@@ -33,17 +33,147 @@
 ;; ==============================================================================
 
 
+(defn address-input []
+  [:div
+   [:p.fs2.bold "Address"]
+   [ant/form-item
+    [ant/input
+     {:default-value "Line 1"}]]
+   [ant/form-item
+    [ant/input
+     {:default-value "Line 2"}]]
+   [:div.columns
+    [:div.column.is-4
+     [ant/form-item
+      [ant/input
+       {:default-value "City/town"}]]]
+    [:div.column.is-4
+     [ant/form-item
+      [ant/input
+       {:default-value "State/province/region"}]]]
+    [:div.column.is-4
+     [ant/form-item
+      [ant/input
+       {:default-value "Postal code"}]]]]])
+
+
 (defn create-community-modal
   []
   [ant/modal
    {:title     "Create New Community"
+    :width     "60%"
     :visible   @(subscribe [:modal/visible? :communities.create/modal])
     :on-ok     #(dispatch [:communities.create/upload-cover-photo!])
     :on-cancel #(dispatch [:modal/hide :communities.create/modal])}
 
-   [:input {:type      "file"
-            :multiple  true
-            :on-change #(dispatch [:communities.create/cover-image-picked (.. % -currentTarget -files)])}]])
+   [ant/card
+    {:title "General information"}
+    [ant/form-item
+     {:style {:width "50%"}
+      :label "Community name"}
+     [ant/input
+      {:default-value "Community name"}]]
+    [address-input]
+    [:hr]
+    [:div.columns
+     [:div.column.is-6
+      [ant/form-item
+       {:label "Number of units"}
+       [ant/input-number]]]
+     [:div.column.is-6
+      [ant/form-item
+       {:label "When will it be available?"}
+       [ant/date-picker]]]]]
+
+   [ant/card
+    {:title "License prices"}
+    [:div.columns
+     [:div.column.is-4
+      [ant/form-item
+       {:label "3 months"}
+       [ant/input-number]]]
+     [:div.column.is-4
+      [ant/form-item
+       {:label "6 months"}
+       [ant/input-number]]]
+     [:div.column.is-4
+      [ant/form-item
+       {:label "12 months"}
+       [ant/input-number]]]]]
+
+   [ant/card
+    {:title "Community cover photo"}
+    [ant/form-item
+     {:label "Upload cover photo"}
+     [:input
+      {:type      "file"
+       :multiple  true
+       :on-change #(dispatch [:communities.create/cover-image-picked (.. % -currentTarget -files)])}]]]])
+
+
+(defn create-teller-community-modal
+  []
+  [ant/modal
+   {:title     "Create New Teller Property"
+    :width     "60%"
+    :visible   @(subscribe [:modal/visible? :communities.teller.create/modal])
+    :on-cancel #(dispatch [:modal/hide :communities.teller.create/modal])}
+
+   [ant/card
+    {:title "Deposit Account Information"}
+    [:div.columns
+     [:div.column.is-6
+      [ant/form-item
+       {:label "Account Number"}
+       [ant/input]]]
+     [:div.column.is-6
+      [ant/form-item
+       {:label "Routing Number"}
+       [ant/input]]]]
+    [:div.columns
+     [:div.column.is-6
+      [ant/form-item
+       {:label "Account holder name"}
+       [ant/input]]]
+     [:div.column.is-6
+      [ant/form-item
+       {:label "Last 4 SSN"}
+       [ant/input]]]]
+    [:div.columns
+     [:div.column.is-6
+      [ant/form-item
+       {:label "Account holder date of birth"}
+       [ant/date-picker]]]]]
+
+   [ant/card
+    {:title "Ops Account Information"}
+    [:div.columns
+     [:div.column.is-6
+      [ant/form-item
+       {:label "Account Number"}
+       [ant/input]]]
+     [:div.column.is-6
+      [ant/form-item
+       {:label "Routing Number"}
+       [ant/input]]]]
+    [ant/form-item
+     [ant/checkbox "Same account holder as deposit account"]]
+    [:div.columns
+     [:div.column.is-6
+      [ant/form-item
+       {:label "Account holder name"}
+       [ant/input]]]
+     [:div.column.is-6
+      [ant/form-item
+       {:label "Last 4 SSN"}
+       [ant/input]]]]
+    [:div.columns
+     [:div.column.is-6
+      [ant/form-item
+       {:label "Account holder date of birth"}
+       [ant/date-picker]]]]]
+
+   ])
 
 
 (defn property-card
@@ -306,6 +436,7 @@
 (defmethod content/view :properties/list [_]
   (let [is-loading (subscribe [:ui/loading? :properties/query])]
     [:div
+     [create-teller-community-modal]
      [create-community-modal]
      (typography/view-header "Communities" "Manage and view our communities.")
      (if @is-loading
@@ -318,4 +449,11 @@
           :size     "large"
           :on-click #(dispatch [:modal/show :communities.create/modal])}
          "Add New Community"]
+        [ant/button
+         {:style    {:margin-bottom "20px"}
+          :icon     "plus"
+          :type     "primary"
+          :size     "large"
+          :on-click #(dispatch [:modal/show :communities.teller.create/modal])}
+         "Add New Teller Community"]
         [communities-list]])]))
