@@ -185,7 +185,7 @@
    :description "Make a fee payment."
    :args        {:id     {:type        (non-null :ID)
                           :description "Id of the payment entity."}
-                 :source {:type (non-null String)
+                 :source {:type        (non-null String)
                           :description "ID of the source to use for the payment. Must be a bank account."}}
    :resolve     :payment/pay-fee!}
 
@@ -243,6 +243,15 @@
    :resolve     :payment.sources/set-default!}
 
 
+  ;; address ======================================================================
+
+
+  :address_create
+  {:type        :address
+   :description "Create an address entity"
+   :args        {:params {:type :address_create_params}}
+   :resolve     :address/create!}
+
   ;; properties ===================================================================
 
 
@@ -264,6 +273,7 @@
    :args        {:id {:type        (non-null :Long)
                       :description "The property's id."}}
    :resolve     :property/toggle-touring!}
+
 
   ;; services =====================================================================
 

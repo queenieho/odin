@@ -202,7 +202,7 @@
                  :fees          {:type (list :Long)}}}
 
   :service_update_params
-  {:description "Parameters to update a new service"
+  {:description "Parameters to update a service"
    :fields      {:name          {:type String}
                  :name_internal {:type String}
                  :code          {:type String}
@@ -218,6 +218,17 @@
                  :rental        {:type Boolean}
                  :fees          {:type (list :Long)}
                  :archived      {:type Boolean}}}
+
+
+  ;;; Addresses
+  :address_create_params
+  {:description "Parameters to create a new address"
+   :fields      {:lines       {:type String}
+                 :locallity   {:type String}
+                 :region      {:type String}
+                 :country     {:type String}
+                 :postal_code {:type String}}}
+
 
 
   ;;; Units
