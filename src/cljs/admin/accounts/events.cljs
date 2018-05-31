@@ -76,7 +76,7 @@
                                     [:income [:id :uri :name]]
                                     [:pet [:type :breed :weight :sterile :vaccines :bitten :demeanor :daytime_care]]]]
                      [:active_license (conj license-selectors
-                                            [:transition [:type :deposit_refund :room_walkthrough_doc :asana_task :date]])]
+                                            [:transition [:id :type :deposit_refund :room_walkthrough_doc :asana_task :date]])]
                      ;; TODO: Move to separate query
                      [:licenses license-selectors]]]
                    [:orders {:params {:accounts [account-id]}}
@@ -344,6 +344,7 @@
  :accounts.entry.transition/update
  [(path db/path)]
  (fn [db [_ k v]]
+   (js/console.log "updating..." k v)
    (assoc-in db [:transition-form k] v)))
 
 
@@ -356,14 +357,15 @@
 
 (reg-event-fx
  :accounts.entry/move-out!
- (fn [db [k license-id {:keys [date] :as form-data}]]
+ (fn [db [k license-id {:keys [date asana-task] :as form-data}]]
    (js/console.log "form data:" form-data)
    {:dispatch-n [[:ui/loading k true]
                  [:accounts.entry.transition/hide]]
     :graphql    {:mutation
                  [[:move_out_initialize {:params {:current_license license-id
                                                   :type            :move_out
-                                                  :date            (.toISOString date)}}
+                                                  :date            (.toISOString date)
+                                                  :asana_task      asana-task}}
                    [:id [:account [:id]]]]]
                  :on-success [::move-out-success k]
                  :on-failure [:graphql/failure k]}}))

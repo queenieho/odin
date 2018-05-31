@@ -62,6 +62,7 @@
                                    :default-value :pending}
                  :deposit_refund  {:type Float}
                  :date            {:type (non-null :Instant)}
+                 :asana_task      {:type String}
                  :new_license_params   {:type :member_license_transition_license_params}}}
 
 

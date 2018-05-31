@@ -579,7 +579,8 @@
          [ant/icon {:type "question-circle"}]]
         [ant/input
          {:placeholder "paste the asana link here..."
-          :on-change #(dispatch [:accounts.entry.transition/update :asana-link])}]]])]))
+          :value       @(subscribe [:accounts.entry.transition/form-data :asana-task])
+          :on-change   #(dispatch [:accounts.entry.transition/update :asana-task (.. % -target -value)])}]]])]))
 
 
 (defn membership-actions [account]
@@ -632,7 +633,8 @@
        [transition-status-item "Early Termination Fee" (format/currency 35.00)]
        (when (some? (:desposit_refund transition))
          [transition-status-item "Security Deposit Refund" (format/currency (:deposit_refund transition))])
-       [transition-status-item "" [:a {:href "https://app.asana.com/0/306571089298787/622139719994873" :target "_blank"} (str pname "Move-out Asana Task")]]]]]))
+       ;; TODO - this asana link has not been validated yet. we should probably get on that soon, but i'm moving on for time.
+       [transition-status-item "" [:a {:href (:asana_task transition) :target "_blank"} (str pname "Move-out Asana Task")]]]]]))
 
 
 (defn membership-orders-list [account orders]
