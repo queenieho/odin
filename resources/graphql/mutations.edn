@@ -61,6 +61,13 @@
    :resolve     :license-transition/create!}
 
 
+  :move_out_update
+  {:type        :license
+   :description "Updates move-out information for a member."
+   :args        {:params {:type :member_license_transition_mutation_params}}
+   :resolve     :license-transition/update!}
+
+
   ;; notes ========================================================================
 
 

@@ -55,11 +55,8 @@
  :account/fetch
  [(path db/path)]
  (fn [{db :db} [k account-id opts]]
-   (js/console.log "fetching account... " account-id)
-   (js/console.log "opts are " opts)
    (let [license-selectors [:id :rate :starts :ends :term :status :rent_status
                             [:property [:id :cover_image_url :name]]
-                            #_[:transition [:type :deposit_refund :room_walkthrough_doc :asana_task :date]]
                             [:unit [:id :code :number]]]]
      {:dispatch [:ui/loading k true]
       :graphql   {:query
@@ -91,7 +88,6 @@
  (fn [{db :db} [_ k opts response]]
    (let [account (get-in response [:data :account])
          orders  (get-in response [:data :orders])]
-     (js/console.log account)
      {:db         (->> (assoc account :orders orders)
                        (norms/assoc-norm db :accounts/norms (:id account)))
       :dispatch-n (tb/conj-when
@@ -334,7 +330,9 @@
    {:editing        true
     :written-notice true}
    :date (js/moment (:date transition))
-   :asana-task (:asana_task transition)))
+   :asana-task (:asana_task transition)
+   :room-walkthrough-doc (:room_walkthrough_doc transition)
+   :deposit-refund (:deposit_refund transition)))
 
 
 (reg-event-fx
@@ -371,7 +369,6 @@
  :accounts.entry.transition/update
  [(path db/path)]
  (fn [db [_ k v]]
-   (js/console.log "updating..." k v)
    (assoc-in db [:transition-form k] v)))
 
 
@@ -384,8 +381,8 @@
 
 (reg-event-fx
  :accounts.entry/move-out!
+ [(path db/path)]
  (fn [db [k license-id {:keys [date asana-task] :as form-data}]]
-   (js/console.log "form data:" form-data)
    {:dispatch-n [[:ui/loading k true]
                  [:accounts.entry.transition/hide]]
     :graphql    {:mutation
@@ -400,6 +397,7 @@
 
 (reg-event-fx
  ::move-out-success
+ [(path db/path)]
  (fn [db [_ k response]]
    (let [account-id (get-in response [:data :move_out_initialize :account :id])]
      {:dispatch-n [[:ui/loading k false]
@@ -409,8 +407,29 @@
 
 (reg-event-fx
  :accounts.entry/update-move-out!
- (fn [db [k license-id form-data]]
-   (js/console.log "you saved the form! (except you didnt because i didnt write that code yet)")))
+ [(path db/path)]
+ (fn [db [k license-id transition-id {:keys [date deposit-refund room-walkthrough-doc asana-task] :as form-data }]]
+   {:dispatch-n [[:ui/loading k true]
+                 [:accounts.entry.transition/hide]]
+    :graphql    {:mutation
+                 [[:move_out_update {:params {:id                   transition-id
+                                              :current_license      license-id
+                                              :date                 (.toISOString date)
+                                              :deposit_refund       deposit-refund
+                                              :room_walkthrough_doc room-walkthrough-doc
+                                              :asana_task           asana-task}}
+                   [:id [:account [:id]]]]]
+                 :on-success [::move-out-update-success k]
+                 :on-failure [:graphql/failure k]}}))
+
+
+(reg-event-fx
+ ::move-out-update-success
+ (fn [db [_ k response]]
+   (let [account-id (get-in response [:data :move_out_update :account :id])]
+     {:dispatch-n [[:ui/loading k false]
+                   [:notify/success "Move-out data updated!"]
+                   [:account/fetch account-id]]})))
 
 
 ;; payment ======================================================================

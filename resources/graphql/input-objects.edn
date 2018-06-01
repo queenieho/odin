@@ -57,22 +57,20 @@
 
   :member_license_transition_create_params
   {:description "Inputs to create a license transition data structure (for end-of-term actions like transfers, renewals, move-outs)"
-   :fields      {:current_license {:type (non-null :Long)}
-                 :type            {:type          :license_transition_type
-                                   :default-value :pending}
-                 :deposit_refund  {:type Float}
-                 :date            {:type (non-null :Instant)}
-                 :asana_task      {:type String}
-                 :new_license_params   {:type :member_license_transition_license_params}}}
+   :fields      {:current_license    {:type (non-null :Long)}
+                 :type               {:type :license_transition_type}
+                 :deposit_refund     {:type Float}
+                 :date               {:type (non-null :Instant)}
+                 :asana_task         {:type String}
+                 :new_license_params {:type :member_license_transition_license_params}}}
 
 
   :member_license_transition_mutation_params
   {:description "Parameters for changing attributes of a member license's transition data"
-   :fields      {:current_license      {:type (non-null :Long)}
-                 :type                 {:type          :license_transition_type
-                                        :default-value :pending}
-                 :deposit_refund       {:type Float}
+   :fields      {:id                   {:type (non-null :Long)}
+                 :current_license      {:type (non-null :Long)}
                  :date                 {:type (non-null :Instant)}
+                 :deposit_refund       {:type Float}
                  :room_walkthrough_doc {:type String}
                  :asana_task           {:type String}
                  :new_license_params   {:type :member_license_transition_license_params}}}

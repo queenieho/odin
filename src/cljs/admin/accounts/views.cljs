@@ -479,11 +479,10 @@
 
 (defn- move-out-confirmation [account form]
   (let [license-id (get-in account [:active_license :id])]
-    (js/console.log "transition looks like this" license-id)
     (ant/modal-confirm
      {:title   "Confirm Move-Out"
       :content "Are you sure you want to continue? This action can't easily be undone and will send an email notification to the member."
-      :on-ok   #(dispatch [:accounts.entry/move-out! license-id @form]) ;; TODO - you need some arguments here
+      :on-ok   #(dispatch [:accounts.entry/move-out! license-id @form])
       :ok-type :danger
       :ok-text "Yes - Confirm Move-out"})))
 
@@ -496,11 +495,13 @@
      :on-click #(dispatch [:accounts.entry.transition/hide])}
     "Cancel"]
    (if (:editing @form)
-     [ant/button
-      {:type :primary
-       :size :large
-       :on-click #(dispatch [:accounts.entry/update-move-out! (get-in account [:active_license :id]) @form])}
-      "Update Move-out Data"]
+     (let [license-id    (get-in account [:active_license :id])
+           transition-id (get-in account [:active_license :transition :id])]
+      [ant/button
+       {:type     :primary
+        :size     :large
+        :on-click #(dispatch [:accounts.entry/update-move-out! license-id transition-id @form])}
+       "Update Move-out Data"])
      [ant/button
       {:type     :danger
        :size     :large
@@ -516,7 +517,6 @@
 
 
 (defn move-out-start []
-  (js/console.log "i am the move-out start thing")
   [:div
    [ant/alert
     {:type        :warning
@@ -669,11 +669,12 @@
       [:div.column
        [transition-status-item "Move-out date" (format/date-short (:date transition))]
        (when (some? (:room_walkthrough_doc transition))
-         [transition-status-item "Final Walkthrough Notes" (:room_walkthrough_doc transition)])]
+         [:div
+          [:p.bold "Final  Walkthrough Docs"]
+          [:p [:a {:href (:room_walkthrough_doc transition) :target "_blank"} "Open in Google Drive"]]])]
 
       [:div.column
-       [transition-status-item "Early Termination Fee Amount" (format/currency 35.00)]
-       (when (some? (:desposit_refund transition))
+       (when (some? (:deposit_refund transition))
          [transition-status-item "Security Deposit Refund Amount" (format/currency (:deposit_refund transition))])]]
      (when (empty? (:asana_task transition))
        [ant/alert

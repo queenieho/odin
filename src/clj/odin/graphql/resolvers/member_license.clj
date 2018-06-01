@@ -172,6 +172,16 @@
     (d/entity (d/db conn) current_license)))
 
 
+(defn update-license-transition!
+  "Updates an existing license transition for a member's license"
+  [{:keys [conn requester] :as ctx} {{:keys [id current_license date deposit_refund room_walkthrough_doc asana_task]} :params} _]
+  (let [updated-transition (license-transition/edit id date deposit_refund room_walkthrough_doc asana_task)]
+    @(d/transact conn [updated-transition
+                       #_(events/transition-updated updated-transition)
+                       (source/create requester)])
+    (d/entity (d/db conn) current_license)))
+
+
 ;; ==============================================================================
 ;; resolvers --------------------------------------------------------------------
 ;; ==============================================================================
@@ -191,7 +201,8 @@
    :license-transition/type      license-transition-type
    ;; mutations
    :member-license/reassign!     reassign!
-   :license-transition/create!   create-license-transition!})
+   :license-transition/create!   create-license-transition!
+   :license-transition/update!   update-license-transition!})
 
 
 (comment
