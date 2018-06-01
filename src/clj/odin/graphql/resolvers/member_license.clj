@@ -177,7 +177,7 @@
   [{:keys [conn requester] :as ctx} {{:keys [id current_license date deposit_refund room_walkthrough_doc asana_task]} :params} _]
   (let [updated-transition (license-transition/edit id date deposit_refund room_walkthrough_doc asana_task)]
     @(d/transact conn [updated-transition
-                       #_(events/transition-updated updated-transition)
+                       (events/transition-updated id)
                        (source/create requester)])
     (d/entity (d/db conn) current_license)))
 
