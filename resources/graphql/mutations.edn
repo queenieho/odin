@@ -246,13 +246,21 @@
   ;; address ======================================================================
 
 
-  :address_create
-  {:type        :address
-   :description "Create an address entity"
-   :args        {:params {:type :address_create_params}}
-   :resolve     :address/create!}
+  ;; :address_create
+  ;; {:type        :address
+  ;;  :description "Create an address entity"
+  ;;  :args        {:params {:type :address_create_params}}
+  ;;  :resolve     :address/create!}
+
 
   ;; properties ===================================================================
+
+
+  :community_create
+  {:type        :property
+   :description "Create a new community"
+   :args        {:params {:type :community_create_params}}
+   :resolve     :property/create!}
 
 
   :property_set_rate

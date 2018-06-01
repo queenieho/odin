@@ -23,6 +23,7 @@
     :graphql  {:query
                [[:properties
                  [:id :name :code :cover_image_url
+                  :has_financials
                   [:units [:id]]]]]
                :on-success [::properties-query k params]
                :on-failure [:graphql/failure k]}}))
@@ -73,6 +74,14 @@
   [[:properties/query]])
 
 
+(reg-event-fx
+ :communities.create.form.teller/show
+ [(path db/path)]
+ (fn [{db :db} [_ id]]
+   {:dispatch-n [[:modal/show :communities.teller.create/modal]
+                 [:community.create.form.teller/update [:id] id]]}))
+
+
 ;; TODO merge all of the form updates into one event handler
 (reg-event-db
  :community.create.form/update
@@ -92,7 +101,7 @@
  :community.create.form.license-price/update
  [(path db/path)]
  (fn [db [_ key value]]
-   (assoc-in db [:form :community :lprice key] value)))
+   (assoc-in db [:form :community :license-prices key] value)))
 
 
 (reg-event-db
@@ -100,6 +109,35 @@
  [(path db/path)]
  (fn [db [_ keys value]]
    (assoc-in db (apply conj [:form :teller] keys) value)))
+
+
+(defn- create-address-params [{:keys [address] :as params}]
+  (assoc params :address (-> address
+                             (assoc :postal_code (:postal-code address))
+                             (dissoc :postal-code))))
+
+
+(defn- create-community-params
+  [{:keys [license-prices date] :as params}]
+  (let [lps (map #(hash-map :term (first %) :price (second %)) license-prices)]
+    (-> params
+        (create-address-params)
+        (assoc :license_prices lps :available_on date)
+        (dissoc :license-prices :date))))
+
+
+(reg-event-fx
+ :community/create!
+ [(path db/path)]
+ (fn [{db :db} [k]]
+   (.log js/console "starting create!")
+   (let [params (create-community-params (get-in db [:form :community]))]
+     (.log js/console "creating community" params)
+     {:dispatch [:ui/loading k true]
+      :graphql  {:mutation   [[:community_create {:params params}
+                               [:id]]]
+                 :on-success [:communities.create/upload-cover-photo! k]
+                 :on-failure [:graphql/failure k]}})))
 
 
 (defn- files->form-data [files]
@@ -124,8 +162,9 @@
 (reg-event-fx
  :communities.create/upload-cover-photo!
  [(path db/path)]
- (fn [{db :db} _]
-   (let [community-id 285873023222957]
+ (fn [{db :db} [_ k response]]
+   (let [community-id (get-in response [:data :community_create :id])]
+     (.log js/console "created" community-id)
      {:http-xhrio {:uri             (str "/api/communities/" community-id "/cover-photo")
                    :body            (get-in db [:new-community :cover-image])
                    :method          :post
@@ -133,6 +172,24 @@
                    :response-format (ajax/json-response-format {:keywords? true})
                    :on-success      [::upload-cover-success]
                    :on-failure      [::upload-cover-failure]}})))
+
+
+(reg-event-fx
+ ::community-create-success
+ [(path db/path)]
+ (fn [{db :db} [_ k response]]
+   (let [community-id (get-in response [:data :community_create :id])]
+     (.log js/console "i created something!!" community-id)
+     {:dispatch-n [[:properties/query]
+                   [:ui/loading k false]
+                   [:community.create.form/clear]]})))
+
+
+(reg-event-db
+ :community.create.form/clear
+ [(path db/path)]
+ (fn [db _]
+   (update-in db [:form] dissoc :community)))
 
 
 (reg-event-fx

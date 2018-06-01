@@ -41,20 +41,20 @@
      [ant/form-item
       [ant/input
        {:placeholder "Line 1"
-        :value       (:line-1 address)
-        :on-change   #(on-change :line-1 (.. % -target -value))}]]
-     [ant/form-item
-      [ant/input
-       {:placeholder "Line 2"
-        :value       (:line-2 address)
-        :on-change   #(on-change :line-1 (.. % -target -value))}]]
+        :value       (:lines address)
+        :on-change   #(on-change :lines (.. % -target -value))}]]
+     #_[ant/form-item
+        [ant/input
+         {:placeholder "Line 2"
+          :value       (:line-2 address)
+          :on-change   #(on-change :line-1 (.. % -target -value))}]]
      [:div.columns
       [:div.column.is-6
        [ant/form-item
         [ant/input
          {:placeholder "City/town"
-          :value       (:city address)
-          :on-change   #(on-change :city (.. % -target -value))}]]]
+          :value       (:locality address)
+          :on-change   #(on-change :locality (.. % -target -value))}]]]
       [:div.column.is-6
        [ant/form-item
         [ant/input
@@ -76,27 +76,18 @@
           :on-change   #(on-change :postal-code (.. % -target -value))}]]]]]))
 
 
-(defn license-prices-input [{:keys [lprice]}]
+(defn license-prices-input [{:keys [license-prices]}]
   (let [on-change #(dispatch [:community.create.form.license-price/update %1 %2])]
     [:div.columns
-     [:div.column.is-4
-      [ant/form-item
-       {:label "3 months"}
-       [ant/input-number
-        {:value     (:three lprice)
-         :on-change #(on-change :three %)}]]]
-     [:div.column.is-4
-      [ant/form-item
-       {:label "6 months"}
-       [ant/input-number
-        {:value     (:six lprice)
-         :on-change #(on-change :six %)}]]]
-     [:div.column.is-4
-      [ant/form-item
-       {:label "12 months"}
-       [ant/input-number
-        {:value     (:twelve lprice)
-         :on-change #(on-change :twelve %)}]]]]))
+     (doall
+      (for [term [3 6 12]]
+        ^{:key term}
+        [:div.column.is-4
+         [ant/form-item
+          {:label (str term " months")}
+          [ant/input-number
+           {:value     (get license-prices term)
+            :on-change #(on-change term %)}]]]))]))
 
 
 (defn create-community-modal []
@@ -106,7 +97,7 @@
      {:title     "Create New Community"
       :width     "60%"
       :visible   @(subscribe [:modal/visible? :communities.create/modal])
-      :on-ok     #(dispatch [:communities.create/upload-cover-photo!])
+      :on-ok     #(dispatch [:community/create!] #_[:communities.create/upload-cover-photo!])
       :on-cancel #(dispatch [:modal/hide :communities.create/modal])}
 
      [ant/card
@@ -259,11 +250,12 @@
 
 (defn property-card
   "Display a property as a card form."
-  [{:keys [name cover-image-url href is-loading]
+  [{:keys [id name cover-image-url href is-loading has-financials]
     :or   {is-loading false, href "#"}
     :as   props}]
   [ant/card {:class   "is-flush"
              :loading is-loading}
+   (.log js/console name has-financials)
    [:div.card-image
     [:figure.image
      [:a {:href href}
@@ -275,7 +267,12 @@
      [:h5.title.is-5 name]
      [:a {:href href}
       "Details "
-      [ant/icon {:type "right"}]]]]])
+      [ant/icon {:type "right"}]]
+     (when-not has-financials
+       [:a.text-red.align-right
+        {:on-click #(dispatch [:communities.create.form.teller/show id])}
+        "Add financials "
+        [ant/icon {:type "right"}]])]]])
 
 
 (defn- unit-list-item
@@ -494,13 +491,15 @@
 (defn community-row [communities]
   [:div.columns
    (map
-    (fn [{:keys [id name cover_image_url units]}]
+    (fn [{:keys [id name cover_image_url units has_financials]}]
       ^{:key id}
       [:div.column.is-4
        [property-card
-        {:name            name
+        {:id              id
+         :name            name
          :cover-image-url cover_image_url
-         :href            (routes/path-for :properties/entry :property-id id)}]])
+         :href            (routes/path-for :properties/entry :property-id id)
+         :has-financials  has_financials}]])
     communities)])
 
 
@@ -530,11 +529,4 @@
           :size     "large"
           :on-click #(dispatch [:modal/show :communities.create/modal])}
          "Add New Community"]
-        [ant/button
-         {:style    {:margin-bottom "20px"}
-          :icon     "plus"
-          :type     "primary"
-          :size     "large"
-          :on-click #(dispatch [:modal/show :communities.teller.create/modal])}
-         "Add New Teller Community"]
         [communities-list]])]))

@@ -224,12 +224,35 @@
   :address_create_params
   {:description "Parameters to create a new address"
    :fields      {:lines       {:type String}
-                 :locallity   {:type String}
+                 :locality   {:type String}
                  :region      {:type String}
                  :country     {:type String}
                  :postal_code {:type String}}}
 
 
+  ;;; Communities - previously properties
+  :community_create_params
+  {:description "Parameters to create a new community"
+   :fields      {:name            {:type        String
+                                   :description "Name that will be given to this community"}
+                 :code            {:type        String
+                                   :description "Unique code for community. Will be used as lookup ref"}
+                 :cover_image_url {:type String}
+                 :units           {:type        (non-null Int)
+                                   :description "Amount of units in this community"}
+                 :available_on    {:type        :Instant
+                                   :description "Date this community will become live"}
+                 :license_prices  {:type        (list :license_price_object)
+                                   :description "List of items needed to create a license price"}
+                 :address         {:type        :address_create_params}}}
+
+
+  :license_price_object
+  {:description "Parameters needed to create a license price"
+   :fields      {:term  {:type        (non-null :Long)
+                         :description "Term lenght of license price"}
+                 :price {:type        (non-null Float)
+                         :description "Price to a license price"}}}
 
   ;;; Units
   :units_query_params

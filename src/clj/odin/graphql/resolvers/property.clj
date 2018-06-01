@@ -6,7 +6,8 @@
             [datomic.api :as d]
             [toolbelt.core :as tb]
             [odin.graphql.authorization :as authorization]
-            [blueprints.models.account :as account]))
+            [blueprints.models.account :as account]
+            [teller.property :as tproperty]))
 
 ;; ==============================================================================
 ;; fields =======================================================================
@@ -27,6 +28,12 @@
   "Is touring enabled?"
   [_ _ property]
   (boolean (:property/tours property)))
+
+
+(defn has-financials
+  "Do we have financial information?"
+  [{:keys [teller]} _ property]
+  (boolean (:entity (tproperty/by-community teller property))))
 
 
 ;; ==============================================================================
@@ -72,6 +79,35 @@
     (d/entity (d/db conn) id)))
 
 
+(defn- parse-license-prices [db license-prices]
+  (->> (map
+        (fn [lprices]
+          (tb/transform-when-key-exists lprices
+            {:term  #(:db/id (license/by-term db %))
+             :price #(float %)}))
+        license-prices)
+       (filter :term)))
+
+
+(defn- parse-create-params [db {:keys [address] :as params}]
+  (tb/transform-when-key-exists params
+    {:units          #(property/create-units (:code params) %)
+     :license_prices #(property/create-license-prices (parse-license-prices db %))
+     :address        (fn [{:keys [lines locality region country postal_code]}]
+                       (property/create-address lines locality region country postal_code))}))
+
+
+(defn create!
+  "Create a new community"
+  [{:keys [conn requester]} {params :params} _]
+  (let [{:keys [name code units address available_on license_prices]}
+        (parse-create-params (d/db conn) params)]
+    @(d/transact conn [(property/create name code units available_on license_prices
+                                        :address address)
+                       (source/create requester)])
+    (d/entity (d/db conn) [:property/code code])))
+
+
 ;; ==============================================================================
 ;; queries ======================================================================
 ;; ==============================================================================
@@ -97,6 +133,10 @@
 ;; ==============================================================================
 
 
+(defmethod authorization/authorized? :property/create! [_ account _]
+  (account/admin? account))
+
+
 (defmethod authorization/authorized? :property/set-rate! [_ account _]
   (account/admin? account))
 
@@ -104,11 +144,14 @@
 (defmethod authorization/authorized? :property/toggle-touring! [_ account _]
   (account/admin? account))
 
+
 (def resolvers
   {;; fields
    :property/license-prices  license-prices
    :property/tours           tours
+   :property/has-financials  has-financials
    ;; mutations
+   :property/create!         create!
    :property/set-rate!       set-rate!
    :property/toggle-touring! toggle-touring!
    ;; queries
