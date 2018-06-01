@@ -54,7 +54,7 @@
    :resolve     :member-license/reassign!}
 
 
-  :move_out_initialize
+  :move_out_create
   {:type        :license
    :description "Begins the move-out process for a member."
    :args        {:params {:type :member_license_transition_create_params}}

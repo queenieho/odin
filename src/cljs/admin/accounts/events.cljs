@@ -358,6 +358,7 @@
  (fn [_ _]
    {:dispatch [:modal/show db/transition-modal-key]}))
 
+
 (reg-event-fx
  :accounts.entry.transition/hide
  [(path db/path)]
@@ -386,7 +387,7 @@
    {:dispatch-n [[:ui/loading k true]
                  [:accounts.entry.transition/hide]]
     :graphql    {:mutation
-                 [[:move_out_initialize {:params {:current_license license-id
+                 [[:move_out_create {:params {:current_license license-id
                                                   :type            :move_out
                                                   :date            (.toISOString date)
                                                   :asana_task      asana-task}}
@@ -399,7 +400,7 @@
  ::move-out-success
  [(path db/path)]
  (fn [db [_ k response]]
-   (let [account-id (get-in response [:data :move_out_initialize :account :id])]
+   (let [account-id (get-in response [:data :move_out_create :account :id])]
      {:dispatch-n [[:ui/loading k false]
                    [:notify/success ["Move-out data created!"]]
                    [:account/fetch account-id]]})))

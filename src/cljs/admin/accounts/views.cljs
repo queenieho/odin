@@ -584,7 +584,7 @@
      [ant/tooltip
       {:placement "topLeft"
        :title     (r/as-element
-                   [:div "Make a copy of the " [:a {:href "https://app.asana.com/0/306571089298787/622139719994873" :target "_blank"} "Member Move Out Template"] " Asana task. Paste the link to your copy of that task in this input."])}
+                   [:div "Make a copy of the " [:a {:href (:move-out asana-transition-templates) :target "_blank"} "Member Move Out Template"] " Asana task. Paste the link to your copy of that task in this input."])}
       [ant/icon {:type "question-circle"}]]]
     [ant/input
      {:placeholder "paste the asana link here..."

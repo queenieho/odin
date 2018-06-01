@@ -243,8 +243,7 @@
                           :resolve     (:get :member-license/unit :property/_units)}
             :transition  {:type        :license_transition
                           :description "Information pertaining to the transition from this license to another (or to no license at all)"
-                          :resolve     :member-license/transition}
-            }}
+                          :resolve     :member-license/transition}}}
 
 
   :note

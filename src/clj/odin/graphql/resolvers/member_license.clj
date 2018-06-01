@@ -147,7 +147,7 @@
         (d/entity (d/db conn) license)))))
 
 (def early-termination-rate
-  "The amount per day that is charged as part of the Early Termination Fee"
+  "The amount (in US Dollars) per day that is charged as part of the Early Termination Fee"
   10)
 
 
@@ -177,7 +177,7 @@
   [{:keys [conn requester] :as ctx} {{:keys [id current_license date deposit_refund room_walkthrough_doc asana_task]} :params} _]
   (let [updated-transition (license-transition/edit id date deposit_refund room_walkthrough_doc asana_task)]
     @(d/transact conn [updated-transition
-                       (events/transition-updated id)
+                       (events/transition-updated updated-transition)
                        (source/create requester)])
     (d/entity (d/db conn) current_license)))
 
@@ -203,18 +203,3 @@
    :member-license/reassign!     reassign!
    :license-transition/create!   create-license-transition!
    :license-transition/update!   update-license-transition!})
-
-
-(comment
-
-  @(d/transact conn [(license-transition/create (d/entity (d/db conn) 285873023223128) :pending 1500.00)])
-
-  @(d/transact conn [(license-transition/create (d/entity (d/db conn) 285873023223148) :pending 2000.00)])
-
-  (license-transition/by-license-id (d/db conn) 285873023223128)
-
-  (license-transition/by-type (d/db conn) :pending)
-
-  (d/touch (first *1))
-
-  )
