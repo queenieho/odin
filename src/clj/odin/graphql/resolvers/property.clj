@@ -1,13 +1,14 @@
 (ns odin.graphql.resolvers.property
-  (:require [blueprints.models.license :as license]
+  (:require [blueprints.models.account :as account]
+            [blueprints.models.license :as license]
             [blueprints.models.property :as property]
             [blueprints.models.source :as source]
             [com.walmartlabs.lacinia.resolve :as resolve]
             [datomic.api :as d]
-            [toolbelt.core :as tb]
             [odin.graphql.authorization :as authorization]
-            [blueprints.models.account :as account]
-            [teller.property :as tproperty]))
+            [teller.property :as tproperty]
+            [toolbelt.core :as tb]
+            [toolbelt.datomic :as td]))
 
 ;; ==============================================================================
 ;; fields =======================================================================
@@ -79,6 +80,47 @@
     (d/entity (d/db conn) id)))
 
 
+;; add financial info ===========================================================
+
+
+(def account-holder-email
+  "jesse@starcity.com")
+
+
+(defn- business [{:keys [business_name tax_id]} owner address]
+  (tproperty/business business_name tax_id owner address))
+
+
+(defn- bank-account [{:keys [account_number routing_number]}]
+  (tproperty/bank-account account_number routing_number
+                          {:account_holder_name "Jesse Suarez"
+                           :country             "US"
+                           :currency            "usd"
+                           :account_holder_type "company"}))
+
+
+(defn- owner [{:keys [first_name last_name dob ssn]}]
+  (tproperty/owner first_name last_name dob ssn))
+
+
+(defn add-financial-info!
+  [{:keys [conn teller]} {:keys [params id]} _]
+  (let [community (d/entity (d/db conn) id)
+        owner     (owner params)
+        address   (tproperty/address "1020 Kearny St" "San Francisco" "CA" "94133")
+        business  (business params owner address)
+        bdeposit  (bank-account (:deposit params))
+        bops      (bank-account (:ops params))]
+    (tproperty/create! teller (property/code community) (property/name community) account-holder-email
+                       {:deposit   (tproperty/connect-account business bdeposit)
+                        :ops       (tproperty/connect-account business bops)
+                        :community community})
+    (d/entity (d/db conn) (td/id community))))
+
+
+;; create =======================================================================
+
+
 (defn- parse-license-prices [db license-prices]
   (->> (map
         (fn [lprices]
@@ -147,13 +189,14 @@
 
 (def resolvers
   {;; fields
-   :property/license-prices  license-prices
-   :property/tours           tours
-   :property/has-financials  has-financials
+   :property/license-prices      license-prices
+   :property/tours               tours
+   :property/has-financials      has-financials
    ;; mutations
-   :property/create!         create!
-   :property/set-rate!       set-rate!
-   :property/toggle-touring! toggle-touring!
+   :property/add-financial-info! add-financial-info!
+   :property/create!             create!
+   :property/set-rate!           set-rate!
+   :property/toggle-touring!     toggle-touring!
    ;; queries
-   :property/entry           entry
-   :property/query           query})
+   :property/entry               entry
+   :property/query               query})

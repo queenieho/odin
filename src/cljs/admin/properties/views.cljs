@@ -97,7 +97,7 @@
      {:title     "Create New Community"
       :width     "60%"
       :visible   @(subscribe [:modal/visible? :communities.create/modal])
-      :on-ok     #(dispatch [:community/create!] #_[:communities.create/upload-cover-photo!])
+      :on-ok     #(dispatch [:community/create!])
       :on-cancel #(dispatch [:modal/hide :communities.create/modal])}
 
      [ant/card
@@ -149,103 +149,113 @@
          :on-change #(dispatch [:communities.create/cover-image-picked (.. % -currentTarget -files)])}]]]]))
 
 
+(def teller-form [{:title  "Business Information"
+                   :fields [{:label       "Business name"
+                             :placeholder "ex. 52 Gilbert LLC"
+                             :type        :text
+                             :keys        [:business-name]}
+                            {:label       "Tax id"
+                             :placeholder "tax id"
+                             :type        :text
+                             :keys        [:tax-id]}]}
+                  {:title  "Account Holder Information"
+                   :fields [{:label       "First Name"
+                             :placeholder "first name"
+                             :type        :text
+                             :keys        [:first-name]}
+                            {:label       "Last Name"
+                             :placeholder "last name"
+                             :type        :text
+                             :keys        [:last-name]}
+                            {:label       "Last 4 SSN"
+                             :placeholder "0000"
+                             :type        :text
+                             :keys        [:ssn]}
+                            {:label "DOB"
+                             :type  :date
+                             :keys  [:dob]}]}
+                  {:title  "Deposit Account Information"
+                   :fields [{:label       "Account number"
+                             :placeholder "000000000000"
+                             :type        :text
+                             :keys        [:deposit :account-number]}
+                            {:label       "Routing number"
+                             :placeholder "000000000"
+                             :type        :text
+                             :keys        [:deposit :routing-number]}]}
+                  {:title  "Ops Account Information"
+                   :fields [{:label       "Account number"
+                             :placeholder "000000000000"
+                             :type        :text
+                             :keys        [:ops :account-number]}
+                            {:label       "Routing number"
+                             :placeholder "000000000"
+                             :type        :text
+                             :keys        [:ops :routing-number]}]}])
+
+
+(defmulti form-field (fn [field form on-change] (:type field)))
+
+
+(defmethod form-field :text
+  [{:keys [label keys placeholder]} form on-change ]
+  [:div.column.is-6
+   [ant/form-item
+    {:label label}
+    [ant/input
+     {:placeholder placeholder
+      :value       (get-in form keys)
+      :on-change   #(on-change keys (.. % -target -value))}]]])
+
+
+(defmethod form-field :date
+  [{:keys [label keys]} form on-change]
+  (let [value (get-in form keys)]
+    [:div.column.is-6
+     [ant/form-item
+      {:label label}
+      [ant/date-picker
+       {:value     (when value
+                     (time/iso->moment value))
+        :on-change #(on-change keys (time/moment->iso %))}]]]))
+
+
+(defn- field-rows [fields form on-change]
+  [:div.columns
+   (map-indexed
+    (fn [i field]
+      ^{:key i}
+      [form-field field form on-change])
+    fields)])
+
+
+(defn form-section [{:keys [title fields]} form on-change]
+  [ant/card
+   {:title title}
+   (map-indexed
+    #(with-meta [field-rows %2 form on-change] {:key %1})
+    (partition 2 2 nil fields))])
+
+
 (defn create-teller-community-modal []
-  (let [{:keys [deposit ops]} @(subscribe [:community.create/form :teller])
-        on-change             #(dispatch [:community.create.form.teller/update %1 %2])]
+  (let [form      @(subscribe [:community.create/form :teller])
+        on-change #(dispatch [:community.create.form.teller/update %1 %2])
+        params    {:deposit       {:account_number "000123456789"
+                                   :routing_number "110000000"}
+                   :ops           {:account_number "000123456789"
+                                   :routing_number "110000000"}
+                   :business_name "Some name"
+                   :tax_id        "4984f61314"}]
     [ant/modal
      {:title     "Create New Teller Property"
       :width     "60%"
+      :on-ok     #(dispatch [:community/add-financial-info! (:id form) form])
       :visible   @(subscribe [:modal/visible? :communities.teller.create/modal])
       :on-cancel #(dispatch [:modal/hide :communities.teller.create/modal])}
 
-     [ant/card
-      {:title "Deposit Account Information"}
-      [:div.columns
-       [:div.column.is-6
-        [ant/form-item
-         {:label "Account Number"}
-         [ant/input
-          {:placeholder "account number"
-           :value       (:account deposit)
-           :on-change   #(on-change [:deposit :account] (.. % -target -value))}]]]
-       [:div.column.is-6
-        [ant/form-item
-         {:label "Routing Number"}
-         [ant/input
-          {:placeholder "routing number"
-           :value       (:routing deposit)
-           :on-change   #(on-change [:deposit :routing] (.. % -target -value))}]]]]
-      [:div.columns
-       [:div.column.is-6
-        [ant/form-item
-         {:label "Account holder name"}
-         [ant/input
-          {:placeholder "John Doe"
-           :value       (:name deposit)
-           :on-change   #(on-change [:deposit :name] (.. % -target -value))}]]]
-       [:div.column.is-6
-        [ant/form-item
-         {:label "Last 4 SSN"}
-         [ant/input
-          {:placeholder "0000"
-           :value       (:ssn deposit)
-           :on-change   #(on-change [:deposit :ssn] (.. % -target -value))}]]]]
-      [:div.columns
-       [:div.column.is-6
-        [ant/form-item
-         {:label "Account holder date of birth"}
-         [ant/date-picker
-          {:value     (when (:dob deposit)
-                        (time/iso->moment (:dob deposit)))
-           :on-change #(on-change [:deposit :dob] (time/moment->iso %))}]]]]]
-
-     [ant/card
-      {:title "Ops Account Information"}
-      [:div.columns
-       [:div.column.is-6
-        [ant/form-item
-         {:label "Account Number"}
-         [ant/input
-          {:placeholder "account number"
-           :value       (:account ops)
-           :on-change   #(on-change [:ops :account] (.. % -target -value))}]]]
-       [:div.column.is-6
-        [ant/form-item
-         {:label "Routing Number"}
-         [ant/input
-          {:placeholder "routing number"
-           :value       (:routing ops)
-           :on-change   #(on-change [:ops :routing] (.. % -target -value))}]]]]
-      [ant/form-item
-       [ant/checkbox
-        {:checked   (:same ops true)
-         :on-change #(on-change [:ops :same] (.. % -target -checked))}
-        "Same account holder as deposit account"]]
-      (when (= false (:same ops))
-        [:div
-         [:div.columns
-          [:div.column.is-6
-           [ant/form-item
-            {:label "Account holder name"}
-            [ant/input
-             {:placeholder "John Doe"
-              :value       (:name ops)
-              :on-change   #(on-change [:ops :name] (.. % -target -value))}]]]
-          [:div.column.is-6
-           [ant/form-item
-            {:label "Last 4 SSN"}
-            [ant/input
-             {:placeholder "0000"
-              :value       (:ssn ops)
-              :on-change   #(on-change [:ops :ssn] (.. % -target -value))}]]]]
-         [:div.columns
-          [:div.column.is-6
-           [ant/form-item
-            {:label "Account holder date of birth"}
-            [ant/date-picker
-             {:value     (when (:dob ops)
-                           (time/iso->moment (:dob ops)))
-              :on-change #(on-change [:ops :dob] (time/moment->iso %))}]]]]])]]))
+     (map-indexed
+      #(with-meta [form-section %2 form on-change] {:key %1})
+      teller-form)]))
 
 
 (defn property-card
@@ -255,7 +265,6 @@
     :as   props}]
   [ant/card {:class   "is-flush"
              :loading is-loading}
-   (.log js/console name has-financials)
    [:div.card-image
     [:figure.image
      [:a {:href href}

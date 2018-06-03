@@ -71,4 +71,4 @@
  :community.create/form
  :<- [db/path]
  (fn [db [_ form-key]]
-   (get-in db [:form form-key])))
+   (get-in db [:form fom-key])))

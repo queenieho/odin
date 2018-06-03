@@ -224,10 +224,27 @@
   :address_create_params
   {:description "Parameters to create a new address"
    :fields      {:lines       {:type String}
-                 :locality   {:type String}
+                 :locality    {:type String}
                  :region      {:type String}
                  :country     {:type String}
                  :postal_code {:type String}}}
+
+
+  :bank_account_params
+  {:fields {:account_number {:type (non-null String)}
+            :routing_number {:type (non-null String)}}}
+
+
+  :community_add_financial_info_params
+  {:description "Parameters to add financial information to a community."
+   :fields      {:deposit       {:type (non-null :bank_account_params)}
+                 :ops           {:type (non-null :bank_account_params)}
+                 :first_name    {:type (non-null String)}
+                 :last_name     {:type (non-null String)}
+                 :dob           {:type :Instant}
+                 :ssn           {:type (non-null String)}
+                 :business_name {:type (non-null String)}
+                 :tax_id        {:type (non-null String)}}}
 
 
   ;;; Communities - previously properties
@@ -244,7 +261,7 @@
                                    :description "Date this community will become live"}
                  :license_prices  {:type        (list :license_price_object)
                                    :description "List of items needed to create a license price"}
-                 :address         {:type        :address_create_params}}}
+                 :address         {:type :address_create_params}}}
 
 
   :license_price_object

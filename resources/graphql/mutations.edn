@@ -256,6 +256,15 @@
   ;; properties ===================================================================
 
 
+  :community_add_financial_info
+  {:type        :property
+   :description "Add financial information to a property."
+   :args        {:params {:type :community_add_financial_info_params}
+                 :id     {:type        (non-null :Long)
+                          :description "The property's id."}}
+   :resolve     :property/add-financial-info!}
+
+
   :community_create
   {:type        :property
    :description "Create a new community"

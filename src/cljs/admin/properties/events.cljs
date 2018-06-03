@@ -111,6 +111,35 @@
    (assoc-in db (apply conj [:form :teller] keys) value)))
 
 
+(defn- create-bank-account-params [{:keys [account-number routing-number]}]
+  {:account_number account-number
+   :routing_number routing-number})
+
+
+(defn- create-financial-info-params
+  [{:keys [business-name tax-id first-name last-name ssn dob deposit ops]}]
+  {:business_name business-name
+   :tax_id        tax-id
+   :first_name    first-name
+   :last_name     last-name
+   :ssn           ssn
+   :dob           dob
+   :deposit       (create-bank-account-params deposit)
+   :ops           (create-bank-account-params ops)})
+
+
+(reg-event-fx
+ :community/add-financial-info!
+ [(path db/path)]
+ (fn [{db :db} [_ id params]]
+   {:graphql {:mutation
+              [[:community_add_financial_info {:id     id
+                                               :params (create-financial-info-params params)}
+                [:id]]]
+              :on-success [::upload-cover-success]
+              :on-failure [::upload-cover-failure]}}))
+
+
 (defn- create-address-params [{:keys [address] :as params}]
   (assoc params :address (-> address
                              (assoc :postal_code (:postal-code address))
@@ -130,9 +159,7 @@
  :community/create!
  [(path db/path)]
  (fn [{db :db} [k]]
-   (.log js/console "starting create!")
    (let [params (create-community-params (get-in db [:form :community]))]
-     (.log js/console "creating community" params)
      {:dispatch [:ui/loading k true]
       :graphql  {:mutation   [[:community_create {:params params}
                                [:id]]]
@@ -148,14 +175,10 @@
     form-data))
 
 
-;;TODO - write an event handler similar to the one found here:
-;; https://github.com/starcity-properties/member-application/blob/development/src/cljs/apply/prompts/events.cljs#L16
-
 (reg-event-db
  :communities.create/cover-image-picked
  [(path db/path)]
  (fn [db [k file]]
-   (js/console.log "i just got a " file)
    (assoc-in db [:new-community :cover-image] (files->form-data file))))
 
 
