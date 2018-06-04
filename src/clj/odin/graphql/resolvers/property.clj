@@ -1,8 +1,10 @@
 (ns odin.graphql.resolvers.property
   (:require [blueprints.models.account :as account]
+            [blueprints.models.address :as address]
             [blueprints.models.license :as license]
             [blueprints.models.property :as property]
             [blueprints.models.source :as source]
+            [blueprints.models.unit :as unit]
             [com.walmartlabs.lacinia.resolve :as resolve]
             [datomic.api :as d]
             [odin.graphql.authorization :as authorization]
@@ -136,11 +138,11 @@
 
 (defn- parse-create-params [db {:keys [address] :as params}]
   (tb/transform-when-key-exists params
-    {:units          #(property/create-units (:code params) %)
+    {:units          #(unit/create-community-units (:code params) %)
      :license_prices #(property/create-license-prices (parse-license-prices db %))
      :address        (fn [{:keys [lines locality region country postal_code]
                           :or   {country "US"}}]
-                       (property/create-address lines locality region country postal_code))}))
+                       (address/create lines locality region country postal_code))}))
 
 
 (defn create!
