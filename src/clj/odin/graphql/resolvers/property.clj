@@ -1,12 +1,16 @@
 (ns odin.graphql.resolvers.property
-  (:require [blueprints.models.license :as license]
+  (:require [blueprints.models.account :as account]
+            [blueprints.models.address :as address]
+            [blueprints.models.license :as license]
             [blueprints.models.property :as property]
             [blueprints.models.source :as source]
+            [blueprints.models.unit :as unit]
             [com.walmartlabs.lacinia.resolve :as resolve]
             [datomic.api :as d]
-            [toolbelt.core :as tb]
             [odin.graphql.authorization :as authorization]
-            [blueprints.models.account :as account]))
+            [teller.property :as tproperty]
+            [toolbelt.core :as tb]
+            [toolbelt.datomic :as td]))
 
 ;; ==============================================================================
 ;; fields =======================================================================
@@ -27,6 +31,12 @@
   "Is touring enabled?"
   [_ _ property]
   (boolean (:property/tours property)))
+
+
+(defn has-financials
+  "Do we have financial information?"
+  [{:keys [teller]} _ property]
+  (boolean (:entity (tproperty/by-community teller property))))
 
 
 ;; ==============================================================================
@@ -72,6 +82,80 @@
     (d/entity (d/db conn) id)))
 
 
+;; add financial info ===========================================================
+
+
+(def ^:private account-holder-email
+  "jesse@starcity.com")
+
+
+(def ^:private business-address
+  (tproperty/address "1020 Kearny St" "San Francisco" "CA" "94133"))
+
+
+(defn- business [{:keys [business_name tax_id]} owner address]
+  (tproperty/business business_name tax_id owner address))
+
+
+(defn- bank-account [{:keys [account_number routing_number]}]
+  (tproperty/bank-account account_number routing_number
+                          {:account_holder_name "Jesse Suarez"
+                           :country             "US"
+                           :currency            "usd"
+                           :account_holder_type "company"}))
+
+
+(defn- owner [{:keys [first_name last_name dob ssn]}]
+  (tproperty/owner first_name last_name dob ssn))
+
+
+(defn add-financial-info!
+  [{:keys [conn teller]} {:keys [params id]} _]
+  (let [community (d/entity (d/db conn) id)
+        owner     (owner params)
+        business  (business params owner business-address)
+        bdeposit  (bank-account (:deposit params))
+        bops      (bank-account (:ops params))]
+    (tproperty/create! teller (property/code community) (property/name community) account-holder-email
+                       {:deposit   (tproperty/connect-account business bdeposit)
+                        :ops       (tproperty/connect-account business bops)
+                        :community community})
+    (d/entity (d/db conn) (td/id community))))
+
+
+;; create =======================================================================
+
+
+(defn- parse-license-prices [db license-prices]
+  (->> (map
+        (fn [lprices]
+          (tb/transform-when-key-exists lprices
+            {:term  #(:db/id (license/by-term db %))
+             :price #(float %)}))
+        license-prices)
+       (filter :term)))
+
+
+(defn- parse-create-params [db {:keys [address] :as params}]
+  (tb/transform-when-key-exists params
+    {:units          #(unit/create-community-units (:code params) %)
+     :license_prices #(property/create-license-prices (parse-license-prices db %))
+     :address        (fn [{:keys [lines locality region country postal_code]
+                          :or   {country "US"}}]
+                       (address/create lines locality region country postal_code))}))
+
+
+(defn create!
+  "Create a new community"
+  [{:keys [conn requester]} {params :params} _]
+  (let [{:keys [name code units address available_on license_prices]}
+        (parse-create-params (d/db conn) params)]
+    @(d/transact conn [(property/create name code units available_on license_prices
+                                        :address address)
+                       (source/create requester)])
+    (d/entity (d/db conn) [:property/code code])))
+
+
 ;; ==============================================================================
 ;; queries ======================================================================
 ;; ==============================================================================
@@ -97,6 +181,10 @@
 ;; ==============================================================================
 
 
+(defmethod authorization/authorized? :property/create! [_ account _]
+  (account/admin? account))
+
+
 (defmethod authorization/authorized? :property/set-rate! [_ account _]
   (account/admin? account))
 
@@ -104,13 +192,17 @@
 (defmethod authorization/authorized? :property/toggle-touring! [_ account _]
   (account/admin? account))
 
+
 (def resolvers
   {;; fields
-   :property/license-prices  license-prices
-   :property/tours           tours
+   :property/license-prices      license-prices
+   :property/tours               tours
+   :property/has-financials      has-financials
    ;; mutations
-   :property/set-rate!       set-rate!
-   :property/toggle-touring! toggle-touring!
+   :property/add-financial-info! add-financial-info!
+   :property/create!             create!
+   :property/set-rate!           set-rate!
+   :property/toggle-touring!     toggle-touring!
    ;; queries
-   :property/entry           entry
-   :property/query           query})
+   :property/entry               entry
+   :property/query               query})
