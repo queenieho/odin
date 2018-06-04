@@ -223,22 +223,22 @@
   ;;; Addresses
   :address_create_params
   {:description "Parameters to create a new address"
-   :fields      {:lines       {:type String}
-                 :locality    {:type String}
-                 :region      {:type String}
+   :fields      {:lines       {:type (non-null String)}
+                 :locality    {:type (non-null String)}
+                 :region      {:type (non-null String)}
                  :country     {:type String}
-                 :postal_code {:type String}}}
+                 :postal_code {:type (non-null String)}}}
 
 
-  :bank_account_params
+  ;;; Communities - previously properties
+  :bank_account_create_params
   {:fields {:account_number {:type (non-null String)}
             :routing_number {:type (non-null String)}}}
 
-
   :community_add_financial_info_params
   {:description "Parameters to add financial information to a community."
-   :fields      {:deposit       {:type (non-null :bank_account_params)}
-                 :ops           {:type (non-null :bank_account_params)}
+   :fields      {:deposit       {:type (non-null :bank_account_create_params)}
+                 :ops           {:type (non-null :bank_account_create_params)}
                  :first_name    {:type (non-null String)}
                  :last_name     {:type (non-null String)}
                  :dob           {:type :Instant}
@@ -246,30 +246,29 @@
                  :business_name {:type (non-null String)}
                  :tax_id        {:type (non-null String)}}}
 
-
-  ;;; Communities - previously properties
   :community_create_params
   {:description "Parameters to create a new community"
-   :fields      {:name            {:type        String
+   :fields      {:name            {:type        (non-null String)
                                    :description "Name that will be given to this community"}
-                 :code            {:type        String
-                                   :description "Unique code for community. Will be used as lookup ref"}
-                 :cover_image_url {:type String}
+                 :code            {:type        (non-null String)
+                                   :description "Unique code for community. Used as lookup ref"}
+                 :cover_image_url {:type        String
+                                   :description "Url where cover image is being stored."}
                  :units           {:type        (non-null Int)
                                    :description "Amount of units in this community"}
-                 :available_on    {:type        :Instant
+                 :available_on    {:type        (non-null :Instant)
                                    :description "Date this community will become live"}
-                 :license_prices  {:type        (list :license_price_object)
+                 :license_prices  {:type        (list :license_price_create_params)
                                    :description "List of items needed to create a license price"}
-                 :address         {:type :address_create_params}}}
+                 :address         {:type (non-null :address_create_params)}}}
 
-
-  :license_price_object
+  :license_price_create_params
   {:description "Parameters needed to create a license price"
    :fields      {:term  {:type        (non-null :Long)
                          :description "Term lenght of license price"}
                  :price {:type        (non-null Float)
                          :description "Price to a license price"}}}
+
 
   ;;; Units
   :units_query_params

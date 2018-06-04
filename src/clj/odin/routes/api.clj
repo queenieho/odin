@@ -147,16 +147,6 @@
               (response/content-type content-type)))))))
 
 
-(comment
-
-  (s3/list-objects-v2 aws/creds {:bucket-name images-bucket-name})
-
-  (s3/get-object aws/creds :bucket-name images-bucket-name
-                 :key "communities/covers/a_deadpool.png")
-
-  )
-
-
 ;; =============================================================================
 ;; Routes
 ;; =============================================================================

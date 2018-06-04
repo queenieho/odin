@@ -243,16 +243,6 @@
    :resolve     :payment.sources/set-default!}
 
 
-  ;; address ======================================================================
-
-
-  ;; :address_create
-  ;; {:type        :address
-  ;;  :description "Create an address entity"
-  ;;  :args        {:params {:type :address_create_params}}
-  ;;  :resolve     :address/create!}
-
-
   ;; properties ===================================================================
 
 

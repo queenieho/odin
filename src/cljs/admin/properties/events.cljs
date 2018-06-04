@@ -1,13 +1,15 @@
 (ns admin.properties.events
   (:require [admin.properties.db :as db]
+            [admin.routes :as routes]
+            [ajax.core :as ajax]
+            [antizer.reagent :as ant]
+            [clojure.set :as set]
             [iface.utils.norms :as norms]
             [re-frame.core :refer [reg-event-db
                                    reg-event-fx
                                    path]]
-            [toolbelt.core :as tb]
-            [admin.routes :as routes]
-            [clojure.set :as set]
-            [ajax.core :as ajax]))
+            [taoensso.timbre :as timbre]
+            [toolbelt.core :as tb]))
 
 
 ;; ==============================================================================
@@ -187,7 +189,6 @@
    (assoc-in db [:new-community :cover-image] (files->form-data file))))
 
 
-;; can we use graphql errors here?
 (reg-event-fx
  :communities.create/upload-cover-photo!
  [(path db/path)]
@@ -199,7 +200,7 @@
                    :format          (ajax/json-request-format)
                    :response-format (ajax/json-response-format {:keywords? true})
                    :on-success      [::community-create-success k community-id]
-                   :on-failure      [:graphql/failure k]}})))
+                   :on-failure      [::community-add-cover-photo-failure k]}})))
 
 
 (reg-event-fx
@@ -210,6 +211,15 @@
                  [:ui/loading k false]
                  [:community.create.form/clear]
                  [:modal/hide :communities.create/modal]]}))
+
+
+(reg-event-fx
+ ::community-add-cover-photo-failure
+ [(path db/path)]
+ (fn [{db :db} [_ k error]]
+   (timbre/error error)
+   (ant/notification-error {:message "Failed to upload photo to this community."})
+   {:dispatch-n [[:ui/loading k false]]}))
 
 
 (reg-event-fx

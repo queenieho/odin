@@ -83,8 +83,12 @@
 ;; add financial info ===========================================================
 
 
-(def account-holder-email
+(def ^:private account-holder-email
   "jesse@starcity.com")
+
+
+(def ^:private business-address
+  (tproperty/address "1020 Kearny St" "San Francisco" "CA" "94133"))
 
 
 (defn- business [{:keys [business_name tax_id]} owner address]
@@ -107,8 +111,7 @@
   [{:keys [conn teller]} {:keys [params id]} _]
   (let [community (d/entity (d/db conn) id)
         owner     (owner params)
-        address   (tproperty/address "1020 Kearny St" "San Francisco" "CA" "94133")
-        business  (business params owner address)
+        business  (business params owner business-address)
         bdeposit  (bank-account (:deposit params))
         bops      (bank-account (:ops params))]
     (tproperty/create! teller (property/code community) (property/name community) account-holder-email
@@ -135,7 +138,8 @@
   (tb/transform-when-key-exists params
     {:units          #(property/create-units (:code params) %)
      :license_prices #(property/create-license-prices (parse-license-prices db %))
-     :address        (fn [{:keys [lines locality region country postal_code]}]
+     :address        (fn [{:keys [lines locality region country postal_code]
+                          :or   {country "US"}}]
                        (property/create-address lines locality region country postal_code))}))
 
 

@@ -125,9 +125,8 @@
         [ant/form-item
          {:label "When will it be available?"}
          [ant/date-picker
-          ;; when i delete the date i get NaN
-          {:value     (when (:date form)
-                        (time/iso->moment (:date form)))
+          {:value     (when-let [d (:date form)]
+                        (time/iso->moment d))
            :on-change #(on-change [:date] (time/moment->iso %))}]]]]]
 
      [ant/card
