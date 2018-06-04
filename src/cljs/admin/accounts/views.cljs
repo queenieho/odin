@@ -665,9 +665,9 @@
      [move-out-form-item
       [:p.bold "What will the member's new license term be?"]
       [ant/select
-       {:style     {:width "50%"}
-        :value     (:term @form)
-        :on-change #(dispatch [:accounts.entry.reassign/update-term license (int %)])}
+       {:style         {:width "50%"}
+        :default-value "3"
+        :on-change     #(dispatch [:accounts.entry.reassign/update-term license (int %)])}
        [ant/select-option {:value "3"} "3 months"]
        [ant/select-option {:value "6"} "6 months"]
        [ant/select-option {:value "12"} "12 months"]]]
