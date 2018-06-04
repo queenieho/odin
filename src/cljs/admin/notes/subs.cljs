@@ -63,3 +63,9 @@
  :<- [db/path]
  (fn [db [_ note-id]]
    (get-in db [:commenting-notes note-id :text])))
+
+
+(reg-sub
+ :note/is-author
+ (fn [db [_ author-id]]
+   (= author-id (get-in db [:account :id]))))

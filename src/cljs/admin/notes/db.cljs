@@ -1,7 +1,7 @@
 (ns admin.notes.db)
 
 
-(def path ::path)
+(def path ::notes)
 
 
 (def default-value

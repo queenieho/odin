@@ -144,6 +144,12 @@
 
 ;; comment ==============================
 
+(reg-event-fx
+ :note.comment/show
+ [(path db/path)]
+ (fn [{db :db} [_ note-id]]
+   {:dispatch-n [[:note/toggle-comment-form note-id]]}))
+
 
 (reg-event-db
  :note/toggle-comment-form
@@ -165,8 +171,8 @@
  (fn [db [k note-id text]]
    {:dispatch [:ui/loading k true]
     :graphql  {:mutation
-               [[:add_note_comment {:note note-id
-                                    :text text}
+               [[:add_note_comment {:note   note-id
+                                    :text   text}
                  [:id :subject :content :created :updated
                   [:refs [:id :name :type]]
                   [:author [:id :name]]]]]
