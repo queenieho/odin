@@ -75,11 +75,19 @@
 
 
 (reg-event-fx
- :communities.create.form.teller/show
+ :community.add-financial/show
  [(path db/path)]
- (fn [{db :db} [_ id]]
-   {:dispatch-n [[:modal/show :communities.teller.create/modal]
-                 [:community.create.form.teller/update [:id] id]]}))
+ (fn [{db :db} [_ params]]
+   {:dispatch-n [[:modal/show :community.add-financial/modal]
+                 [:community.add-financial/update [] params]]}))
+
+
+(reg-event-fx
+ :community.add-financial/cancel
+ [(path db/path)]
+ (fn [{db :db} _]
+   {:dispatch [:modal/hide :community.add-financial/modal]
+    :db       (update-in db [:form] dissoc :financial)}))
 
 
 (reg-event-db
@@ -90,10 +98,10 @@
 
 
 (reg-event-db
- :community.create.form.teller/update
+ :community.add-financial/update
  [(path db/path)]
  (fn [db [_ keys value]]
-   (assoc-in db (apply conj [:form :teller] keys) value)))
+   (assoc-in db (apply conj [:form :financial] keys) value)))
 
 
 (defn- create-bank-account-params [{:keys [account-number routing-number]}]
@@ -116,13 +124,25 @@
 (reg-event-fx
  :community/add-financial-info!
  [(path db/path)]
- (fn [{db :db} [_ id params]]
-   {:graphql {:mutation
+ (fn [{db :db} [k id params]]
+   {:dispatch [:ui/loading k true]
+    :graphql {:mutation
               [[:community_add_financial_info {:id     id
                                                :params (create-financial-info-params params)}
                 [:id]]]
-              :on-success [::upload-cover-success]
-              :on-failure [::upload-cover-failure]}}))
+              :on-success [::add-financial-info-success k]
+              :on-failure [:graphql/failure k]}}))
+
+
+(reg-event-fx
+ ::add-financial-info-success
+ [(path db/path)]
+ (fn [{db :db} [_ k response]]
+   (let [community-id (get-in response [:data :community_add_financial_info :id])]
+     {:dispatch-n [[:ui/loading k false]
+                   [:properties/query]
+                   [:modal/hide :community.add-financial/modal]]
+      :db         (update-in db [:form] dissoc :financial)})))
 
 
 (defn- create-address-params [{:keys [address] :as params}]
@@ -186,7 +206,7 @@
  ::community-create-success
  [(path db/path)]
  (fn [{db :db} [_ k community-id response]]
-   {:dispatch-n [[:property/fetch community-id]
+   {:dispatch-n [[:properties/query]
                  [:ui/loading k false]
                  [:community.create.form/clear]
                  [:modal/hide :communities.create/modal]]}))
@@ -206,13 +226,6 @@
  (fn [db _]
    (-> (update-in db [:form] dissoc :community)
        (dissoc :new-community))))
-
-
-(reg-event-fx
- ::upload-cover-success
- (fn [_ _]
-   (js/console.log "we succeeded")))
-
 
 
 ;; ==============================================================================

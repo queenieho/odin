@@ -1,5 +1,6 @@
 (ns admin.properties.subs
   (:require [admin.properties.db :as db]
+            [clojure.string :as string]
             [iface.utils.norms :as norms]
             [re-frame.core :refer [reg-sub]]
             [toolbelt.core :as tb]))
@@ -16,7 +17,8 @@
  :properties/list
  :<- [db/path]
  (fn [db _]
-   (norms/denormalize db :properties/norms)))
+   (->> (norms/denormalize db :properties/norms)
+        (sort-by #(string/lower-case (:name %))))))
 
 
 (reg-sub

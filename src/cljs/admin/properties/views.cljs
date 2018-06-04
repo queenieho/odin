@@ -189,21 +189,21 @@
 
 (defn add-financial-info-form [form]
   (let [empty-form @(subscribe [:financial/form])
-        on-change  #(dispatch [:community.create.form.teller/update %1 %2])]
+        on-change  #(dispatch [:community.add-financial/update %1 %2])]
     [:div
      (map-indexed
       #(with-meta [form-section %2 form on-change] {:key %1})
       empty-form)]))
 
 
-(defn create-teller-community-modal []
-  (let [form       @(subscribe [:community.create/form :teller])]
+(defn add-financial-info-modal []
+  (let [form @(subscribe [:community.create/form :financial])]
     [ant/modal
-     {:title     "Add Financial Information"
+     {:title     (str "Add Financial Information for " (:name form))
       :width     "60%"
       :on-ok     #(dispatch [:community/add-financial-info! (:id form) form])
-      :visible   @(subscribe [:modal/visible? :communities.teller.create/modal])
-      :on-cancel #(dispatch [:modal/hide :communities.teller.create/modal])}
+      :visible   @(subscribe [:modal/visible? :community.add-financial/modal])
+      :on-cancel #(dispatch [:community.add-financial/cancel])}
      [add-financial-info-form form]]))
 
 
@@ -217,7 +217,7 @@
    [:div.card-image
     [:figure.image
      [:a {:href href}
-      [:img {:src    cover-image-url
+      [:img {:src   cover-image-url
              :style {:height "196px"}}]]]]
 
    [:div.card-content
@@ -227,10 +227,13 @@
       "Details "
       [ant/icon {:type "right"}]]
      (when-not has-financials
-       [:a.text-red.align-right
-        {:on-click #(dispatch [:communities.create.form.teller/show id])}
-        "Add financials "
-        [ant/icon {:type "right"}]])]]])
+       [ant/button
+        {:style    {:float "right"}
+         :size     :small
+         :icon     "plus"
+         :on-click #(dispatch [:community.add-financial/show {:id   id
+                                                              :name name}])}
+        "Add financial information"])]]])
 
 
 (defn- unit-list-item
@@ -474,7 +477,7 @@
 (defmethod content/view :properties/list [_]
   (let [is-loading (subscribe [:ui/loading? :properties/query])]
     [:div
-     [create-teller-community-modal]
+     [add-financial-info-modal]
      [create-community-modal]
      (typography/view-header "Communities" "Manage and view our communities.")
      (if @is-loading
