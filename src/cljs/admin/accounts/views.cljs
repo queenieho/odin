@@ -497,11 +497,11 @@
    (if (:editing @form)
      (let [license-id    (get-in account [:active_license :id])
            transition-id (get-in account [:active_license :transition :id])]
-      [ant/button
-       {:type     :primary
-        :size     :large
-        :on-click #(dispatch [:accounts.entry/update-move-out! license-id transition-id @form])}
-       "Update Move-out Data"])
+       [ant/button
+        {:type     :primary
+         :size     :large
+         :on-click #(dispatch [:accounts.entry/update-move-out! license-id transition-id @form])}
+        "Update Move-out Data"])
      [ant/button
       {:type     :danger
        :size     :large
@@ -614,6 +614,87 @@
        [move-out-form form])]))
 
 
+(defn renewal-confirmation
+  [account form]
+  (let [license-id (get-in account [:active_license :id])]
+    (ant/modal-confirm
+     {:title   "Confirm License Renewal"
+      :content "Are you sure you want to continue? This action can't easily be undone and will send an email notification to the member."
+      :on-ok   #(dispatch [:accounts.entry/renew-license! license-id @form])
+      :ok-type :primary
+      :ok-text "Yes - Confirm License Renewal"})))
+
+
+(defn renewal-modal-footer
+  [account form]
+  [:div
+   [ant/button
+    {:size     :large
+     :on-click #(dispatch [:modal/hide db/renewal-modal-key])}
+    "Cancel"]
+   (if (:editing @form)
+     (let [license-id    (get-in account [:active_license :id])
+           transition-id (get-in account [:active_license :transition :id])]
+       [ant/button
+        {:type     :primary
+         :size     :large
+         :on-click #(dispatch [:accounts.entry/update-move-out! license-id transition-id @form])}
+        "Update Renewal Info"])
+     [ant/button
+      {:type     :danger
+       :size     :large
+       :disabled false ;; TODO - disable when no term?
+       :on-click #(renewal-confirmation account form)}
+      "Renew License"])])
+
+(def radio-style
+  {:display     "block"
+   :height      "30px"
+   :line-height "30px"})
+
+(defn renewal-modal
+  [account]
+  (let [form (subscribe [:accounts.entry.transition/form-data])]
+    [ant/modal
+     {:title       (str "Renewal: " (:name account))
+      :visible     @(subscribe [:modal/visible? db/renewal-modal-key])
+      :after-close #(dispatch [:accounts.entry.transition/clear])
+      :on-cancel   #(dispatch [:modal/hide db/renewal-modal-key])
+      :footer      (r/as-element [renewal-modal-footer account form])}
+     [move-out-form-item
+      [:p.bold "What will the member's new license term be?"]
+      [ant/select
+       {:style     {:width "50%"}
+        :value     (:term-length @form)
+        :on-change #(dispatch [:accounts.entry.transition/update :term-length %])}
+       [ant/select-option {:value "3"} "3 months"]
+       [ant/select-option {:value "6"} "6 months"]
+       [ant/select-option {:value "12"} "12 months"]]]
+
+     [move-out-form-item
+      [:p.bold "Will the member's monthly rate change?"
+       [ant/tooltip
+        {:placement "right"
+         :title     (r/as-element
+                     [:div "Please consult with the Operations team before changing the member's rate."])}
+        [ant/icon {:type  "question-circle"
+                   :style {:margin-left 10}}]]]
+      [ant/radio-group
+       {:on-change     #(dispatch [:accounts.entry.transition/update :rate-changing (.. % -target -value)])
+        :default-value false}
+       [ant/radio (assoc {:value false} :style radio-style) "No - it will not change"]
+       [ant/radio (assoc {:value true} :style radio-style) "Yes - it will change to..."
+        (when (true? (:rate-changing @form))
+          [ant/input-number {:style       {:width       "50%"
+                                           :margin-left 10}
+                             :size        :small
+                             :min         0
+                             :precision   2
+                             :formatter   #(str "$"%)
+                             :placeholder "new rate..."
+                             :value       (:new-rate @form) ;;TODO - populate new-rate with existing rate on form load
+                             :on-change   #(dispatch [:accounts.entry.transition/update :new-rate %])}])]]]]))
+
 (defn membership-actions [account]
   (when (nil? (:transition (:active_license account)))
     [:div
@@ -622,10 +703,10 @@
       {:icon     "swap"
        :on-click #(dispatch [:accounts.entry.reassign/show account])}
       "Reassign"]
-     #_[ant/button
-        {:icon     "retweet"
-         :on-click #(js/console.log "coming soon")}
-        "Renew License"]
+     [ant/button
+      {:icon     "retweet"
+       :on-click #(dispatch [:modal/show db/renewal-modal-key])}
+      "Renew License"]
      [ant/button
       {:icon     "home"
        :type     :danger
@@ -712,6 +793,7 @@
         orders     @(subscribe [:account/orders (:id account)])]
     [:div.columns
      [move-out-modal account]
+     [renewal-modal account]
      [:div.column
       [membership/license-summary license
        (when is-active {:content [membership-actions account]})]]

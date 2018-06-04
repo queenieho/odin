@@ -396,6 +396,15 @@
                  :on-failure [:graphql/failure k]}}))
 
 
+
+
+(reg-event-fx
+ :accounts.entry/renew-license!
+ [(path db/path)]
+ (fn [db [_ license-id form-data]]
+   (js/console.log "renewing license!" form-data)))
+
+
 (reg-event-fx
  ::move-out-success
  [(path db/path)]

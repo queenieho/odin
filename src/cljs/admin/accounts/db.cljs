@@ -16,6 +16,10 @@
   ::transition)
 
 
+(def renewal-modal-key
+  ::renewal)
+
+
 (def default-params
   {:selected-view "member"
    :sort-order    :asc
