@@ -458,7 +458,7 @@
         [ant/select
          {:style     {:width "100%"}
           :value     (str (:unit @form))
-          :on-change #(dispatch [:accounts.entry.reassign/select-unit % (:term license)])}
+          :on-change #(dispatch [:accounts.entry.reassign/select-unit % (:term license) :accounts.entry.reassign/update])}
          (doall
           (map-indexed
            #(with-meta (reassign-unit-option %2) {:key %1})
@@ -654,7 +654,8 @@
 
 (defn renewal-modal
   [account]
-  (let [form (subscribe [:accounts.entry.transition/form-data])]
+  (let [form    (subscribe [:accounts.entry.transition/form-data])
+        license (:active_license account)]
     [ant/modal
      {:title       (str "Renewal: " (:name account))
       :visible     @(subscribe [:modal/visible? db/renewal-modal-key])
@@ -665,8 +666,8 @@
       [:p.bold "What will the member's new license term be?"]
       [ant/select
        {:style     {:width "50%"}
-        :value     (:term-length @form)
-        :on-change #(dispatch [:accounts.entry.transition/update :term-length %])}
+        :value     (:term @form)
+        :on-change #(dispatch [:accounts.entry.reassign/update-term license (int %)])}
        [ant/select-option {:value "3"} "3 months"]
        [ant/select-option {:value "6"} "6 months"]
        [ant/select-option {:value "12"} "12 months"]]]
@@ -680,8 +681,9 @@
         [ant/icon {:type  "question-circle"
                    :style {:margin-left 10}}]]]
       [ant/radio-group
-       {:on-change     #(dispatch [:accounts.entry.transition/update :rate-changing (.. % -target -value)])
-        :default-value false}
+       {:on-change #(dispatch [:accounts.entry.transition/update :rate-changing (.. % -target -value)])
+        :disabled  (nil? (:rate @form))
+        :value     (:rate-changing @form)}
        [ant/radio (assoc {:value false} :style radio-style) "No - it will not change"]
        [ant/radio (assoc {:value true} :style radio-style) "Yes - it will change to..."
         (when (true? (:rate-changing @form))
@@ -689,10 +691,9 @@
                                            :margin-left 10}
                              :size        :small
                              :min         0
-                             :precision   2
                              :formatter   #(str "$"%)
                              :placeholder "new rate..."
-                             :value       (:new-rate @form) ;;TODO - populate new-rate with existing rate on form load
+                             :value       (:rate @form)
                              :on-change   #(dispatch [:accounts.entry.transition/update :new-rate %])}])]]]]))
 
 (defn membership-actions [account]

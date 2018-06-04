@@ -267,33 +267,33 @@
  (fn [db [_ unit term]]
    (let [unit (tb/str->int unit)]
      {:dispatch-n [[:accounts.entry.reassign/update :unit unit]
-                   [:accounts.entry.reassign/fetch-rate unit term]]})))
+                   [:accounts.entry.reassign/fetch-rate unit term :accounts.entry.reassign/update]]})))
 
 
 (reg-event-fx
  :accounts.entry.reassign/fetch-rate
  [(path db/path)]
- (fn [_ [k unit-id term]]
+ (fn [_ [k unit-id term on-success]]
    {:dispatch [:ui/loading k true]
     :graphql  {:query
                [[:unit {:id unit-id}
                  [[:rates [:rate :term]]
                   [:property [[:rates [:rate :term]]]]]]]
-               :on-success [::fetch-rate-success k term]
+               :on-success [::fetch-rate-success k term on-success]
                :on-failure [:graphql/failure k]}}))
 
 
 (reg-event-fx
  ::fetch-rate-success
  [(path db/path)]
- (fn [_ [_ k term response]]
+ (fn [_ [_ k term on-success response]]
    (let [urates (get-in response [:data :unit :rates])
          prates (get-in response [:data :unit :property :rates])
          rate   (->> [urates prates]
                      (map (comp :rate (partial tb/find-by (comp #{term} :term)))) ; oh my
                      (apply max))]
      {:dispatch-n [[:ui/loading k false]
-                   [:accounts.entry.reassign/update :rate rate]]})))
+                   [on-success :rate rate]]})))
 
 
 (reg-event-fx
@@ -397,7 +397,6 @@
 
 
 
-
 (reg-event-fx
  :accounts.entry/renew-license!
  [(path db/path)]
@@ -440,6 +439,15 @@
      {:dispatch-n [[:ui/loading k false]
                    [:notify/success "Move-out data updated!"]
                    [:account/fetch account-id]]})))
+
+
+(reg-event-fx
+ :accounts.entry.reassign/update-term
+ [(path db/path)]
+ (fn [db [k license term]]
+   {:dispatch-n [[:accounts.entry.transition/update :term term]
+                 [:accounts.entry.reassign/fetch-rate (get-in license [:unit :id]) term :accounts.entry.transition/update]]}))
+
 
 
 ;; payment ======================================================================
