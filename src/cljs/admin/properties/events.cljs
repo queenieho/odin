@@ -82,26 +82,11 @@
                  [:community.create.form.teller/update [:id] id]]}))
 
 
-;; TODO merge all of the form updates into one event handler
 (reg-event-db
  :community.create.form/update
  [(path db/path)]
- (fn [db [_ key value]]
-   (assoc-in db [:form :community key] value)))
-
-
-(reg-event-db
- :community.create.form.address/update
- [(path db/path)]
- (fn [db [_ key value]]
-   (assoc-in db [:form :community :address key] value)))
-
-
-(reg-event-db
- :community.create.form.license-price/update
- [(path db/path)]
- (fn [db [_ key value]]
-   (assoc-in db [:form :community :license-prices key] value)))
+ (fn [db [_ keys value]]
+   (assoc-in db (apply conj [:form :community] keys) value)))
 
 
 (reg-event-db
@@ -182,37 +167,45 @@
    (assoc-in db [:new-community :cover-image] (files->form-data file))))
 
 
+;; can we use graphql errors here?
 (reg-event-fx
  :communities.create/upload-cover-photo!
  [(path db/path)]
  (fn [{db :db} [_ k response]]
    (let [community-id (get-in response [:data :community_create :id])]
-     (.log js/console "created" community-id)
      {:http-xhrio {:uri             (str "/api/communities/" community-id "/cover-photo")
                    :body            (get-in db [:new-community :cover-image])
                    :method          :post
                    :format          (ajax/json-request-format)
                    :response-format (ajax/json-response-format {:keywords? true})
-                   :on-success      [::upload-cover-success]
-                   :on-failure      [::upload-cover-failure]}})))
+                   :on-success      [::community-create-success k community-id]
+                   :on-failure      [:graphql/failure k]}})))
 
 
 (reg-event-fx
  ::community-create-success
  [(path db/path)]
- (fn [{db :db} [_ k response]]
-   (let [community-id (get-in response [:data :community_create :id])]
-     (.log js/console "i created something!!" community-id)
-     {:dispatch-n [[:properties/query]
-                   [:ui/loading k false]
-                   [:community.create.form/clear]]})))
+ (fn [{db :db} [_ k community-id response]]
+   {:dispatch-n [[:property/fetch community-id]
+                 [:ui/loading k false]
+                 [:community.create.form/clear]
+                 [:modal/hide :communities.create/modal]]}))
+
+
+(reg-event-fx
+ :community.create/cancel
+ [(path db/path)]
+ (fn [{db :db} _]
+   {:dispatch-n [[:community.create.form/clear]
+                 [:modal/hide :communities.create/modal]]}))
 
 
 (reg-event-db
  :community.create.form/clear
  [(path db/path)]
  (fn [db _]
-   (update-in db [:form] dissoc :community)))
+   (-> (update-in db [:form] dissoc :community)
+       (dissoc :new-community))))
 
 
 (reg-event-fx
@@ -220,11 +213,6 @@
  (fn [_ _]
    (js/console.log "we succeeded")))
 
-
-(reg-event-fx
- ::upload-cover-failure
- (fn [_ _]
-   (js/console.log "we failured")))
 
 
 ;; ==============================================================================

@@ -35,49 +35,44 @@
 
 
 (defn address-input [{:keys [address]}]
-  (let [on-change #(dispatch [:community.create.form.address/update %1 %2])]
+  (let [on-change #(dispatch [:community.create.form/update %1 %2])]
     [:div
-     [:p.fs2.bold "Address"]
      [ant/form-item
+      {:label "Community Address"}
       [ant/input
        {:placeholder "Line 1"
         :value       (:lines address)
-        :on-change   #(on-change :lines (.. % -target -value))}]]
-     #_[ant/form-item
-        [ant/input
-         {:placeholder "Line 2"
-          :value       (:line-2 address)
-          :on-change   #(on-change :line-1 (.. % -target -value))}]]
+        :on-change   #(on-change [:address :lines] (.. % -target -value))}]]
      [:div.columns
       [:div.column.is-6
        [ant/form-item
         [ant/input
          {:placeholder "City/town"
           :value       (:locality address)
-          :on-change   #(on-change :locality (.. % -target -value))}]]]
+          :on-change   #(on-change [:address :locality] (.. % -target -value))}]]]
       [:div.column.is-6
        [ant/form-item
         [ant/input
          {:placeholder "State/province/region"
           :value       (:region address)
-          :on-change   #(on-change :region (.. % -target -value))}]]]]
+          :on-change   #(on-change [:address :region] (.. % -target -value))}]]]]
      [:div.columns
       [:div.column.is-6
        [ant/form-item
         [ant/input
          {:placeholder "Country"
           :value       (:country address)
-          :on-change   #(on-change :country (.. % -target -value))}]]]
+          :on-change   #(on-change [:address :country] (.. % -target -value))}]]]
       [:div.column.is-6
        [ant/form-item
         [ant/input
          {:placeholder "Postal code"
           :value       (:postal-code address)
-          :on-change   #(on-change :postal-code (.. % -target -value))}]]]]]))
+          :on-change   #(on-change [:address :postal-code] (.. % -target -value))}]]]]]))
 
 
 (defn license-prices-input [{:keys [license-prices]}]
-  (let [on-change #(dispatch [:community.create.form.license-price/update %1 %2])]
+  (let [on-change #(dispatch [:community.create.form/update %1 %2])]
     [:div.columns
      (doall
       (for [term [3 6 12]]
@@ -87,7 +82,7 @@
           {:label (str term " months")}
           [ant/input-number
            {:value     (get license-prices term)
-            :on-change #(on-change term %)}]]]))]))
+            :on-change #(on-change [:license-prices term] %)}]]]))]))
 
 
 (defn create-community-modal []
@@ -98,7 +93,7 @@
       :width     "60%"
       :visible   @(subscribe [:modal/visible? :communities.create/modal])
       :on-ok     #(dispatch [:community/create!])
-      :on-cancel #(dispatch [:modal/hide :communities.create/modal])}
+      :on-cancel #(dispatch [:community.create/cancel])}
 
      [ant/card
       {:title "General information"}
@@ -109,14 +104,14 @@
          [ant/input
           {:placeholder "Community name"
            :value       (:name form)
-           :on-change   #(on-change :name (.. % -target -value))}]]]
+           :on-change   #(on-change [:name] (.. % -target -value))}]]]
        [:div.column.is-6
         [ant/form-item
          {:label "Code"}
          [ant/input
           {:placeholder "ex. 52-gilbert"
            :value       (:code form)
-           :on-change   #(on-change :code (.. % -target -value))}]]]]
+           :on-change   #(on-change [:code] (.. % -target -value))}]]]]
       [address-input form]
       [:hr]
       [:div.columns
@@ -125,7 +120,7 @@
          {:label "Number of units"}
          [ant/input-number
           {:value     (:units form)
-           :on-change #(on-change :units %)}]]]
+           :on-change #(on-change [:units] %)}]]]
        [:div.column.is-6
         [ant/form-item
          {:label "When will it be available?"}
@@ -133,7 +128,7 @@
           ;; when i delete the date i get NaN
           {:value     (when (:date form)
                         (time/iso->moment (:date form)))
-           :on-change #(on-change :date (time/moment->iso %))}]]]]]
+           :on-change #(on-change [:date] (time/moment->iso %))}]]]]]
 
      [ant/card
       {:title "License prices"}
@@ -147,51 +142,6 @@
         {:type      "file"
          :multiple  true
          :on-change #(dispatch [:communities.create/cover-image-picked (.. % -currentTarget -files)])}]]]]))
-
-
-(def teller-form [{:title  "Business Information"
-                   :fields [{:label       "Business name"
-                             :placeholder "ex. 52 Gilbert LLC"
-                             :type        :text
-                             :keys        [:business-name]}
-                            {:label       "Tax id"
-                             :placeholder "tax id"
-                             :type        :text
-                             :keys        [:tax-id]}]}
-                  {:title  "Account Holder Information"
-                   :fields [{:label       "First Name"
-                             :placeholder "first name"
-                             :type        :text
-                             :keys        [:first-name]}
-                            {:label       "Last Name"
-                             :placeholder "last name"
-                             :type        :text
-                             :keys        [:last-name]}
-                            {:label       "Last 4 SSN"
-                             :placeholder "0000"
-                             :type        :text
-                             :keys        [:ssn]}
-                            {:label "DOB"
-                             :type  :date
-                             :keys  [:dob]}]}
-                  {:title  "Deposit Account Information"
-                   :fields [{:label       "Account number"
-                             :placeholder "000000000000"
-                             :type        :text
-                             :keys        [:deposit :account-number]}
-                            {:label       "Routing number"
-                             :placeholder "000000000"
-                             :type        :text
-                             :keys        [:deposit :routing-number]}]}
-                  {:title  "Ops Account Information"
-                   :fields [{:label       "Account number"
-                             :placeholder "000000000000"
-                             :type        :text
-                             :keys        [:ops :account-number]}
-                            {:label       "Routing number"
-                             :placeholder "000000000"
-                             :type        :text
-                             :keys        [:ops :routing-number]}]}])
 
 
 (defmulti form-field (fn [field form on-change] (:type field)))
@@ -237,25 +187,24 @@
     (partition 2 2 nil fields))])
 
 
+(defn add-financial-info-form [form]
+  (let [empty-form @(subscribe [:financial/form])
+        on-change  #(dispatch [:community.create.form.teller/update %1 %2])]
+    [:div
+     (map-indexed
+      #(with-meta [form-section %2 form on-change] {:key %1})
+      empty-form)]))
+
+
 (defn create-teller-community-modal []
-  (let [form      @(subscribe [:community.create/form :teller])
-        on-change #(dispatch [:community.create.form.teller/update %1 %2])
-        params    {:deposit       {:account_number "000123456789"
-                                   :routing_number "110000000"}
-                   :ops           {:account_number "000123456789"
-                                   :routing_number "110000000"}
-                   :business_name "Some name"
-                   :tax_id        "4984f61314"}]
+  (let [form       @(subscribe [:community.create/form :teller])]
     [ant/modal
-     {:title     "Create New Teller Property"
+     {:title     "Add Financial Information"
       :width     "60%"
       :on-ok     #(dispatch [:community/add-financial-info! (:id form) form])
       :visible   @(subscribe [:modal/visible? :communities.teller.create/modal])
       :on-cancel #(dispatch [:modal/hide :communities.teller.create/modal])}
-
-     (map-indexed
-      #(with-meta [form-section %2 form on-change] {:key %1})
-      teller-form)]))
+     [add-financial-info-form form]]))
 
 
 (defn property-card
@@ -318,7 +267,7 @@
     :or   {page-size 10, active false}}]
   (let [state (r/atom {:current 1 :q ""})]
     (fn [{:keys [units page-size active on-click]
-         :or   {page-size 10, active false}}]
+          :or   {page-size 10, active false}}]
       (let [{:keys [current q]} @state
             units'               (->> (drop (* (dec current) page-size) units)
                                       (take (* current page-size))
