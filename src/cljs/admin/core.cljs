@@ -72,7 +72,7 @@
      [inotes/create-note-modal
       {:is-creating @(subscribe [:note/showing?])
        :form        @(subscribe [:note/form])
-       :accounts    @(subscribe [:accounts])
+       :members     @(subscribe [:note.mentions.options/members])
        :properties  @(subscribe [:properties/list])
        :on-cancel   #(dispatch [:note.create/cancel])
        :on-submit   #(dispatch [:note.create/create-note! %])

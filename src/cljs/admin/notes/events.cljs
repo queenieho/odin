@@ -19,6 +19,7 @@
  [(path db/path)]
  (fn [{db :db} _]
    {:dispatch-n [[:accounts/query {}]
+                 [:properties/query]
                  [:note.create/toggle]]}))
 
 

@@ -138,7 +138,7 @@
     "Create"]])
 
 
-(defn create-note-modal [{:keys [is-creating form accounts properties
+(defn create-note-modal [{:keys [is-creating form members properties
                                  on-cancel on-change on-submit]}]
   [ant/modal
    {:title     "Create a note"
@@ -153,13 +153,24 @@
       :value     (mapv str (:refs form))
       :on-change #(let [ids (mapv tb/str->int (js->clj %))]
                     (on-change :refs ids))}
-     (map
-      (fn [{:keys [name id]}]
-        [ant/select-option
-         {:value (str id)
-          :key   id}
-         name])
-      accounts)]]
+     [ant/select-opt-group
+      {:label "Members"}
+      (map
+       (fn [{:keys [name id]}]
+         [ant/select-option
+          {:value (str id)
+           :key   id}
+          name])
+       members)]
+     [ant/select-opt-group
+      {:label "Communities"}
+      (map
+       (fn [{:keys [name id]}]
+         [ant/select-option
+          {:value (str id)
+           :key   id}
+          name])
+       properties)]]]
    [ant/form-item
     {:label "Subject"}
     [ant/input

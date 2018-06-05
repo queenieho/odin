@@ -69,3 +69,10 @@
  :note/is-author
  (fn [db [_ author-id]]
    (= author-id (get-in db [:account :id]))))
+
+
+(reg-sub
+ :note.mentions.options/members
+ :<- [:accounts]
+ (fn [db _]
+   (filter #(= :member (:role %)) db)))
