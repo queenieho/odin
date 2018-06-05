@@ -158,6 +158,10 @@
     "Create"]])
 
 
+(defn- get-name [opt]
+  (goog.object/getValueByKeys opt "props" "children"))
+
+
 (defn create-note-modal [{:keys [is-creating form members properties loading
                                  on-cancel on-change on-submit can-submit]}]
   [ant/modal
@@ -169,11 +173,14 @@
    [ant/form-item
     {:label "Mentions"}
     [ant/select
-     {:style     {:width "100%"}
-      :mode      "multiple"
-      :value     (mapv str (:refs form))
-      :on-change #(let [ids (mapv tb/str->int (js->clj %))]
-                    (on-change :refs ids))}
+     {:style         {:width "100%"}
+      :mode          "multiple"
+      :value         (mapv str (:refs form))
+      :filter-option (fn [val opt]
+                       (let [q (string/lower-case (get-name opt))]
+                         (string/includes? q (string/lower-case val))))
+      :on-change     #(let [ids (mapv tb/str->int (js->clj %))]
+                        (on-change :refs ids))}
      [ant/select-opt-group
       {:label "Members"}
       (map
