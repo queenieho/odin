@@ -70,7 +70,9 @@
   (let [route (subscribe [:route/current])]
     [layout/layout
      [inotes/create-note-modal
-      {:is-creating @(subscribe [:note/showing?])
+      {:loading     @(subscribe [:ui/loading? :note.create/create-note!])
+       :can-submit  @(subscribe [:note/can-submit?])
+       :is-creating @(subscribe [:note/showing?])
        :form        @(subscribe [:note/form])
        :members     @(subscribe [:note.mentions.options/members])
        :properties  @(subscribe [:properties/list])

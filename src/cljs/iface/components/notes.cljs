@@ -143,7 +143,7 @@
    "Create note"])
 
 
-(defn create-note-footer [form on-cancel on-submit]
+(defn create-note-footer [form on-cancel on-submit can-submit loading]
   [:div
    [ant/button
     {:size     :large
@@ -152,17 +152,19 @@
    [ant/button
     {:type     :primary
      :size     :large
+     :loading  loading
+     :disabled can-submit
      :on-click #(on-submit form)}
     "Create"]])
 
 
-(defn create-note-modal [{:keys [is-creating form members properties
-                                 on-cancel on-change on-submit]}]
+(defn create-note-modal [{:keys [is-creating form members properties loading
+                                 on-cancel on-change on-submit can-submit]}]
   [ant/modal
    {:title     "Create a note"
     :visible   is-creating
     :on-cancel on-cancel
-    :footer    (r/as-element [create-note-footer form on-cancel on-submit])}
+    :footer    (r/as-element [create-note-footer form on-cancel on-submit can-submit loading])}
 
    [ant/form-item
     {:label "Mentions"}

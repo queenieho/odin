@@ -24,6 +24,13 @@
    (:form db)))
 
 
+(reg-sub
+ :note/can-submit?
+ :<- [:note/form]
+ (fn [{:keys [refs subject content]} _]
+   (not (and (not-empty refs) (some? subject) (some? content)))))
+
+
 (defn- matching-id [id refs]
   (some #(= id (:id %)) refs))
 
