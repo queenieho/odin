@@ -2,7 +2,8 @@
   (:require [antizer.reagent :as ant]
             [iface.utils.formatters :as format]
             [reagent.core :as r]
-            [toolbelt.core :as tb]))
+            [toolbelt.core :as tb]
+            [clojure.string :as string]))
 
 
 ;; ==============================================================================
@@ -145,6 +146,7 @@
     :visible   is-creating
     :on-cancel on-cancel
     :footer    (r/as-element [create-note-footer form on-cancel on-submit])}
+
    [ant/form-item
     {:label "Mentions"}
     [ant/select

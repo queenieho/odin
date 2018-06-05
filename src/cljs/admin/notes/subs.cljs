@@ -24,8 +24,8 @@
    (:form db)))
 
 
-(defn- matching-account [account-id refs]
-  (some #(= account-id (:id %)) refs))
+(defn- matching-id [id refs]
+  (some #(= id (:id %)) refs))
 
 
 (reg-sub
@@ -33,7 +33,16 @@
  :<- [db/path]
  (fn [db [_ account-id]]
    (->> (:notes db)
-        (filter #(matching-account account-id (:refs %)))
+        (filter #(matching-id account-id (:refs %)))
+        (sort-by :created >))))
+
+
+(reg-sub
+ :notes/by-community
+ :<- [db/path]
+ (fn [db [_ community-id]]
+   (->> (:notes db)
+        (filter #(matching-id community-id (:refs %)))
         (sort-by :created >))))
 
 
