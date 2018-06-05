@@ -3,7 +3,8 @@
             [iface.utils.formatters :as format]
             [reagent.core :as r]
             [toolbelt.core :as tb]
-            [clojure.string :as string]))
+            [clojure.string :as string]
+            [admin.routes :as routes]))
 
 
 ;; ==============================================================================
@@ -20,10 +21,26 @@
             (str " (updated at " (format/date-time-short d) ")")))]))
 
 
+(defn- get-route [type id]
+  (case type
+    :account   (routes/path-for :accounts/entry :account-id id)
+    :property  (routes/path-for :properties/entry :property-id id)
+    :otherwise nil))
+
+
 (defn- note-mentions [refs]
-  (let [mentions (apply str (interpose ", " (map #(:name %) refs)))]
+  (let [{:keys [name id type]} (last refs)]
+    [:span
     [:p.fs1
-     [:b "Mentions: "] mentions]))
+     [:b "Mentions: "]
+     (map
+      (fn [{:keys [name id type]}]
+        ^{:key id}
+        [:span
+         [:a {:href (get-route type id)} name]
+         ", "])
+      (butlast refs))
+     [:a {:href (get-route type id)} name]]]))
 
 
 (defn note-action [props text]
