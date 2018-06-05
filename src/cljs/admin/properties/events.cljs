@@ -79,7 +79,8 @@
 
 (defmethod routes/dispatches :properties [{:keys [params]}]
   [[:property/fetch (tb/str->int (:property-id params))
-    [::set-property-rates (tb/str->int (:property-id params))]]])
+    [::set-property-rates (tb/str->int (:property-id params))]]
+   [:notes/fetch {:refs (tb/str->int (:property-id params))}]])
 
 
 (defn update-rate [term new-rate rates]
