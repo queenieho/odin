@@ -17,7 +17,7 @@
             [day8.re-frame.http-fx]
             [goog.dom :as gdom]
             [iface.components.layout :as layout]
-            [iface.components.notes :as notes]
+            [iface.components.notes :as inotes]
             [iface.modules.graphql :as graphql]
             [iface.modules.loading :as loading]
             [iface.modules.modal]
@@ -45,16 +45,6 @@
 ;; ==============================================================================
 
 
-(defn- create-note-button []
-  [ant/button
-   {:style    {:margin "auto"}
-    :type     :primary
-    :size     :large
-    :icon     :plus
-    :on-click #(dispatch [:note.create/toggle])}
-   "Create note"])
-
-
 (defn- nav-user-menu []
   [ant/menu
    [ant/menu-item {:key "profile-link"}
@@ -72,13 +62,14 @@
                     :on-menu-click       #(dispatch [:layout.mobile-menu/toggle])}
      [layout/navbar-menu-items @menu-items @active]
      [layout/navbar-menu-profile
-      (:name @account) [nav-user-menu] [create-note-button]]]))
+      (:name @account) [nav-user-menu] [inotes/create-note-button
+                                        {:on-click #(dispatch [:note.create/open])}]]]))
 
 
 (defn layout []
   (let [route (subscribe [:route/current])]
     [layout/layout
-     [notes/create-note-modal
+     [inotes/create-note-modal
       {:is-creating @(subscribe [:note/showing?])
        :form        @(subscribe [:note/form])
        :accounts    @(subscribe [:accounts])

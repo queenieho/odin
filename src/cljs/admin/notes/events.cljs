@@ -18,7 +18,8 @@
  :note.create/open
  [(path db/path)]
  (fn [{db :db} _]
-   {:dispatch-n [[:notes.create/toggle]]}))
+   {:dispatch-n [[:accounts/query {}]
+                 [:note.create/toggle]]}))
 
 
 (reg-event-fx
