@@ -656,7 +656,6 @@
   [account]
   (let [form    (subscribe [:accounts.entry.transition/form-data])
         license (:active_license account)]
-    (js/console.log license)
     [ant/modal
      {:title       (str "Renewal: " (:name account))
       :visible     @(subscribe [:modal/visible? db/renewal-modal-key])
@@ -695,7 +694,7 @@
                              :formatter   #(str "$"%)
                              :placeholder "new rate..."
                              :value       (:rate @form)
-                             :on-change   #(dispatch [:accounts.entry.transition/update :new-rate %])}])]]]]))
+                             :on-change   #(dispatch [:accounts.entry.transition/update :rate %])}])]]]]))
 
 (defn membership-actions [account]
   (when (nil? (:transition (:active_license account)))
