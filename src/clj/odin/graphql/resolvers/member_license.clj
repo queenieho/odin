@@ -181,8 +181,6 @@
                                                :deposit-refund deposit_refund
                                                :new-license (when (some? new_license_params)
                                                               new-license)))]
-    (timbre/info "\n\n----------- look at this shiny new license")
-    (clojure.pprint/pprint new-license)
     @(d/transact conn [transition
                        new-license
                        (events/transition-created transition)
