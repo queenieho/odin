@@ -173,7 +173,8 @@
   [{:keys [conn requester] :as ctx} {{:keys [current_license type date asana_task deposit_refund new_license_params]} :params} _]
   (let [type       (keyword (string/replace (name type) "_" "-"))
         license    (d/entity (d/db conn) current_license)
-        new-license (create-pending-license-tx conn new_license_params)
+        new-license (when (some? new_license_params)
+                      (create-pending-license-tx conn new_license_params))
         transition (license-transition/create current_license type date
                                               (tb/assoc-when
                                                {}
@@ -181,10 +182,11 @@
                                                :deposit-refund deposit_refund
                                                :new-license (when (some? new_license_params)
                                                               new-license)))]
-    @(d/transact conn [transition
-                       new-license
-                       (events/transition-created transition)
-                       (source/create requester)])
+    @(d/transact conn (tb/conj-when
+                       [transition
+                        (events/transition-created transition)
+                        (source/create requester)]
+                       new-license))
     (d/entity (d/db conn) current_license)))
 
 
