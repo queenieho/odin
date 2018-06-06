@@ -74,7 +74,7 @@
                                     [:pet [:type :breed :weight :sterile :vaccines :bitten :demeanor :daytime_care]]]]
                      [:active_license (conj license-selectors
                                             [:transition [:id :type :deposit_refund :room_walkthrough_doc :asana_task :date
-                                                          [:new_license [:rate :term  :starts :ends
+                                                          [:new_license [:id :rate :term  :starts :ends
                                                                          [:unit [:name :id]]]]]])]
                      ;; TODO: Move to separate query
                      [:licenses license-selectors]]]
