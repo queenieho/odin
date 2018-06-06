@@ -181,3 +181,18 @@
 (defn log-file
   [config]
   (get-in config [:log :file]))
+
+
+;; ==============================================================================
+;; AWS ==========================================================================
+;; ==============================================================================
+
+
+(defn aws-access-key
+  [config]
+  (get-in config [:secrets :aws :access-key]))
+
+
+(defn aws-secret-key
+  [config]
+  (get-in config [:secrets :aws :secret-key]))

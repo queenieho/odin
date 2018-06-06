@@ -12,7 +12,7 @@
 
 
 (defn ->db [req]
-  (d/db (get-in req [:deps :conn])))
+  (d/db (->conn req)))
 
 
 (defn ->stripe [req]

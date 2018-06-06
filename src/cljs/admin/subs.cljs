@@ -6,6 +6,7 @@
             [admin.profile.subs]
             [admin.properties.subs]
             [admin.services.subs]
+            [admin.overview.subs]
             [re-frame.core :refer [reg-sub]]
             [toolbelt.core :as tb]))
 

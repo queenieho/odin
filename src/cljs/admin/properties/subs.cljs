@@ -1,5 +1,6 @@
 (ns admin.properties.subs
   (:require [admin.properties.db :as db]
+            [clojure.string :as string]
             [iface.utils.norms :as norms]
             [re-frame.core :refer [reg-sub]]
             [toolbelt.core :as tb]))
@@ -16,7 +17,8 @@
  :properties/list
  :<- [db/path]
  (fn [db _]
-   (norms/denormalize db :properties/norms)))
+   (->> (norms/denormalize db :properties/norms)
+        (sort-by #(string/lower-case (:name %))))))
 
 
 (reg-sub
@@ -39,7 +41,7 @@
  :property/rates
  :<- [db/path]
  (fn [db [_ property-id]]
-   (get-in db [:property-rates property-id])))
+   (sort-by :term (get-in db [:property-rates property-id]))))
 
 
 (reg-sub
@@ -55,7 +57,7 @@
  :property.unit/rates
  :<- [db/path]
  (fn [db [_ property-id unit-id]]
-   (get-in db [:unit-rates unit-id])))
+   (sort-by :term (get-in db [:unit-rates unit-id]))))
 
 
 (reg-sub
@@ -65,3 +67,17 @@
    (let [unit (db/unit db property-id unit-id)]
      (not= (set (get-in db [:unit-rates unit-id]))
            (set (db/unit-rates unit))))))
+
+
+(reg-sub
+ :community.create/form
+ :<- [db/path]
+ (fn [db [_ form-key]]
+   (get-in db [:form form-key])))
+
+
+(reg-sub
+ :financial/form
+ :<- [db/path]
+ (fn [db [_]]
+   (:financial-form db)))

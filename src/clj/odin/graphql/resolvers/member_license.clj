@@ -101,12 +101,9 @@
                                                           :payment-types [:payment.type/rent]})
                              (tb/find-by tsubscription/active?))
           old-plan      (tsubscription/plan old-sub)
-          source        (tsubscription/source old-sub)
           new-plan      (tplan/create! teller (plans-utils/plan-name teller license-after) :payment.type/rent rate)]
-      (tsubscription/cancel! old-sub)
+      (tsubscription/upgrade! old-sub new-plan)
       (tplan/deactivate! old-plan)
-      (tsubscription/subscribe! customer new-plan {:source   source
-                                                   :start-on (autopay-utils/autopay-start customer)})
       (d/entity (d/db conn) license))
     (catch Throwable t
       (timbre/error t ::reassign-room {:license license :unit unit :rate rate})

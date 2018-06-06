@@ -1,20 +1,20 @@
 (ns odin.routes.api
-  (:require [blueprints.models.account :as account]
+  (:require [amazonica.aws.s3 :as s3]
+            [blueprints.models.account :as account]
+            [blueprints.models.property :as property]
             [buddy.auth.accessrules :refer [restrict]]
-            [customs.access :as access]
             [com.walmartlabs.lacinia :refer [execute]]
-            [compojure.core :as compojure :refer [defroutes GET DELETE POST]]
+            [compojure.core :as compojure :refer [defroutes GET POST]]
+            [customs.access :as access]
+            [datomic.api :as d]
+            [odin.aws :as aws]
             [odin.graphql :as graph]
             [odin.graphql.resolvers.utils :as gqlu]
             [odin.routes.kami :as kami]
             [odin.routes.onboarding :as onboarding]
             [odin.routes.util :refer :all]
             [ring.util.response :as response]
-            [taoensso.timbre :as timbre]
-            [toolbelt.core :as tb]
-            [datomic.api :as d]
-            [customs.access :as access]
-            [blueprints.models.order :as order]))
+            [toolbelt.core :as tb]))
 
 ;; =============================================================================
 ;; GraphQL
@@ -101,6 +101,52 @@
              :account account))))))
 
 
+;; upload cover photo ===========================================================
+
+
+(defn- community-exists?
+  [db community-id]
+  (some?
+   (d/q '[:find ?name .
+          :in $ ?c
+          :where
+          [?c :property/name ?name]]
+        db community-id)))
+
+
+(def ^:private images-bucket-name
+  "starcity-images")
+
+
+(defn- cover-image-url [creds key]
+  (format "https://s3-%s.amazonaws.com/%s/%s" (:endpoint creds) images-bucket-name key))
+
+
+(defn upload-cover-photo!
+  [community-id]
+  (fn [{:keys [params] :as req}]
+    (let [content-type (get-in req [:headers "accept"] "application/transit+json")]
+      (cond
+        (not (community-exists? (->db req) community-id))
+        (-> (response/response {:message "Invalid community specified."})
+            (response/status 404)
+            (response/content-type content-type))
+
+        :otherwise
+        (let [{:keys [filename tempfile]} (first (:files params))
+              key                         (str "communities/covers/" community-id "/" filename)]
+          (s3/put-object aws/creds
+                         :bucket-name images-bucket-name
+                         :key key
+                         :file tempfile)
+          @(d/transact (->conn req) [[:db/add
+                                      community-id
+                                      :property/cover-image-url
+                                      (cover-image-url aws/creds key)]])
+          (-> (response/response {:message "ok"})
+              (response/content-type content-type)))))))
+
+
 ;; =============================================================================
 ;; Routes
 ;; =============================================================================
@@ -128,6 +174,11 @@
          (let [db (d/db (->conn req))]
            (-> (response/response {:data {:history (history db (tb/str->int entity-id))}})
                (response/content-type "application/transit+json")))))
+
+
+  (POST "/communities/:community-id/cover-photo" [community-id]
+        (-> (upload-cover-photo! (tb/str->int community-id))
+            (restrict {:handler (access/user-isa :account.role/admin)})))
 
 
   (compojure/context "/kami" [] kami/routes))

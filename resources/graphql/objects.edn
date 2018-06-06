@@ -413,7 +413,10 @@
                               :resolve :property/license-prices}
             :tours           {:type        (non-null Boolean)
                               :description "Is touring enabled?"
-                              :resolve     :property/tours}}}
+                              :resolve     :property/tours}
+            :has_financials  {:type        (non-null Boolean)
+                              :description "Does this community have financial information?"
+                              :resolve     :property/has-financials}}}
 
 
   :rate
