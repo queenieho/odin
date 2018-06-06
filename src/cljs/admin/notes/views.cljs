@@ -7,14 +7,6 @@
             [reagent.core :as r]))
 
 
-;; note UI moved here
-;; TODO query mentions properly from wherever you are
-;; TODO move things to iface components with
-;; parametrized subscriptions and event handlers
-;; TODO when creating note from an account detail page
-;; we should add the current account onto de mentions automatically
-
-
 (declare note-content)
 
 
@@ -24,22 +16,22 @@
     [:article.media
      [:div.media-content
       (if @is-editing
-        [inotes/note-edit-form {:note-id   id
-                                :form      @(subscribe [:note/edit-form])
-                                :on-change #(dispatch [:note.form/update %1 %2])
-                                :on-cancel #(dispatch [:note/edit-cancel %])
-                                :on-ok     #(dispatch [:note/update! %])}]
-        [inotes/note-body-text {:note   note
-                                :is-commenting is-commenting
-                                :on-comment    #(dispatch [:note.comment/show %])
-                                :on-edit       #(dispatch [:note/edit-note %])
-                                :on-delete     #(dispatch [:note/delete! %])
-                                :is-author     @(subscribe [:note/is-author (:id author)])}])
+        [inotes/edit-form {:note-id   id
+                           :form      @(subscribe [:note.edit/form])
+                           :on-change #(dispatch [:note.form/update %1 %2])
+                           :on-cancel #(dispatch [:note.edit/cancel %])
+                           :on-ok     #(dispatch [:note/update! %])}]
+        [inotes/body-text {:note          note
+                           :is-commenting is-commenting
+                           :on-comment    #(dispatch [:note.comment/show %])
+                           :on-edit       #(dispatch [:note/edit %])
+                           :on-delete     #(dispatch [:note/delete! %])
+                           :is-author     @(subscribe [:note/is-author? (:id author)])}])
       (when is-commenting
-        [inotes/note-comment-form {:note-id   (:id note)
-                                   :comment   @(subscribe [:note/comment-text id])
-                                   :on-change #(dispatch [:note.comment/update %1 %2])
-                                   :on-ok     #(dispatch [:note/add-comment! %1 %2])}])
+        [inotes/comment-form {:note-id   (:id note)
+                              :comment   @(subscribe [:note/comment-text id])
+                              :on-change #(dispatch [:note.comment/update %1 %2])
+                              :on-ok     #(dispatch [:note/add-comment! %1 %2])}])
       (map-indexed
        #(with-meta [note-content %2 true] {:key %1})
        (sort-by :created comments))]]))
@@ -51,7 +43,7 @@
   ([{:keys [id subject content comments refs] :as note} is-comment]
    [:div
     (if is-comment
-      [inotes/note-comment note]
+      [inotes/comment note]
       [note-body note])]))
 
 

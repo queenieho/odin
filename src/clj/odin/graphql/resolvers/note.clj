@@ -35,7 +35,7 @@
 (defn note-ref-name [_ _ ref]
   (cond
     (account/email ref) (account/short-name ref)
-    (property/code ref) (property/code ref)
+    (property/code ref) (property/name ref)
     :otherwise nil))
 
 
@@ -63,7 +63,7 @@
 
 (defn entry
   "Get one note by id"
-  [{conn :conn} {id :id}]
+  [{conn :conn} {id :id} _]
   (d/entity (d/db conn) id))
 
 
@@ -72,7 +72,6 @@
 ;; ==============================================================================
 
 
-;; TODO update to work with new model?
 (defn add-comment!
   [{:keys [conn requester]} {:keys [note text]} _]
   (let [parent  (d/entity (d/db conn) note)
@@ -81,16 +80,6 @@
                        (events/note-comment-created note comment)
                        (source/create requester)])
     (note/by-uuid (d/db conn) (note/uuid comment))))
-
-
-#_(defn create!
-  [{:keys [conn requester]} {{:keys [account subject content notify]} :params} _]
-  (let [note (note/create subject content :author requester)]
-    @(d/transact conn (tb/conj-when
-                       [{:db/id account :account/notes note}
-                        (source/create requester)]
-                       (when notify (events/note-created note))))
-    (note/by-uuid (d/db conn) (note/uuid note))))
 
 
 (defn create!
@@ -103,7 +92,6 @@
     (note/by-uuid (d/db conn) (note/uuid note))))
 
 
-;; TODO update to work with new model?
 (defn delete!
   [{:keys [conn requester]} {:keys [note]} _]
   @(d/transact conn [[:db.fn/retractEntity note]
@@ -111,7 +99,6 @@
   :ok)
 
 
-;; TODO update to work with new model?
 (defn update!
   [{:keys [conn requester]} {{:keys [note subject content]} :params} _]
   (let [note (d/entity (d/db conn) note)]

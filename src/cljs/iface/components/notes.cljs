@@ -71,7 +71,7 @@
       "Delete"])])
 
 
-(defn note-body-text [{:keys [note] :as props}]
+(defn body-text [{:keys [note] :as props}]
   (let [{:keys [refs subject content]} note]
     [:div
      (when (some? refs) [note-mentions refs])
@@ -81,7 +81,7 @@
      [note-actions props]]))
 
 
-(defn- note-comment [{:keys [content] :as note}]
+(defn comment [{:keys [content] :as note}]
   [:article.media
    [:figure.media-left [ant/icon {:type "message"}]]
    [:div.media-content
@@ -89,7 +89,7 @@
     [note-byline note]]])
 
 
-(defn note-comment-form [{:keys [note-id comment on-change on-ok]}]
+(defn comment-form [{:keys [note-id comment on-change on-ok]}]
   [:div
    [ant/form-item
     {:label "Comment"}
@@ -104,7 +104,7 @@
     "Comment"]])
 
 
-(defn note-edit-form [{:keys [note-id form on-change on-cancel on-ok]}]
+(defn edit-form [{:keys [note-id form on-change on-cancel on-ok]}]
   [:div
    [ant/form-item
     {:label "Subject"}
@@ -133,7 +133,7 @@
 ;; ==============================================================================
 
 
-(defn create-note-button [{:keys [on-click]}]
+(defn create-button [{:keys [on-click]}]
   [ant/button
    {:style    {:margin "auto"}
     :type     :primary
@@ -143,7 +143,7 @@
    "Create note"])
 
 
-(defn create-note-footer [form on-cancel on-submit can-submit loading]
+(defn create-modal-footer [form on-cancel on-submit can-submit loading]
   [:div
    [ant/button
     {:size     :large
@@ -162,13 +162,13 @@
   (goog.object/getValueByKeys opt "props" "children"))
 
 
-(defn create-note-modal [{:keys [is-creating form members properties loading
+(defn create-modal [{:keys [is-creating form members properties loading
                                  on-cancel on-change on-submit can-submit]}]
   [ant/modal
    {:title     "Create a note"
     :visible   is-creating
     :on-cancel on-cancel
-    :footer    (r/as-element [create-note-footer form on-cancel on-submit can-submit loading])}
+    :footer    (r/as-element [create-modal-footer form on-cancel on-submit can-submit loading])}
 
    [ant/form-item
     {:label "Mentions"}

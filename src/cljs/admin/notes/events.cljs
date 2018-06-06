@@ -39,9 +39,7 @@
     :graphql  {:mutation
                [[:create_note {:params {:refs    refs
                                         :subject subject
-                                        :content (-> (format/escape-newlines content)
-                                                     (string/replace #"\"" "&quot;")
-                                                     (string/replace #"'" "&#39;"))
+                                        :content (format/graphql-string content)
                                         :notify  notify}}
                  [:id]]]
                :on-success [::create-note-success k]
@@ -98,23 +96,23 @@
 
 
 (reg-event-fx
- :note/edit-note
+ :note/edit
  [(path db/path)]
  (fn [{db :db} [_ {:keys [id] :as note}]]
-   {:dispatch [:note/toggle-editing id]
+   {:dispatch [:note.edit/toggle id]
     :db       (assoc db :form note)}))
 
 
 (reg-event-fx
- :note/edit-cancel
+ :note.edit/cancel
  [(path db/path)]
  (fn [{db :db} [_ note-id]]
    {:dispatch-n [[:note.form/clear]
-                 [:note/toggle-editing note-id]]}))
+                 [:note.edit/toggle note-id]]}))
 
 
 (reg-event-db
- :note/toggle-editing
+ :note.edit/toggle
  [(path db/path)]
  (fn [db [_ note-id]]
    (update-in db [:editing-notes note-id] not)))
@@ -128,7 +126,7 @@
     :graphql {:mutation
               [[:update_note {:params {:note id
                                        :subject subject
-                                       :content (format/escape-newlines content)}}
+                                       :content (format/graphql-string content)}}
                 [:id]]]
               :on-success [::update-note-success k]
               :on-failure [:graphql/failure k]}}))
@@ -140,7 +138,7 @@
  (fn [_ [_ k response]]
    {:dispatch-n [[:ui/loading k false]
                  [:note.form/clear]
-                 [:note/toggle-editing (get-in response [:data :update_note :id])]
+                 [:note.edit/toggle (get-in response [:data :update_note :id])]
                  [:notes/fetch]]}))
 
 
@@ -150,11 +148,11 @@
  :note.comment/show
  [(path db/path)]
  (fn [{db :db} [_ note-id]]
-   {:dispatch-n [[:note/toggle-comment-form note-id]]}))
+   {:dispatch-n [[:note.comment/toggle note-id]]}))
 
 
 (reg-event-db
- :note/toggle-comment-form
+ :note.comment/toggle
  [(path db/path)]
  (fn [db [_ note-id]]
    (update-in db [:commenting-notes note-id :shown] not)))
@@ -189,7 +187,7 @@
    (let [comment (get-in response [:data :add_note_comment])]
      {:dispatch-n [[:ui/loading k false]
                    [:note.comment/update note-id ""]
-                   [:note/toggle-comment-form note-id]]
+                   [:note.comment/toggle note-id]]
       :db         (update db :notes (fn [notes]
                                       (map
                                        (fn [note]
@@ -210,6 +208,7 @@
     :graphql  {:mutation   [[:delete_note {:note note-id}]]
                :on-success [::delete-note-success k note-id]
                :on-failure [:graphql/failure k]}}))
+
 
 (reg-event-fx
  ::delete-note-success

@@ -28,7 +28,7 @@
  :note/can-submit?
  :<- [:note/form]
  (fn [{:keys [refs subject content]} _]
-   (not (and (not-empty refs) (some? subject) (some? content)))))
+   (not (and (seq refs) (some? subject) (some? content)))))
 
 
 (defn- matching-id [id refs]
@@ -61,7 +61,7 @@
 
 
 (reg-sub
- :note/edit-form
+ :note.edit/form
  :<- [db/path]
  (fn [db _]
    (:form db)))
@@ -82,7 +82,7 @@
 
 
 (reg-sub
- :note/is-author
+ :note/is-author?
  (fn [db [_ author-id]]
    (= author-id (get-in db [:account :id]))))
 
@@ -90,5 +90,5 @@
 (reg-sub
  :note.mentions.options/members
  :<- [:accounts]
- (fn [db _]
-   (filter #(= :member (:role %)) db)))
+ (fn [accounts _]
+   (filter #(= :member (:role %)) accounts)))

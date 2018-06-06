@@ -152,3 +152,9 @@
 
 (defn newlines->line-breaks [s]
   (string/replace s #"\\n|\n" "<br>"))
+
+
+(defn graphql-string [s]
+  (-> (escape-newlines s)
+      (string/replace #"\"" "&quot;")
+      (string/replace #"'" "&#39;")))

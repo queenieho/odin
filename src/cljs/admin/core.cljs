@@ -62,14 +62,14 @@
                     :on-menu-click       #(dispatch [:layout.mobile-menu/toggle])}
      [layout/navbar-menu-items @menu-items @active]
      [layout/navbar-menu-profile
-      (:name @account) [nav-user-menu] [inotes/create-note-button
+      (:name @account) [nav-user-menu] [inotes/create-button
                                         {:on-click #(dispatch [:note.create/open])}]]]))
 
 
 (defn layout []
   (let [route (subscribe [:route/current])]
     [layout/layout
-     [inotes/create-note-modal
+     [inotes/create-modal
       {:loading     @(subscribe [:ui/loading? :note.create/create-note!])
        :can-submit  @(subscribe [:note/can-submit?])
        :is-creating @(subscribe [:note/showing?])
