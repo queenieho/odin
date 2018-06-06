@@ -36,21 +36,35 @@
 
 
 (reg-sub
+ :notes/pagination
+ :<- [db/path]
+ (fn [db _]
+   (let [total (count (:notes db))]
+     (assoc (:notes-pagination db) :total total))))
+
+
+(reg-sub
  :notes/by-account
  :<- [db/path]
- (fn [db [_ account-id]]
+ :<- [:notes/pagination]
+ (fn [[db {:keys [size page]}] [_ account-id]]
    (->> (:notes db)
         (filter #(matching-id account-id (:refs %)))
-        (sort-by :created >))))
+        (sort-by :created >)
+        (drop (* (dec page) size))
+        (take size))))
 
 
 (reg-sub
  :notes/by-community
  :<- [db/path]
- (fn [db [_ community-id]]
+ :<- [:notes/pagination]
+ (fn [[db {:keys [size page]}] [_ community-id]]
    (->> (:notes db)
         (filter #(matching-id community-id (:refs %)))
-        (sort-by :created >))))
+        (sort-by :created >)
+        (drop (* (dec page) size))
+        (take size))))
 
 
 (reg-sub
@@ -92,11 +106,3 @@
  :<- [:accounts]
  (fn [accounts _]
    (filter #(= :member (:role %)) accounts)))
-
-
-(reg-sub
- :notes/pagination
- :<- [db/path]
- (fn [db _]
-   (let [total (count (:notes db))]
-     (assoc (:notes-pagination db) :total total))))

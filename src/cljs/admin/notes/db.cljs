@@ -5,5 +5,7 @@
 
 
 (def default-value
-  {path {:creating false
-         :form     {:notify true}}})
+  {path {:creating         false
+         :form             {:notify true}
+         :notes-pagination {:size 5
+                            :page 1}}})
