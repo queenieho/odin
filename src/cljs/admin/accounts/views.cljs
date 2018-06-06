@@ -729,7 +729,24 @@
    [:p value]])
 
 
-(defn transition-status
+(defmulti transition-status (fn [_ transition] (:type transition)))
+
+
+(defmethod transition-status :renewal
+  [account transition]
+  (let [pname (format/make-first-name-possessive (:name account))
+        new-license (:new_license transition)]
+      [ant/card
+       {:title (str pname "License Renewal")}
+       [:div.columns
+        [:div.column
+         [transition-status-item "Term" (str (:term new-license) " months")]
+         [transition-status-item "Duration" (str (format/date-short (:starts new-license)) " - " (format/date-short (:ends new-license)))]]
+        [:div.column
+         [transition-status-item "Rate" (format/currency (:rate new-license))]]]]))
+
+
+(defmethod transition-status :move-out
   [account transition]
   (let [pname (format/make-first-name-possessive (:name account))]
     [ant/card
