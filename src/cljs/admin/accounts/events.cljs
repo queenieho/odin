@@ -414,6 +414,12 @@
 
 
 (reg-event-fx
+ :accounts.entry.renewal/hide
+ (fn [_ _]
+   {:dispatch [:modal/hide db/renewal-modal-key]}))
+
+
+(reg-event-fx
  :accounts.entry/renew-license!
  [(path db/path)]
  (fn [{db :db} [k {:keys [id ends] :as license} {:keys [unit term rate] :as form-data}]]
@@ -438,7 +444,8 @@
    (let [account-id (get-in response [:data :renewal_create :account :id])]
      {:dispatch-n [[:ui/loading k false]
                    [:notify/success ["Great! License renewed!"]]
-                   [:account/fetch account-id]]})))
+                   [:account/fetch account-id]
+                   [:accounts.entry.renewal/hide]]})))
 
 
 (reg-event-fx
