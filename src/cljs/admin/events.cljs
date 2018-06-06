@@ -4,6 +4,7 @@
             [admin.overview.events]
             [admin.kami.events]
             [admin.metrics.events]
+            [admin.notes.events]
             [admin.profile.events]
             [admin.properties.events]
             [admin.services.events]

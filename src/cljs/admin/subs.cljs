@@ -2,6 +2,7 @@
   (:require [admin.accounts.subs]
             [admin.kami.subs]
             [admin.metrics.subs]
+            [admin.notes.subs]
             [admin.profile.subs]
             [admin.properties.subs]
             [admin.services.subs]
@@ -79,3 +80,12 @@
  :<- [::menu]
  (fn [menu _]
    (:showing menu)))
+
+
+;; layout ========================================================================
+
+
+(reg-sub
+ ::layout
+ (fn [db _]
+   (:layout db)))

@@ -5,6 +5,9 @@
   :accounts        {:type    (list :account)
                     :args    {:params {:type :accounts_query_params}}
                     :resolve :account/list}
+  :notes           {:type    (list :note)
+                    :args    {:params {:type :notes_query_params}}
+                    :resolve :note/query}
   :order           {:type    :order
                     :args    {:id {:type (non-null :Long)}}
                     :resolve :order/entry}

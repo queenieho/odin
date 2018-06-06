@@ -139,8 +139,7 @@
   ;;; Note
   :create_note_params
   {:description "Parameters to create a new note."
-   :fields      {:account {:type        (non-null :Long)
-                           :description "ID of the account to create this note for."}
+   :fields      {:refs    {:type (list :Long)}
                  :subject {:type (non-null String)}
                  :content {:type (non-null String)}
                  :notify  {:type Boolean}}}
@@ -151,6 +150,13 @@
                            :description "ID of the note to update."}
                  :subject {:type String}
                  :content {:type String}}}
+
+  :notes_query_params
+  {:description "Parameters to query for notes."
+   :fields      {:q    {:type        String
+                        :description "Query term."}
+                 :refs {:type        (list :Long)
+                        :description "List of entities that are mentioned in the note"}}}
 
 
   ;;; Services

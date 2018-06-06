@@ -18,6 +18,7 @@
             [day8.re-frame.http-fx]
             [goog.dom :as gdom]
             [iface.components.layout :as layout]
+            [iface.components.notes :as inotes]
             [iface.modules.graphql :as graphql]
             [iface.modules.loading :as loading]
             [iface.modules.modal]
@@ -28,7 +29,8 @@
             [re-frame.core :as rf :refer [dispatch subscribe]]
             [starcity.re-frame.stripe-fx]
             [toolbelt.re-frame.fx]
-            [taoensso.timbre :as timbre]))
+            [taoensso.timbre :as timbre]
+            [toolbelt.core :as tb]))
 
 
 (enable-console-print!)
@@ -61,12 +63,23 @@
                     :on-menu-click       #(dispatch [:layout.mobile-menu/toggle])}
      [layout/navbar-menu-items @menu-items @active]
      [layout/navbar-menu-profile
-      (:name @account) [nav-user-menu]]]))
+      (:name @account) [nav-user-menu] [inotes/create-button
+                                        {:on-click #(dispatch [:note.create/open])}]]]))
 
 
 (defn layout []
   (let [route (subscribe [:route/current])]
     [layout/layout
+     [inotes/create-modal
+      {:loading     @(subscribe [:ui/loading? :note.create/create-note!])
+       :can-submit  @(subscribe [:note/can-submit?])
+       :is-creating @(subscribe [:note/showing?])
+       :form        @(subscribe [:note/form])
+       :members     @(subscribe [:note.mentions.options/members])
+       :properties  @(subscribe [:properties/list])
+       :on-cancel   #(dispatch [:note.create/cancel])
+       :on-submit   #(dispatch [:note.create/create-note! %])
+       :on-change   #(dispatch [:note.form/update %1 %2])}]
      [navbar]
      [layout/content
       [content/view @route]]]))

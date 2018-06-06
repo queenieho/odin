@@ -1,12 +1,13 @@
 (ns admin.accounts.views
   (:require [admin.accounts.db :as db]
             [admin.accounts.views.application :as application]
-            [admin.accounts.views.notes :as notes]
+            [admin.notes.views :as notes]
             [admin.content :as content]
             [admin.routes :as routes]
             [antizer.reagent :as ant]
             [clojure.string :as string]
             [iface.components.membership :as membership]
+            [iface.components.notes :as inotes]
             [iface.components.order :as order]
             [iface.components.table :as table]
             [iface.loading :as loading]
@@ -392,14 +393,13 @@
 
 
 (defn notes-view [account]
-  (let [notes (subscribe [:accounts.entry/notes])]
+  (let [notes (subscribe [:notes/by-account (:id account)])]
     [:div.columns
      [:div.column
-      [:div.mb2 [notes/new-note-form account]]
       (doall
-       (map-indexed
-        #(with-meta [notes/note-card %2] {:key %1})
-        @notes))
+         (map
+          #(with-meta [notes/note-card %] {:key (:id %)})
+          @notes))
       (when-not (empty? @notes)
         [notes/pagination])]]))
 

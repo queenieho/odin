@@ -10,7 +10,11 @@
             [iface.utils.time :as time]
             [reagent.core :as r]
             [re-frame.core :refer [subscribe dispatch]]
-            [toolbelt.core :as tb]))
+            [toolbelt.core :as tb]
+            [iface.components.typography :as typography]
+            [admin.routes :as routes]
+            [iface.loading :as loading]
+            [admin.notes.views :as notes]))
 
 ;; What do we want to be able to see in a property's detail view?
 
@@ -404,6 +408,21 @@
         :on-submit  #(dispatch [:property.rates/update! property-id])}]]]))
 
 
+;; notes subview ================================================================
+
+
+(defn notes-subview [community-id]
+  (let [notes @(subscribe [:notes/by-community community-id])]
+    [:div.columns
+     [:div.column
+      (doall
+       (map
+        #(with-meta [notes/note-card %] {:key (:id %)})
+        notes))
+      (when-not (empty? notes)
+        [notes/pagination])]]))
+
+
 ;; subview management ===========================================================
 
 
@@ -413,6 +432,7 @@
     [:entry]               :entry
     [:entry :units]        :units
     [:entry :units :entry] :units
+    [:entry :notes]        :notes
     :entry))
 
 
@@ -424,7 +444,11 @@
      "Overview"]]
    [ant/menu-item {:key :units}
     [:a {:href (routes/path-for :properties.entry/units :property-id property-id)}
-     "Units"]]])
+     "Units"]]
+   [ant/menu-item {:key :notes}
+    [:a {:on-click #(dispatch [:notes/fetch {:refs [property-id]}])
+         :href     (routes/path-for :properties.entry/notes :property-id property-id)}
+     "Notes"]]])
 
 
 (defmethod content/view :properties [{:keys [path params]}]
@@ -440,6 +464,7 @@
           [[:entry :units]]        [units-subview property-id]
           [[:entry :units :entry]] [units-subview property-id
                                     :active (tb/str->int (:unit-id params))]
+          [[:entry :notes]]        [notes-subview property-id]
           :else [:p "unmatched"]))]]))
 
 

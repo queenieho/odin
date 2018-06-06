@@ -3,6 +3,7 @@
             [admin.overview.db :as overview]
             [admin.kami.db :as kami]
             [admin.metrics.db :as metrics]
+            [admin.notes.db :as notes]
             [admin.profile.db :as profile]
             [admin.properties.db :as properties]
             [admin.services.db :as services]
@@ -41,6 +42,7 @@
    accounts/default-value
    kami/default-value
    metrics/default-value
+   notes/default-value
    payments/default-value
    profile/default-value
    properties/default-value

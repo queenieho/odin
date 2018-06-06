@@ -51,8 +51,9 @@
 
 (defn navbar-menu-profile
   "TODO:"
-  [user-name menu]
+  [user-name menu create-note]
   [:div.navbar-end
+   (r/as-element create-note)
    [:div.navbar-item.hoverable
     [ant/dropdown {:trigger   ["click"]
                    :placement "bottomRight"

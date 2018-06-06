@@ -1,12 +1,14 @@
 (ns odin.graphql.resolvers.note
   (:require [odin.graphql.authorization :as authorization]
             [blueprints.models.account :as account]
+            [blueprints.models.events :as events]
             [blueprints.models.note :as note]
+            [blueprints.models.property :as property]
+            [com.walmartlabs.lacinia.resolve :as resolve]
             [datomic.api :as d]
             [blueprints.models.source :as source]
             [taoensso.timbre :as timbre]
-            [toolbelt.core :as tb]
-            [blueprints.models.events :as events]))
+            [toolbelt.core :as tb]))
 
 
 (defn- get-account [note]
@@ -17,6 +19,57 @@
 
 (defn account [_ _ note]
   (get-account note))
+
+
+(defn refs [_ _ note]
+  (note/refs note))
+
+
+(defn note-ref-type [_ _ ref]
+  (cond
+    (account/email ref) :account
+    (property/code ref) :property
+    :otherwise nil))
+
+
+(defn note-ref-name [_ _ ref]
+  (cond
+    (account/email ref) (account/short-name ref)
+    (property/code ref) (property/name ref)
+    :otherwise nil))
+
+
+;; ==============================================================================
+;; queries ======================================================================
+;; ==============================================================================
+
+
+(defn- query-notes
+  [db params]
+  (->> (tb/transform-when-key-exists params {:refs (partial map (partial d/entity db))})
+       (note/query db)))
+
+
+(defn query
+  "Query notes"
+  [{conn :conn} {params :params} _]
+  (try
+    (query-notes (d/db conn) params)
+    (catch Throwable t
+      (timbre/error t "error querying notes")
+      (resolve/resolve-as nil {:message  (.getMessage t)
+                               :err-data (ex-data t)}))))
+
+
+(defn entry
+  "Get one note by id"
+  [{conn :conn} {id :id} _]
+  (d/entity (d/db conn) id))
+
+
+;; ==============================================================================
+;; mutations ====================================================================
+;; ==============================================================================
 
 
 (defn add-comment!
@@ -30,10 +83,10 @@
 
 
 (defn create!
-  [{:keys [conn requester]} {{:keys [account subject content notify]} :params} _]
-  (let [note (note/create subject content :author requester)]
+  [{:keys [conn requester]} {{:keys [refs subject content notify]} :params} _]
+  (let [note (note/create subject content refs :author requester)]
     @(d/transact conn (tb/conj-when
-                       [{:db/id account :account/notes note}
+                       [note
                         (source/create requester)]
                        (when notify (events/note-created note))))
     (note/by-uuid (d/db conn) (note/uuid note))))
@@ -76,8 +129,14 @@
 (def resolvers
   {;; fields
    :note/account      account
+   :note/refs         refs
+   :note.ref/type     note-ref-type
+   :note.ref/name     note-ref-name
    ;; mutations
    :note/add-comment! add-comment!
    :note/create!      create!
    :note/delete!      delete!
-   :note/update!      update!})
+   :note/update!      update!
+   ;; queries
+   :note/query        query
+   :note/entry        entry})
