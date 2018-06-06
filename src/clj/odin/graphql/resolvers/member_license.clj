@@ -171,22 +171,26 @@
 (defn create-license-transition!
   "Creates a license transition for a member's license"
   [{:keys [conn requester] :as ctx} {{:keys [current_license type date asana_task deposit_refund new_license_params]} :params} _]
-  (let [type       (keyword (string/replace (name type) "_" "-"))
-        license    (d/entity (d/db conn) current_license)
+  (let [type        (keyword (string/replace (name type) "_" "-"))
+        license     (d/entity (d/db conn) current_license)
+        account     (member-license/account license)
         new-license (when (some? new_license_params)
                       (create-pending-license-tx conn new_license_params))
-        transition (license-transition/create current_license type date
-                                              (tb/assoc-when
-                                               {}
-                                               :asana-task asana_task
-                                               :deposit-refund deposit_refund
-                                               :new-license (when (some? new_license_params)
-                                                              new-license)))]
+        lic-for-acct-tx (when (some? new_license_params)
+                          {:db/id (td/id account) :account/licenses new-license})
+        transition  (license-transition/create current_license type date
+                                               (tb/assoc-when
+                                                {}
+                                                :asana-task asana_task
+                                                :deposit-refund deposit_refund
+                                                :new-license (when (some? new_license_params)
+                                                               new-license)))]
     @(d/transact conn (tb/conj-when
                        [transition
                         (events/transition-created transition)
                         (source/create requester)]
-                       new-license))
+                       new-license
+                       lic-for-acct-tx))
     (d/entity (d/db conn) current_license)))
 
 
