@@ -24,11 +24,6 @@
          ;; entry
          :units            []
          :tab              nil
-         :notes            []
-         :notes-pagination {:size 5
-                            :page 1}
-         :editing-notes    {}
-         :commenting-notes {}
          :create-form      {}
          :reassign-form    {}}})
 
