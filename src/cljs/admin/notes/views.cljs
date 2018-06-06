@@ -53,11 +53,11 @@
 
 
 (defn pagination []
-  (let [pagination (subscribe [:accounts.entry.notes/pagination])]
+  (let [pagination (subscribe [:notes/pagination])]
     [:div.mt3
      [ant/pagination
       {:show-size-changer   true
-       :on-show-size-change #(dispatch [:accounts.entry.notes/change-pagination %1 %2])
+       :on-show-size-change #(dispatch [:notes/change-pagination %1 %2])
        :default-current     (:page @pagination)
        :total               (:total @pagination)
        :show-total          (fn [total range]
@@ -65,4 +65,4 @@
                                              (first range) (second range) total))
        :page-size-options   ["5" "10" "15" "20"]
        :default-page-size   (:size @pagination)
-       :on-change           #(dispatch [:accounts.entry.notes/change-pagination %1 %2])}]]))
+       :on-change           #(dispatch [:notes/change-pagination %1 %2])}]]))

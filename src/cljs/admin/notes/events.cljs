@@ -218,3 +218,13 @@
                  [:notes/fetch]]
     :db         (update db :notes (fn [notes]
                                     (remove #(= note-id (:id %)) notes)))}))
+
+
+;; pagination ===========================
+
+
+(reg-event-db
+ :notes/change-pagination
+ [(path db/path)]
+ (fn [db [_ page size]]
+   (assoc db :notes-pagination {:page page :size size})))

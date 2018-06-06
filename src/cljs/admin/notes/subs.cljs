@@ -92,3 +92,11 @@
  :<- [:accounts]
  (fn [accounts _]
    (filter #(= :member (:role %)) accounts)))
+
+
+(reg-sub
+ :notes/pagination
+ :<- [db/path]
+ (fn [db _]
+   (let [total (count (:notes db))]
+     (assoc (:notes-pagination db) :total total))))
