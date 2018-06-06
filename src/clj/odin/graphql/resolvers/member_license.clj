@@ -18,7 +18,9 @@
             [teller.subscription :as tsubscription]
             [toolbelt.date :as date]
             [toolbelt.core :as tb]
-            [toolbelt.datomic :as td]))
+            [toolbelt.datomic :as td]
+            [clojure.string :as string]
+            [blueprints.models.license :as license]))
 
 ;; ==============================================================================
 ;; helpers ======================================================================
@@ -102,7 +104,7 @@
 (defn transition
   "Retrieves license transition information for current license. If no transition, resolves as an empty map"
   [{:keys [conn] :as ctx} _ license]
-  (license-transition/by-license-id (d/db conn) (td/id license)))
+  (license-transition/by-license (d/db conn) license))
 
 
 ;; ==============================================================================
@@ -160,13 +162,29 @@
       (* early-termination-rate)))
 
 
+(defn create-pending-license-tx
+  "Creates a new member license with a status of `pending`."
+  [conn {:keys [unit term date rate] :as params}]
+  (member-license/create (license/by-term (d/db conn) term) (d/entity (d/db conn) unit) date rate :member-license.status/pending))
+
+
 (defn create-license-transition!
   "Creates a license transition for a member's license"
-  [{:keys [conn requester] :as ctx} {{:keys [current_license type date asana_task deposit_refund]} :params} _]
-  (let [type (keyword (clojure.string/replace (name type) "_" "-"))
-        license (d/entity (d/db conn) current_license)
-        transition (license-transition/create current_license type date asana_task deposit_refund)]
+  [{:keys [conn requester] :as ctx} {{:keys [current_license type date asana_task deposit_refund new_license_params]} :params} _]
+  (let [type       (keyword (string/replace (name type) "_" "-"))
+        license    (d/entity (d/db conn) current_license)
+        new-license (create-pending-license-tx conn new_license_params)
+        transition (license-transition/create current_license type date
+                                              (tb/assoc-when
+                                               {}
+                                               :asana-task asana_task
+                                               :deposit-refund deposit_refund
+                                               :new-license (when (some? new_license_params)
+                                                              new-license)))]
+    (timbre/info "\n\n----------- look at this shiny new license")
+    (clojure.pprint/pprint new-license)
     @(d/transact conn [transition
+                       new-license
                        (events/transition-created transition)
                        (source/create requester)])
     (d/entity (d/db conn) current_license)))

@@ -48,7 +48,7 @@
 
 
   :member_license_transition_license_params
-  {:description "sometimes we make new licenses."
+  {:description "Inputs to create a new license."
    :fields      {:unit {:type :Long}
                  :term {:type :Long}
                  :date {:type :Instant}

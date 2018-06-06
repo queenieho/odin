@@ -310,6 +310,7 @@
                :on-failure [:graphql/failure k]}}))
 
 
+
 (reg-event-fx
  ::reassign-unit-success
  [(path db/path)]
@@ -388,20 +389,56 @@
                  [:accounts.entry.transition/hide]]
     :graphql    {:mutation
                  [[:move_out_create {:params {:current_license license-id
-                                                  :type            :move_out
-                                                  :date            (.toISOString date)
-                                                  :asana_task      asana-task}}
+                                              :type            :move_out
+                                              :date            (.toISOString date)
+                                              :asana_task      asana-task}}
                    [:id [:account [:id]]]]]
                  :on-success [::move-out-success k]
                  :on-failure [:graphql/failure k]}}))
 
+(reg-event-fx
+ :accounts.entry.renewal/populate
+ [(path db/path)]
+ (fn [{db :db} [k {:keys [unit rate term] :as license}]]
+   {:db (assoc db :transition-form {:unit (:id unit)
+                                    :rate rate
+                                    :term term})}))
+
+
+(reg-event-fx
+ :accounts.entry.renewal/show
+ [(path db/path)]
+ (fn [{db :db} [_ license]]
+   {:dispatch-n [[:modal/show db/renewal-modal-key]
+                 [:accounts.entry.renewal/populate license]]}))
 
 
 (reg-event-fx
  :accounts.entry/renew-license!
  [(path db/path)]
- (fn [db [_ license-id form-data]]
-   (js/console.log "renewing license!" form-data)))
+ (fn [{db :db} [k {:keys [id ends] :as license} {:keys [unit term rate] :as form-data}]]
+   (let [date (.toISOString (.add (js/moment ends) 1 "days"))]
+     {:graphql {:mutation
+                [[:renewal_create {:params {:current_license    id
+                                            :date               date
+                                            :type               :renewal
+                                            :new_license_params {:unit unit
+                                                                 :term term
+                                                                 :rate rate
+                                                                 :date date}}}
+                  [:id [:account [:id]]]]]
+                :on-success [::renewal-success k]
+                :on-failure [:graphql/failure k]}})))
+
+
+(reg-event-fx
+ ::renewal-success
+ [(path db/path)]
+ (fn [{db :db} [_ k response]]
+   (let [account-id (get-in response [:data :renewal_create :account :id])]
+     {:dispatch-n [[:ui/loading k false]
+                   [:notify/success ["Great! License renewed!"]]
+                   [:account/fetch account-id]]})))
 
 
 (reg-event-fx
@@ -447,6 +484,8 @@
  (fn [db [k license term]]
    {:dispatch-n [[:accounts.entry.transition/update :term term]
                  [:accounts.entry.reassign/fetch-rate (get-in license [:unit :id]) term :accounts.entry.transition/update]]}))
+
+
 
 
 

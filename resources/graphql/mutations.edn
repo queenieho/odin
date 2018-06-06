@@ -68,6 +68,13 @@
    :resolve     :license-transition/update!}
 
 
+  :renewal_create
+  {:type        :license
+   :description "Creates a license for a member renewing their membership in the same unit."
+   :args        {:params {:type :member_license_transition_create_params}}
+   :resolve     :license-transition/create!}
+
+
   ;; notes ========================================================================
 
 

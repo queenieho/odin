@@ -616,11 +616,11 @@
 
 (defn renewal-confirmation
   [account form]
-  (let [license-id (get-in account [:active_license :id])]
+  (let [license (:active_license account)]
     (ant/modal-confirm
      {:title   "Confirm License Renewal"
       :content "Are you sure you want to continue? This action can't easily be undone and will send an email notification to the member."
-      :on-ok   #(dispatch [:accounts.entry/renew-license! license-id @form])
+      :on-ok   #(dispatch [:accounts.entry/renew-license! license @form])
       :ok-type :primary
       :ok-text "Yes - Confirm License Renewal"})))
 
@@ -656,6 +656,7 @@
   [account]
   (let [form    (subscribe [:accounts.entry.transition/form-data])
         license (:active_license account)]
+    (js/console.log license)
     [ant/modal
      {:title       (str "Renewal: " (:name account))
       :visible     @(subscribe [:modal/visible? db/renewal-modal-key])
@@ -706,7 +707,7 @@
       "Reassign"]
      [ant/button
       {:icon     "retweet"
-       :on-click #(dispatch [:modal/show db/renewal-modal-key])}
+       :on-click #(dispatch [:accounts.entry.renewal/show (:active_license account)])}
       "Renew License"]
      [ant/button
       {:icon     "home"
