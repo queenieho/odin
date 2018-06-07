@@ -97,6 +97,19 @@
                 :chatlio? true)))
 
 
+(defmethod page :account.role/apply [req]
+  (let [account (->requester req)]
+    (facade/app req "apply"
+                :title "Application Dashboard"
+                :fonts ["https://fonts.googleapis.com/css?family=Work+Sans"]
+                :json [["stripe"  {:key (config/stripe-public-key (->config req))}]
+                       ["account" {:id    (td/id account)
+                                   :name  (account/short-name account)
+                                   :email (account/email account)}]]
+                :stylesheets [facade/font-awesome]
+                :css-bundles ["antd.css" "styles.css"])))
+
+
 ;; ==============================================================================
 ;; api ==========================================================================
 ;; ==============================================================================

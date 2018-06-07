@@ -82,4 +82,22 @@
                                      :externs          ["externs/stripe.ext.js"
                                                         "externs/chatlio.ext.js"]
                                      :closure-warnings {:externs-validation :off
+                                                        :non-standard-jsdoc :off}}}
+
+
+                     {:id           "apply"
+                      :source-paths ["src/cljs/apply" "src/cljs/iface"]
+                      :jar          true
+                      :compiler     {:main             apply.core
+                                     :optimizations    :advanced
+                                     :elide-asserts    true
+                                     :pretty-print     true
+                                     :pseudo-names     true
+                                     :parallel-build   true
+                                     :asset-path       "/js/cljs/out"
+                                     :output-dir       "resources/public/js/cljs/apply/out"
+                                     :output-to        "resources/public/js/cljs/apply.js"
+                                     :source-map       "resources/public/js/cljs/apply.js.map"
+                                     :externs          ["externs/stripe.ext.js"]
+                                     :closure-warnings {:externs-validation :off
                                                         :non-standard-jsdoc :off}}}]}}}
