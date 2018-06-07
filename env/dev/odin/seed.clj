@@ -84,6 +84,7 @@
     (apply concat
            (accounts/member [:unit/name "52gilbert-1"] (:db/id license) :email "member@test.com")
            (accounts/admin :email "admin@test.com")
+           (accounts/applicant :email "apply@test.com")
            members
            applicants)))
 
