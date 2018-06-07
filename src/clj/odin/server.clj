@@ -73,8 +73,11 @@
   {"admin.js"      ["/js/cljs/admin.js"]
    "member.js"     ["/js/cljs/member.js"]
    "onboarding.js" ["/js/cljs/onboarding.js"]
+   "apply.js"      ["/js/cljs/apply.js"]
    "antd.css"      ["/assets/css/antd.css"]
-   "styles.css"    ["/assets/css/styles.css"]})
+   "styles.css"    ["/assets/css/styles.css"]
+   ;; "ptm.css"       ["/assets/css/ptm.css"]
+   })
 
 
 (defn- assemble-assets []
