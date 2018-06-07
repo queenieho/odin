@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="15px" height="15px" viewBox="0 0 15 15" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 49.3 (51167) - http://www.bohemiancoding.com/sketch -->
+    <title>icon-help</title>
+    <desc>Created with Sketch.</desc>
+    <defs></defs>
+    <g id="Symbols" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="card---community-selected" transform="translate(-126.000000, -216.000000)">
+            <g id="icon-help" transform="translate(127.000000, 217.000000)">
+                <g id="help">
+                    <path d="M13,6.5 C13,2.91025 10.08975,0 6.5,0 C2.91025,0 0,2.91025 0,6.5 C0,10.08975 2.91025,13 6.5,13 C10.08975,13 13,10.08975 13,6.5 Z" id="Stroke-1" stroke="#1186C9" stroke-linecap="round" stroke-linejoin="round"></path>
+                    <path d="M7,3.5 C7,3.776 6.776,4 6.5,4 C6.224,4 6,3.776 6,3.5 C6,3.224 6.224,3 6.5,3 C6.776,3 7,3.224 7,3.5" id="Fill-3" fill="#1186C9"></path>
+                    <path d="M7,5.5 C7,5.224 6.776,5 6.5,5 C6.224,5 6,5.224 6,5.5 L6,10 C6,10.276 6.224,10.5 6.5,10.5 C6.776,10.5 7,10.276 7,10 L7,5.5 Z" id="Fill-5" fill="#1186C9"></path>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

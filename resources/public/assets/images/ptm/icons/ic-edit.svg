@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="16px" height="16px" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 49.3 (51167) - http://www.bohemiancoding.com/sketch -->
+    <title>icon-edit</title>
+    <desc>Created with Sketch.</desc>
+    <defs></defs>
+    <g id="design" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" stroke-linecap="round" stroke-linejoin="round">
+        <g id="Review" transform="translate(-760.000000, -311.000000)" stroke="#1186C9">
+            <g id="icon---ediy" transform="translate(761.000000, 312.000000)">
+                <g id="Page-1">
+                    <polygon id="Stroke-1" points="10.5933423 1.16579615 12.83415 3.40660385 4.42041923 11.8200654 -8.07692308e-05 14.0000269 2.17988077 9.57925769"></polygon>
+                    <polyline id="Stroke-3" points="2.12401538 9.69230769 3.23082308 9.69230769 3.23082308 11.3076923 4.9329 11.3076923"></polyline>
+                    <g id="Group-8" transform="translate(0.538462, 0.000000)">
+                        <path d="M0.201384615,12.4992538 L0.962230769,13.2601" id="Stroke-4"></path>
+                        <path d="M10.0548808,1.16579615 L10.9888423,0.232103846 C11.2979192,-0.0775115385 11.8000346,-0.0775115385 12.1091115,0.232103846 L13.2293808,1.35210385 C13.5389962,1.66145 13.5389962,2.16356538 13.2293808,2.47264231 L12.2956885,3.40660385" id="Stroke-6"></path>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

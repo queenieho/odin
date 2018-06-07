@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="18px" height="19px" viewBox="0 0 18 19" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 49.3 (51167) - http://www.bohemiancoding.com/sketch -->
+    <title>ic-delete</title>
+    <desc>Created with Sketch.</desc>
+    <defs></defs>
+    <g id="assets" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" stroke-linecap="round" stroke-linejoin="round">
+        <g id="ic-delete" transform="translate(-1.000000, 0.000000)" stroke="#EE433B">
+            <path d="M3.390625,3.390625 L3.390625,17.046875 C3.390625,17.8407344 4.03426563,18.484375 4.828125,18.484375 L14.890625,18.484375 C15.6844844,18.484375 16.328125,17.8407344 16.328125,17.046875 L16.328125,3.390625" id="Stroke-262"></path>
+            <path d="M1.5,3.390625 L17.765625,3.390625" id="Stroke-263"></path>
+            <path d="M9.859375,6.265625 L9.859375,14.265625" id="Stroke-264"></path>
+            <path d="M6.984375,6.265625 L6.984375,14.265625" id="Stroke-265"></path>
+            <path d="M12.734375,6.265625 L12.734375,14.265625" id="Stroke-266"></path>
+            <path d="M6.984375,3.390625 L6.984375,1.953125 C6.984375,1.15926562 7.62801563,0.515625 8.421875,0.515625 L11.296875,0.515625 C12.0907344,0.515625 12.734375,1.15926562 12.734375,1.953125 L12.734375,3.390625" id="Stroke-267"></path>
+        </g>
+    </g>
+</svg>
