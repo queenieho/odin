@@ -16,7 +16,7 @@
        :repl-options {:nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}
 
        :cooper {"main" ["sass" "--watch" "-E" "UTF-8" "style/sass/main.sass:resources/public/assets/css/styles.css"]
-                ;; "ptm"  ["sass" "--watch" "-E" "UTF-8" "style/sass/ptm.sass:resources/public/assets/css/ptm.css"]
+                "ptm"  ["sass" "--watch" "-E" "UTF-8" "style/sass/ptm.sass:resources/public/assets/css/ptm.css"]
                 "antd" ["less-watch-compiler" "style/less" "resources/public/assets/css/"]}}
 
  :uberjar {:aot          :all

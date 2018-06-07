@@ -1,16 +1,25 @@
 (ns apply.core
   (:require [accountant.core :as accountant]
             [antizer.reagent :as ant]
+            [apply.content :as content]
+            [apply.routes :as routes]
             [day8.re-frame.http-fx]
             [goog.dom :as gdom]
+            [iface.components.layout :as layout]
             [iface.modules.graphql :as graphql]
             [iface.utils.routes :as iroutes]
             [reagent.core :as r]
             [re-frame.core :as rf :refer [dispatch subscribe]]))
 
+(defmethod content/view :home [route]
+  [:h1 "This is the application home"])
+
 
 (defn layout []
-  [:h1 "were in application!"])
+  (let [route (subscribe [:route/current])]
+    [layout/layout
+     [layout/content
+      [content/view @route]]]))
 
 
 ;; ==============================================================================
@@ -41,7 +50,5 @@
 
 
     (rf/dispatch-sync [:app/init account])
-    (iroutes/hook-browser-navigation! [""
-                                       ["/logout" :logout]
-                                       [true :home]])
+    (iroutes/hook-browser-navigation! routes/app-routes)
     (render)))

@@ -97,7 +97,7 @@
                 :chatlio? true)))
 
 
-(defmethod page :account.role/apply [req]
+(defmethod page :account.role/applicant [req]
   (let [account (->requester req)]
     (facade/app req "apply"
                 :title "Application Dashboard"
@@ -129,7 +129,8 @@
   {:and [access/authenticated-user
          {:or [(access/user-isa role/admin)
                (access/user-isa role/member)
-               (access/user-isa role/onboarding)]}]})
+               (access/user-isa role/onboarding)
+               (access/user-isa role/applicant)]}]})
 
 
 (defroutes routes
