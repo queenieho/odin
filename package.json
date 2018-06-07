@@ -24,6 +24,6 @@
         "less-plugin-clean-css": "^1.5.1",
         "npm": "^5.8.0",
         "spinkit": "^1.2.5",
-        "tachyons": "^4.10.0"
+        "tachyons-sass": "^4.9.3"
     }
 }
