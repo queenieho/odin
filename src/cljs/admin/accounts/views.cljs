@@ -760,7 +760,7 @@
                   [ant/button
                    {:icon "check-square-o"}
                    "Open in Asana"]]) " "
-               [ant/button
+               #_[ant/button
                 {:icon     "edit"
                  :on-click #(dispatch [:accounts.entry.transition/show transition])}
                 "Edit"]])}
