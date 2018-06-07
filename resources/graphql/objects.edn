@@ -188,26 +188,28 @@
 
 
   :license_transition
-  {:fields {:current_license      {:type    (non-null :license)
-                                   :resolve (:get :license-transition/current-license)}
-            :id                   {:type    (non-null :Long)
-                                   :resolve (:get :db/id)}
-            :uuid                 {:type    (non-null String)
-                                   :resolve (:get :license-transition/uuid)}
-            :type                 {:type    (non-null :license_transition_type)
-                                   :resolve :license-transition/type}
-            :fees                 {:type    (list :payment)
-                                   :resolve (:get :license-transition/fees)}
-            :deposit_refund       {:type    Float
-                                   :resolve (:get :license-transition/deposit-refund)}
-            :room_walkthrough_doc {:type    String
-                                   :resolve (:get :license-transition/room-walkthrough-doc)}
-            :asana_task           {:type    String
-                                   :resolve (:get :asana/task)}
-            :new_license          {:type    :license
-                                   :resolve (:get :license-transition/new-license)}
-            :date                 {:type    :Instant
-                                   :resolve (:get :license-transition/date)}}}
+  {:fields {:current_license       {:type    (non-null :license)
+                                    :resolve (:get :license-transition/current-license)}
+            :id                    {:type    (non-null :Long)
+                                    :resolve (:get :db/id)}
+            :uuid                  {:type    (non-null String)
+                                    :resolve (:get :license-transition/uuid)}
+            :type                  {:type    (non-null :license_transition_type)
+                                    :resolve :license-transition/type}
+            :fees                  {:type    (list :payment)
+                                    :resolve (:get :license-transition/fees)}
+            :deposit_refund        {:type    Float
+                                    :resolve (:get :license-transition/deposit-refund)}
+            :room_walkthrough_doc  {:type    String
+                                    :resolve (:get :license-transition/room-walkthrough-doc)}
+            :early_termination_fee {:type    Float
+                                    :resolve (:get :license-transition/early-termination-fee)}
+            :asana_task            {:type    String
+                                    :resolve (:get :asana/task)}
+            :new_license           {:type    :license
+                                    :resolve (:get :license-transition/new-license)}
+            :date                  {:type    :Instant
+                                    :resolve (:get :license-transition/date)}}}
 
 
   :license

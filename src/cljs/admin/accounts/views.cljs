@@ -574,9 +574,9 @@
    [move-out-form-item
     [:p.bold "What date is the member moving out?"]
     [form/date-picker
-     {:style     {:width "50%"}
-      :value     (default-moment (:date @form))
-      :on-change #(dispatch [:accounts.entry.transition/update :date %])}]]
+     {:style         {:width "50%"}
+      :value         (:date @form)
+      :on-change     #(dispatch [:accounts.entry.transition/update :date %])}]]
 
    ;; TODO - validate/sanitize this link.
    [move-out-form-item
@@ -746,7 +746,7 @@
          [transition-status-item "Rate" (format/currency (:rate new-license))]]]]))
 
 
-(defmethod transition-status :move-out
+(defmethod transition-status :move_out
   [account transition]
   (let [pname (format/make-first-name-possessive (:name account))]
     [ant/card
@@ -774,7 +774,9 @@
 
       [:div.column
        (when (some? (:deposit_refund transition))
-         [transition-status-item "Security Deposit Refund Amount" (format/currency (:deposit_refund transition))])]]
+         [transition-status-item "Security Deposit Refund Amount" (format/currency (:deposit_refund transition))])
+       (when (some? (:early_termination_fee transition))
+         [transition-status-item "Early Termination Fee Amount" (format/currency (:early_termination_fee transition))])]]
      (when (empty? (:asana_task transition))
        [ant/alert
         {:type      :warning

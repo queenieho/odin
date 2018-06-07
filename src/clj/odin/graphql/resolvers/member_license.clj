@@ -156,33 +156,52 @@
 (defn- calculate-early-termination-fee-amount
   "Calclates an Early Termination Fee for members moving out before the end of their license term."
   [move-out term-end]
-  (-> (t/interval move-out term-end)
+  (-> (t/interval (c/to-date-time move-out) (c/to-date-time term-end))
       (t/in-days)
       (inc) ;; for some reason `interval` is off-by-one
       (* early-termination-rate)))
 
 
+(defn- one-day-before
+  [date]
+  (c/to-date (t/minus (c/to-date-time date) (t/days 1))))
+
+
+(defn- moving-out-after-license-end?
+  [license transition-date]
+  (t/after?
+   (c/to-date-time transition-date)
+   (c/to-date-time (one-day-before (c/to-date-time (member-license/ends license))))))
+
+
 (defn create-pending-license-tx
   "Creates a new member license with a status of `pending`."
   [conn {:keys [unit term date rate] :as params}]
-  (member-license/create (license/by-term (d/db conn) term) (d/entity (d/db conn) unit) date rate :member-license.status/pending))
+  (member-license/create (license/by-term (d/db conn) term)
+                         (d/entity (d/db conn) unit)
+                         date
+                         rate
+                         :member-license.status/pending))
 
 
 (defn create-license-transition!
   "Creates a license transition for a member's license"
-  [{:keys [conn requester] :as ctx} {{:keys [current_license type date asana_task deposit_refund new_license_params]} :params} _]
+  [{:keys [conn requester] :as ctx}
+   {{:keys [current_license type date asana_task deposit_refund new_license_params]} :params}
+   _]
   (let [type        (keyword (string/replace (name type) "_" "-"))
         license     (d/entity (d/db conn) current_license)
         account     (member-license/account license)
         new-license (when (some? new_license_params)
                       (create-pending-license-tx conn new_license_params))
-        lic-for-acct-tx (when (some? new_license_params)
-                          {:db/id (td/id account) :account/licenses new-license})
+        etf         (when-not (moving-out-after-license-end? license date)
+                      (calculate-early-termination-fee-amount date (member-license/ends license)))
         transition  (license-transition/create current_license type date
                                                (tb/assoc-when
                                                 {}
                                                 :asana-task asana_task
                                                 :deposit-refund deposit_refund
+                                                :early-termination-fee etf
                                                 :new-license (when (some? new_license_params)
                                                                new-license)))]
     @(d/transact conn (tb/conj-when
@@ -190,7 +209,11 @@
                         (events/transition-created transition)
                         (source/create requester)]
                        new-license
-                       lic-for-acct-tx))
+                       (when (and (moving-out-after-license-end? license date) (= type :move-out))
+                         {:db/id (td/id current_license)
+                          :member-license/ends (one-day-before date)})
+                       (when (some? new_license_params)
+                         {:db/id (td/id account) :account/licenses new-license})))
     (d/entity (d/db conn) current_license)))
 
 
