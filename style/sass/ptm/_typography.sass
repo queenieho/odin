@@ -1,0 +1,112 @@
+$serif: Eczar, serif !default
+$sans-serif: Work Sans, Helvetica, sans-serif !default
+$h1-font-size: 2.25rem !default
+$h1-line-height: 1.2 !default
+$h2-font-size: 1.4rem !default
+$h2-line-height: 1.1 !default
+$h3-font-size: 1rem !default
+$h3-line-height: 1.4 !default
+$h4-font-size: 0.75rem !default
+$h4-line-height: 1.2 !default
+$h4-letter-spacing: 0.5px !default
+$p-font-size: 1rem !default
+$p-line-height: 1.5 !default
+$link-hover: darken($blue, 10%) !default
+
+*
+  -webkit-font-smoothing: antialiased
+  -moz-osx-font-smoothing: grayscale
+
+body
+  font-family: $sans-serif
+  color: $dark-gray
+  line-height: $p-line-height
+
+h1
+  font-family: $serif
+  font-size: $h1-font-size
+  line-height: $h1-line-height
+  color: $blue
+  position: relative
+
+h2
+  font-family: $sans-serif
+  font-size: $h2-font-size
+  line-height: $h2-line-height
+  color: $black
+  position: relative
+
+h3
+  font-family: $sans-serif
+  font-size: $h3-font-size
+  font-weight: 600
+  line-height: $h3-line-height
+  color: $black
+  position: relative
+
+h4
+  font-family: $sans-serif
+  font-size: $h4-font-size
+  font-weight: 600
+  line-height: $h4-line-height
+  color: $gray
+  text-transform: uppercase
+  letter-spacing: $h4-letter-spacing
+  position: relative
+
+p
+  font-family: $sans-serif
+  font-size: $p-font-size
+  line-height: $p-line-height
+  color: $dark-gray
+  position: relative
+
+.small
+  font-size: $h4-font-size
+  line-height: $p-font-size
+
+::selection
+  background-color: $blue
+  color: white
+
+a
+  text-decoration: none
+  color: $blue
+  &:hover
+    color: $link-hover
+
+.text-link
+  @extend h4
+  color: $blue
+
+blockquote
+  border-left: solid 2px $line-gray
+  margin-left: 0
+  padding-left: 2rem
+
+.section-label
+  display: none
+
+code
+  font-family: Consolas,Monaco,'Andale Mono','Ubuntu Mono',monospace
+
+hr
+  border: 0
+  height: 0
+  border-top: none
+  border-bottom: $border-width solid $line-gray
+  margin: $spacing-medium 0
+
+
+// Mobile Specific Styles
+@media screen and (max-width: $breakpoint-small)
+  h1
+    font-size: $h2-font-size
+    line-height: $h2-line-height
+
+  h2
+    font-size: $h3-font-size
+    line-height: $h3-line-height
+
+  .section-label
+    display: block

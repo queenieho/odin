@@ -1,0 +1,72 @@
+$scrim-background: rgba(0,0,0,0.7) !default
+$lightbox-padding: $spacing-large $spacing-extra-large !default
+$lightbox-width: 800px !default
+$lightbox-height: 80vh !default
+
+.lightbox
+  width: $lightbox-width
+  height: $lightbox-height
+  background: white
+  border-radius: $border-radius
+  border-color: $line-gray
+  position: fixed
+  z-index: 2000
+  top: 0
+  left: 0
+  right: 0
+  bottom: 0
+  margin: auto
+  overflow-x: scroll
+
+
+.lightbox-mask
+  max-height: 74vh
+  overflow-y: auto
+
+
+.lightbox-photo
+  @extend .aspect-ratio
+  .aspect-ratio--object
+    border-top-left-radius: $border-radius
+    border-top-right-radius: $border-radius
+  &:hover
+    .chevron
+      opacity: $card-icon-opacity-default
+    .chevron-scrim
+      opacity: $card-icon-opacity-hover
+
+
+.lightbox-content
+  padding: $lightbox-padding
+  position: relative
+
+
+.scrim
+  background-color: $scrim-background
+  width: 100%
+  height: 100%
+  position: fixed
+  top: 0
+  left: 0
+  z-index: 999
+
+
+.lightbox-footer
+  position: relative
+  width: 100%
+  height: 60px
+  overflow: hidden
+  padding: $spacing-medium $spacing-extra-large
+  border-top: $border-width solid $line-gray
+
+
+.lightbox-footer-left
+  float: left
+  width: 50%
+  margin-top: 4px
+
+
+.lightbox-footer-right
+  float: right
+  width: 50%
+  margin-top: 4px

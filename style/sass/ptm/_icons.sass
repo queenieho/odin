@@ -1,0 +1,24 @@
+$icon-small-size: 17px !default
+$icon-in-text-positioning: 3px !default
+
+.icon-small
+  width: $icon-small-size
+  height: $icon-small-size
+
+// if the small icon is in a paragraph, adjust the baseline
+p .icon-small
+  position: absolute
+  top: $icon-in-text-positioning
+
+// if the small icon is in an H4, adjust the baseline
+h4 .icon-small
+  position: absolute
+  top: -2px
+  margin-left: 4px
+
+// positing the edit icon when it's inline with text
+.icon-edit
+  position: relative
+  bottom: -3px
+  margin-left: 4px
+  cursor: pointer

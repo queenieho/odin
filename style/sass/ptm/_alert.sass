@@ -1,0 +1,27 @@
+$alert-padding: 0.4rem 1rem !default
+$alert-bottom-margin: $spacing-large !default
+$alert-icon-size: 32px
+
+.alert
+  padding: $alert-padding
+  border-radius: $border-radius
+  border-width: 1px
+  border-style: solid
+  display: table
+  width: 100%
+  margin-bottom: $alert-bottom-margin
+
+.alert-icon
+  display: table-cell
+  vertical-align: middle
+  width: $alert-icon-size
+
+.alert-text
+  display: table-cell
+  vertical-align: middle
+  font-size: 14px
+  padding-left: $spacing-medium
+
+.alert-yellow
+  background-color: $light-yellow
+  border-color: adjust-color($light-yellow, $lightness: -10%, $saturation: -30%)
