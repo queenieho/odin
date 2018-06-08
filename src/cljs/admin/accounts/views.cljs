@@ -413,8 +413,10 @@
   [ant/select-option {:value (str id)} name])
 
 (defn- reassign-unit-option
-  [{:keys [id code number occupant] :as unit}]
-  [ant/select-option {:value (str id)}
+  [{:keys [id code number occupant] :as unit} current-unit-id]
+  [ant/select-option
+   {:value (str id)
+    :disabled (= id current-unit-id)}
    (if (some? occupant)
      (format/format "Unit #%d (occupied by %s until %s)"
                     number
@@ -451,7 +453,7 @@
         units               (subscribe [:property/units (:community @form)])
         license             (:active_license account)]
     [ant/modal
-     {:title     (str "Reassign " (:name account))
+     {:title     (str "Transfer: " (:name account))
       :visible   @is-visible
       :on-cancel #(dispatch [:modal/hide db/reassign-modal-key])
       :footer    (r/as-element [reassign-modal-footer account @form])}
@@ -464,7 +466,7 @@
         [ant/select
          {:style     {:width "100%"}
           :value     (str (:community @form))
-          :on-change #(dispatch [:accounts.entry.reassign/select-community %])}
+          :on-change #(dispatch [:accounts.entry.reassign/select-community % license])}
          (doall
           (map
            #(with-meta (reassign-community-option %) {:key (:id %)})
@@ -481,7 +483,7 @@
           :on-change #(dispatch [:accounts.entry.reassign/select-unit % (:term license) :accounts.entry.reassign/update])}
          (doall
           (map-indexed
-           #(with-meta (reassign-unit-option %2) {:key %1})
+           #(with-meta (reassign-unit-option %2 (get-in license [:unit :id])) {:key %1})
            @units))])]
 
      ;; rate selection
