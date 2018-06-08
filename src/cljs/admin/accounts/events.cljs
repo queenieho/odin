@@ -267,6 +267,15 @@
 
 
 (reg-event-fx
+ :accounts.entry.reassign/select-community
+ [(path db/path)]
+ (fn [{db :db} [_ community]]
+   (let [community (tb/str->int community)]
+     {:dispatch-n [[:accounts.entry.reassign/update :community community]
+                   [:property/fetch community]]})))
+
+
+(reg-event-fx
  :accounts.entry.reassign/select-unit
  [(path db/path)]
  (fn [db [_ unit term]]

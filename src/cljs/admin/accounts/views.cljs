@@ -446,12 +446,10 @@
         communities-loading (subscribe [:ui/loading? :properties/query])
         units-loading       (subscribe [:ui/loading? :property/fetch])
         rate-loading        (subscribe [:ui/loading? :accounts.entry.reassign/fetch-rate])
-        communities         (subscribe [:properties/list])
-        units               (subscribe [:property/units (get-in account [:property :id])])
         form                (subscribe [:accounts.entry.reassign/form-data])
+        communities         (subscribe [:properties/list])
+        units               (subscribe [:property/units (:community @form)])
         license             (:active_license account)]
-    (js/console.log "communities are totes " @communities)
-    (js/console.log "current community id is " (get-in license [:property :id]))
     [ant/modal
      {:title     (str "Reassign " (:name account))
       :visible   @is-visible
@@ -466,8 +464,7 @@
         [ant/select
          {:style     {:width "100%"}
           :value     (str (:community @form))
-          :default-value (str (get-in license [:property :id]))
-          :on-change #(dispatch [:accounts.entry.reassign/update :community %])}
+          :on-change #(dispatch [:accounts.entry.reassign/select-community %])}
          (doall
           (map
            #(with-meta (reassign-community-option %) {:key (:id %)})
@@ -489,7 +486,7 @@
 
      ;; rate selection
      [ant/form-item
-      {:label "What should his/her rate change to?"}
+      {:label "What should their rate change to?"}
       (if @rate-loading
         [:div.has-text-centered
          [ant/spin {:tip "Fetching current rate..."}]]
