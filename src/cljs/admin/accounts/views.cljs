@@ -408,9 +408,18 @@
 ;; membership ===================================================================
 
 
+(def asana-transition-templates
+  "asana task templates that the community team uses to track work related to a member's transition"
+  {:move-out   "https://app.asana.com/0/306571089298787/622139719994873"
+   :renewal    "https://app.asana.com/0/306571089298787/655446069485967"
+   :xfer-intra "https://app.asana.com/0/306571089298787/622124213884611"
+   :xfer-inter "https://app.asana.com/0/306571089298787/622124213884611"})
+
+
 (defn- reassign-community-option
   [{:keys [id name] :as community}]
   [ant/select-option {:value (str id)} name])
+
 
 (defn- reassign-unit-option
   [{:keys [id code number occupant] :as unit} current-unit-id]
@@ -425,8 +434,18 @@
      (str "Unit #" number))])
 
 
+(defn- reassign-confirmation [account form]
+  (let [license-id (get-in account [:active_license :id])]
+    (ant/modal-confirm
+     {:title   "Confirm Transfer?"
+      :content "Are you sure you want to continue? This action can't easily be undone and will send an email notification to the member."
+      :on-ok   #(dispatch [:accounts.entry/reassign! license-id form])
+      :ok-type :primary
+      :ok-text "Yes - Confirm Transfer"})))
+
+
 (defn- reassign-modal-footer
-  [account {:keys [rate unit] :as form}]
+  [account {:keys [rate unit move-out-date] :as form}]
   (let [is-loading (subscribe [:ui/loading? :accounts.entry/reassign!])
         license-id (get-in account [:active_license :id])]
     [:div
@@ -437,10 +456,10 @@
      [ant/button
       {:type     :primary
        :size     :large
-       :disabled (or (nil? rate) (nil? unit))
+       :disabled (or (nil? rate) (nil? unit) (nil? move-out-date))
        :loading  @is-loading
-       :on-click #(dispatch [:accounts.entry/reassign! license-id form])}
-      "Reassign"]]))
+       :on-click #(reassign-confirmation account form)}
+      "Begin Transfer Process"]]))
 
 
 (defn- reassign-modal [account]
@@ -496,7 +515,41 @@
          {:style     {:width "100%"}
           :value     (:rate @form)
           :disabled  (nil? (:unit @form))
-          :on-change #(dispatch [:accounts.entry.reassign/update :rate %])}])]]))
+          :on-change #(dispatch [:accounts.entry.reassign/update :rate %])}])]
+
+
+     [ant/form-item
+      {:label "What date will the member move out of their old unit?"}
+      [form/date-picker
+       {:style     {:width "50%"}
+        :value     (:date @form)
+        :disabled  (:editing @form)
+        :on-change #(dispatch [:accounts.entry.reassign/update :move-out-date %])}]]
+
+
+     [ant/form-item
+      {:label "What date will the member move in to their new unit?"}
+      [form/date-picker
+       {:style     {:width "50%"}
+        :value     (:date @form)
+        :disabled  (:editing @form)
+        :on-change #(dispatch [:accounts.entry.reassign/update :move-in-date %])}]]
+
+
+     [ant/form-item
+      {:label (r/as-element
+               [:span [:span.bold "Asana Transfer Task"]
+                [ant/tooltip
+                 {:placement "topLeft"
+                  :title     (r/as-element
+                              [:div "Make a copy of the "
+                               [:a {:href (:xfer-intra asana-transition-templates) :target "_blank"} "Member Transfer Template"]
+                               " Asana task. Paste the link to your copy of that task in this input."])}
+                 [ant/icon {:type "question-circle-o"}]]])}
+      [ant/input
+       {:placeholder "paste the asana link here..."
+        :value       (:asana-task @form)
+        :on-change   #(dispatch [:accounts.entry.reassign/update :asana-task (.. % -target -value)])}]]]))
 
 
 (defn- move-out-confirmation [account form]
@@ -532,12 +585,6 @@
                   (nil? (:written-notice @form)))
        :on-click #(move-out-confirmation account form)}
       "Begin Move-out Process"])])
-
-
-(def asana-transition-templates
-  {:move-out   "https://app.asana.com/0/306571089298787/622139719994873"
-   :renewal    "https://app.asana.com/0/306571089298787/655446069485967"
-   :xfer-intra "https://app.asana.com/0/306571089298787/622124213884611"})
 
 
 (defn move-out-start []
@@ -666,7 +713,7 @@
          :on-click #(dispatch [:accounts.entry/update-move-out! license-id transition-id @form])}
         "Update Renewal Info"])
      [ant/button
-      {:type     :danger
+      {:type     :primary
        :size     :large
        :disabled false ;; TODO - disable when no term?
        :on-click #(renewal-confirmation account form)}
@@ -728,7 +775,7 @@
      [ant/button
       {:icon     "swap"
        :on-click #(dispatch [:accounts.entry.reassign/show account])}
-      "Reassign"]
+      "Transfer"]
      [ant/button
       {:icon     "retweet"
        :on-click #(dispatch [:accounts.entry.renewal/show (:active_license account)])}
