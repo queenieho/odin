@@ -451,7 +451,7 @@
     [:div
      [ant/button
       {:size     :large
-       :on-click #(dispatch [:modal/hide db/reassign-modal-key])}
+       :on-click #(dispatch [:accounts.entry.reassign/hide])}
       "Cancel"]
      [ant/button
       {:type     :primary
@@ -474,7 +474,7 @@
     [ant/modal
      {:title     (str "Transfer: " (:name account))
       :visible   @is-visible
-      :on-cancel #(dispatch [:modal/hide db/reassign-modal-key])
+      :on-cancel #(dispatch [:accounts.entry.reassign/hide])
       :footer    (r/as-element [reassign-modal-footer account @form])}
 
      ;; community selection
@@ -483,9 +483,10 @@
         [:div.has-text-centered
          [ant/spin {:tip "Fetching communities..."}]]
         [ant/select
-         {:style     {:width "100%"}
-          :value     (str (:community @form))
-          :on-change #(dispatch [:accounts.entry.reassign/select-community % license])}
+         {:style                       {:width "100%"}
+          :dropdown-match-select-width false
+          :value                       (str (:community @form))
+          :on-change                   #(dispatch [:accounts.entry.reassign/select-community % license])}
          (doall
           (map
            #(with-meta (reassign-community-option %) {:key (:id %)})
@@ -497,7 +498,8 @@
         [:div.has-text-centered
          [ant/spin {:tip "Fetching units..."}]]
         [ant/select
-         {:style     {:width "100%"}
+         {:style     {:width "50%"}
+          :dropdown-match-select-width false
           :value     (str (:unit @form))
           :on-change #(dispatch [:accounts.entry.reassign/select-unit % (:term license) :accounts.entry.reassign/update])}
          (doall
@@ -549,7 +551,34 @@
       [ant/input
        {:placeholder "paste the asana link here..."
         :value       (:asana-task @form)
-        :on-change   #(dispatch [:accounts.entry.reassign/update :asana-task (.. % -target -value)])}]]]))
+        :size        "default"
+        :on-change   #(dispatch [:accounts.entry.reassign/update :asana-task (.. % -target -value)])}]
+
+      ;; these things only matter later in the proces - let's figure out the editing story on them soon.
+
+      #_[ant/form-item
+       {:label (r/as-element
+                [ant/tooltip
+                 {:title "Link to Google Drive Doc"}
+                 [:span.bold "Final Walkthrough Notes"]])}
+       [ant/input
+        {:placeholder "paste the google drive link here..."
+         :value       (:room-walkthrough-doc @form)
+         :size        "default"
+         :on-change   #(dispatch [:accounts.entry.reassign/update :room-walkthrough-doc (.. % -target -value)])}]]
+
+      #_[ant/form-item
+       {:label (r/as-element
+                [ant/tooltip
+                 {:title     "To be added after Ops has reviewed the final walkthrough details"
+                  :placement "topLeft"}
+                 [:span.bold "Security Desposit Refund Amount"]] )}
+       [ant/input-number
+        {:style     {:width "50%"}
+         :value     (:deposit-refund @form)
+         :size      "default"
+         :on-change #(dispatch [:accounts.entry.reassign/update :deposit-refund %])}]]
+      ]]))
 
 
 (defn- move-out-confirmation [account form]

@@ -260,6 +260,14 @@
                    [:property/fetch current-community-id]]})))
 
 
+(reg-event-fx
+ :accounts.entry.reassign/hide
+ [(path db/path)]
+ (fn [{db :db} _]
+   {:dispatch [:modal/hide db/reassign-modal-key]
+    :db (assoc db :reassign-form {})}))
+
+
 (reg-event-db
  :accounts.entry.reassign/update
  [(path db/path)]
@@ -321,8 +329,9 @@
 (reg-event-fx
  :accounts.entry/reassign!
  [(path db/path)]
- (fn [_ [k license-id {:keys [unit rate]}]]
-   {:dispatch [:ui/loading k true]
+ (fn [_ [k account {:keys [unit rate]}]]
+   (js/console.log "reassign event triggered...")
+   #_{:dispatch [:ui/loading k true]
     :graphql  {:mutation
                [[:reassign_member_unit {:params {:license license-id
                                                  :unit    unit
