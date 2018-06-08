@@ -513,7 +513,9 @@
 
 
 (def asana-transition-templates
-  {:move-out "https://app.asana.com/0/306571089298787/622139719994873"})
+  {:move-out   "https://app.asana.com/0/306571089298787/622139719994873"
+   :renewal    "https://app.asana.com/0/306571089298787/655446069485967"
+   :xfer-intra "https://app.asana.com/0/306571089298787/622124213884611"})
 
 
 (defn move-out-start []
