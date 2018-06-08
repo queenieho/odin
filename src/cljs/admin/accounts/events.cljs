@@ -75,7 +75,8 @@
                      [:active_license (conj license-selectors
                                             [:transition [:id :type :deposit_refund :room_walkthrough_doc :asana_task :date :early_termination_fee
                                                           [:new_license [:id :rate :term  :starts :ends
-                                                                         [:unit [:name :id]]]]]])]
+                                                                         [:unit [:name :id :number
+                                                                                 [:property [:name :id]]]]]]]])]
                      ;; TODO: Move to separate query
                      [:licenses license-selectors]]]
                    [:orders {:params {:accounts [account-id]}}
@@ -248,6 +249,23 @@
 ;; reassign =====================================================================
 
 
+(defn- populate-reassign-form
+  [{:keys [deposit_refund asana_task room_walkthrough_doc] :as transition}]
+  (tb/assoc-when
+   {:editing true}
+   :deposit-refund deposit_refund
+   :room-walkthrough-doc room_walkthrough_doc
+   :asana-task asana_task))
+
+
+(reg-event-fx
+ :accounts.entry.reassign/edit
+ [(path db/path)]
+ (fn [{db :db} [_ transition]]
+   {:db       (assoc db :reassign-form (populate-reassign-form transition))
+    :dispatch [:modal/show db/reassign-modal-key]}))
+
+
 (reg-event-fx
  :accounts.entry.reassign/show
  [(path db/path)]
@@ -256,15 +274,27 @@
      {:dispatch-n [[:modal/show db/reassign-modal-key]
                    [:properties/query]
                    [:accounts.entry.reassign/update :community current-community-id]
-                   [:accounts.entry.reassign/update :type :xfer-intra]
+                   [:accounts.entry.reassign/update :type :intra-xfer]
                    [:property/fetch current-community-id]]})))
+
+
+(reg-event-fx
+ :accounts.entry.reassign/hide
+ [(path db/path)]
+ (fn [{db :db} _]
+   {:dispatch [:modal/hide db/reassign-modal-key]}))
+
+
+(reg-event-db
+ :accounts.entry.reassign/clear
+ [(path db/path)]
+ (fn [db _] (assoc db :reassign-form {})))
 
 
 (reg-event-db
  :accounts.entry.reassign/update
  [(path db/path)]
  (fn [db [_ k v]]
-   (js/console.log "updating... " k v)
    (assoc-in db [:reassign-form k] v)))
 
 
@@ -274,13 +304,11 @@
  (fn [{db :db} [_ community license]]
    (let [community (tb/str->int community)
          current-community (get-in license [:property :id])]
-     (js/console.log "current community is " current-community)
-     (js/console.log "selected community is " community)
      {:dispatch-n [[:accounts.entry.reassign/update :community community]
                    [:property/fetch community]
                    (if (= community current-community)
-                     [:accounts.entry.reassign/update :type :xfer-intra]
-                     [:accounts.entry.reassign/update :type :xfer-inter])]})))
+                     [:accounts.entry.reassign/update :type :intra-xfer]
+                     [:accounts.entry.reassign/update :type :inter-xfer])]})))
 
 
 (reg-event-fx
@@ -318,29 +346,71 @@
                    [on-success :rate rate]]})))
 
 
+(defn- reassign-form->transition-params
+  [account {:keys [type move-out-date unit rate move-in-date asana-task] :as form-data}]
+  (let [result (tb/assoc-when
+                {:current_license    (get-in account [:active_license :id])
+                 :type               (keyword (string/replace (name type) "-" "_"))
+                 :date               (.toISOString move-out-date)
+                 :new_license_params {:unit unit
+                                      :rate rate
+                                      :term (get-in account [:active_license :term])
+                                      :date (.toISOString move-in-date)}}
+                :asana_task asana-task)]
+    result))
+
 (reg-event-fx
  :accounts.entry/reassign!
  [(path db/path)]
- (fn [_ [k license-id {:keys [unit rate]}]]
-   {:dispatch [:ui/loading k true]
-    :graphql  {:mutation
-               [[:reassign_member_unit {:params {:license license-id
-                                                 :unit    unit
-                                                 :rate    rate}}
-                 [:id [:account [:id]]]]]
-               :on-success [::reassign-unit-success k]
-               :on-failure [:graphql/failure k]}}))
+ (fn [_ [k account form]]
+   {:dispatch  [:ui/loading k true]
+    :graphql {:mutation
+              [[:transfer_create {:params (reassign-form->transition-params account form)}
+                [:id [:account [:id]]]]]
+              :on-success [::reassign-unit-success k]
+              :on-failure [:graphql/failure k]}}))
 
+
+(reg-event-fx
+ :accounts.entry/reassign-update!
+ [(path db/path)]
+ (fn [{db :db} [k account form]]
+   (let [transition (get-in account [:active_license :transition])
+         params (tb/assoc-when
+                 {:id (:id transition)
+                  :current_license (get-in account [:active_license :id])}
+                 :room_walkthrough_doc (:room-walkthrough-doc form)
+                 :asana_task (:asana-task form)
+                 :deposit_refund (:deposit-refund form))]
+     {:dispatch [:ui/loading k true]
+      :graphql {:mutation
+                [[:transfer_update {:params params}
+                  [:id [:account [:id]]]]]
+                :on-success [::reassign-update-success k]
+                :on-failure [:graphql/failure k]}})))
+
+
+(reg-event-fx
+ ::reassign-update-success
+ [(path db/path)]
+ (fn [{db :db} [_ k response]]
+   (let [account-id (get-in response [:data :transfer_update :account :id])]
+     {:dispatch-n [[:ui/loading k false]
+                   [:modal/hide db/reassign-modal-key]
+                   [:payment-sources/fetch account-id]
+                   [:notify/success ["Transfer Info updated!"]]
+                   [:account/fetch account-id]]})))
 
 
 (reg-event-fx
  ::reassign-unit-success
  [(path db/path)]
  (fn [_ [_ k response]]
-   (let [account-id (get-in response [:data :reassign_member_unit :account :id])]
+   (let [account-id (get-in response [:data :transfer_create :account :id])]
      {:dispatch-n [[:ui/loading k false]
                    [:modal/hide db/reassign-modal-key]
                    [:payment-sources/fetch account-id]
+                   [:notify/success ["Transfer created!"]]
                    [:account/fetch account-id]]})))
 
 

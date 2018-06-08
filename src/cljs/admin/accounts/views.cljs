@@ -408,9 +408,18 @@
 ;; membership ===================================================================
 
 
+(def asana-transition-templates
+  "asana task templates that the community team uses to track work related to a member's transition"
+  {:move-out   "https://app.asana.com/0/306571089298787/622139719994873"
+   :renewal    "https://app.asana.com/0/306571089298787/655446069485967"
+   :intra-xfer "https://app.asana.com/0/306571089298787/622124213884611"
+   :inter-xfer "https://app.asana.com/0/306571089298787/622124213884611"})
+
+
 (defn- reassign-community-option
   [{:keys [id name] :as community}]
   [ant/select-option {:value (str id)} name])
+
 
 (defn- reassign-unit-option
   [{:keys [id code number occupant] :as unit} current-unit-id]
@@ -425,22 +434,37 @@
      (str "Unit #" number))])
 
 
+(defn- reassign-confirmation [account form]
+  (let [license-id (get-in account [:active_license :id])]
+    (ant/modal-confirm
+     {:title   "Confirm Transfer?"
+      :content "Are you sure you want to continue? This action can't easily be undone and will send an email notification to the member."
+      :on-ok   #(dispatch [:accounts.entry/reassign! account form])
+      :ok-type :primary
+      :ok-text "Yes - Confirm Transfer"})))
+
+
 (defn- reassign-modal-footer
-  [account {:keys [rate unit] :as form}]
+  [account {:keys [rate unit move-out-date] :as form}]
   (let [is-loading (subscribe [:ui/loading? :accounts.entry/reassign!])
         license-id (get-in account [:active_license :id])]
     [:div
      [ant/button
       {:size     :large
-       :on-click #(dispatch [:modal/hide db/reassign-modal-key])}
+       :on-click #(dispatch [:accounts.entry.reassign/hide])}
       "Cancel"]
      [ant/button
       {:type     :primary
        :size     :large
-       :disabled (or (nil? rate) (nil? unit))
+       :disabled (and (not (:editing form)) (or (nil? rate) (nil? unit) (nil? move-out-date)))
        :loading  @is-loading
-       :on-click #(dispatch [:accounts.entry/reassign! license-id form])}
-      "Reassign"]]))
+       :on-click (if (:editing form)
+                   #(dispatch [:accounts.entry/reassign-update! account form])
+                   #(reassign-confirmation account form))}
+      (if (:editing form)
+        "Update Transfer Details"
+        "Begin Transfer Process")]]))
+
 
 
 (defn- reassign-modal [account]
@@ -455,48 +479,114 @@
     [ant/modal
      {:title     (str "Transfer: " (:name account))
       :visible   @is-visible
-      :on-cancel #(dispatch [:modal/hide db/reassign-modal-key])
+      :after-close #(dispatch [:accounts.entry.reassign/clear])
+      :on-cancel #(dispatch [:accounts.entry.reassign/hide])
       :footer    (r/as-element [reassign-modal-footer account @form])}
 
-     ;; community selection
-     [ant/form-item {:label "Which community?"}
-      (if @communities-loading
-        [:div.has-text-centered
-         [ant/spin {:tip "Fetching communities..."}]]
-        [ant/select
-         {:style     {:width "100%"}
-          :value     (str (:community @form))
-          :on-change #(dispatch [:accounts.entry.reassign/select-community % license])}
-         (doall
-          (map
-           #(with-meta (reassign-community-option %) {:key (:id %)})
-           @communities))])]
+     (when-not (:editing @form)
+       [:div
+       ;; community selection
+        [ant/form-item {:label "Which community?"}
+        (if @communities-loading
+          [:div.has-text-centered
+           [ant/spin {:tip "Fetching communities..."}]]
+          [ant/select
+           {:style                       {:width "100%"}
+            :dropdown-match-select-width false
+            :value                       (str (:community @form))
+            :on-change                   #(dispatch [:accounts.entry.reassign/select-community % license])}
+           (doall
+            (map
+             #(with-meta (reassign-community-option %) {:key (:id %)})
+             @communities))])]
 
-     ;; unit selection
-     [ant/form-item {:label "Which unit?"}
-      (if @units-loading
-        [:div.has-text-centered
-         [ant/spin {:tip "Fetching units..."}]]
-        [ant/select
-         {:style     {:width "100%"}
-          :value     (str (:unit @form))
-          :on-change #(dispatch [:accounts.entry.reassign/select-unit % (:term license) :accounts.entry.reassign/update])}
-         (doall
-          (map-indexed
-           #(with-meta (reassign-unit-option %2 (get-in license [:unit :id])) {:key %1})
-           @units))])]
+       ;; unit selection
+        [ant/form-item {:label "Which unit?"}
+        (if @units-loading
+          [:div.has-text-centered
+           [ant/spin {:tip "Fetching units..."}]]
+          [ant/select
+           {:style                       {:width "50%"}
+            :dropdown-match-select-width false
+            :value                       (str (:unit @form))
+            :on-change                   #(dispatch [:accounts.entry.reassign/select-unit % (:term license) :accounts.entry.reassign/update])}
+           (doall
+            (map-indexed
+             #(with-meta (reassign-unit-option %2 (get-in license [:unit :id])) {:key %1})
+             @units))])]
 
-     ;; rate selection
+       ;; rate selection
+       [ant/form-item
+        {:label "What should their rate change to?"}
+        (if @rate-loading
+          [:div.has-text-centered
+           [ant/spin {:tip "Fetching current rate..."}]]
+          [ant/input-number
+           {:style     {:width "100%"}
+            :value     (:rate @form)
+            :disabled  (nil? (:unit @form))
+            :on-change #(dispatch [:accounts.entry.reassign/update :rate %])}])]
+
+
+       [ant/form-item
+        {:label "What date will the member move out of their old unit?"}
+        [form/date-picker
+         {:style     {:width "50%"}
+          :value     (:move-out-date @form)
+          :disabled  (:editing @form)
+          :on-change #(dispatch [:accounts.entry.reassign/update :move-out-date %])}]]
+
+
+       [ant/form-item
+        {:label "What date will the member move in to their new unit?"}
+        [form/date-picker
+         {:style     {:width "50%"}
+          :value     (:move-in-date @form)
+          :disabled  (:editing @form)
+          :on-change #(dispatch [:accounts.entry.reassign/update :move-in-date %])}]]])
+
+
      [ant/form-item
-      {:label "What should their rate change to?"}
-      (if @rate-loading
-        [:div.has-text-centered
-         [ant/spin {:tip "Fetching current rate..."}]]
-        [ant/input-number
-         {:style     {:width "100%"}
-          :value     (:rate @form)
-          :disabled  (nil? (:unit @form))
-          :on-change #(dispatch [:accounts.entry.reassign/update :rate %])}])]]))
+      {:label (r/as-element
+               [:span [:span.bold "Asana Transfer Task"]
+                [ant/tooltip
+                 {:placement "topLeft"
+                  :title     (r/as-element
+                              [:div "Make a copy of the "
+                               [:a {:href (:intra-xfer asana-transition-templates) :target "_blank"} "Member Transfer Template"]
+                               " Asana task. Paste the link to your copy of that task in this input."])}
+                 [ant/icon {:type "question-circle-o"}]]])}
+      [ant/input
+       {:placeholder "paste the asana link here..."
+        :value       (:asana-task @form)
+        :size        "default"
+        :on-change   #(dispatch [:accounts.entry.reassign/update :asana-task (.. % -target -value)])}]]
+
+     (when (:editing @form)
+       [:div
+        [ant/form-item
+         {:label (r/as-element
+                  [ant/tooltip
+                   {:title "Link to Google Drive Doc"}
+                   [:span.bold "Final Walkthrough Notes"]])}
+         [ant/input
+          {:placeholder "paste the google drive link here..."
+           :value       (:room-walkthrough-doc @form)
+           :size        "default"
+           :on-change   #(dispatch [:accounts.entry.reassign/update :room-walkthrough-doc (.. % -target -value)])}]]
+
+        [ant/form-item
+         {:label (r/as-element
+                  [ant/tooltip
+                   {:title     "To be added after Ops has reviewed the final walkthrough details"
+                    :placement "topLeft"}
+                   [:span.bold "Security Desposit Refund Amount"]] )}
+         [ant/input-number
+          {:style     {:width "50%"}
+           :value     (:deposit-refund @form)
+           :size      "default"
+           :on-change #(dispatch [:accounts.entry.reassign/update :deposit-refund %])}]]])
+     ]))
 
 
 (defn- move-out-confirmation [account form]
@@ -532,12 +622,6 @@
                   (nil? (:written-notice @form)))
        :on-click #(move-out-confirmation account form)}
       "Begin Move-out Process"])])
-
-
-(def asana-transition-templates
-  {:move-out   "https://app.asana.com/0/306571089298787/622139719994873"
-   :renewal    "https://app.asana.com/0/306571089298787/655446069485967"
-   :xfer-intra "https://app.asana.com/0/306571089298787/622124213884611"})
 
 
 (defn move-out-start []
@@ -666,7 +750,7 @@
          :on-click #(dispatch [:accounts.entry/update-move-out! license-id transition-id @form])}
         "Update Renewal Info"])
      [ant/button
-      {:type     :danger
+      {:type     :primary
        :size     :large
        :disabled false ;; TODO - disable when no term?
        :on-click #(renewal-confirmation account form)}
@@ -724,11 +808,10 @@
 (defn membership-actions [account]
   (when (nil? (:transition (:active_license account)))
     [:div
-     [reassign-modal account]
      [ant/button
       {:icon     "swap"
        :on-click #(dispatch [:accounts.entry.reassign/show account])}
-      "Reassign"]
+      "Transfer"]
      [ant/button
       {:icon     "retweet"
        :on-click #(dispatch [:accounts.entry.renewal/show (:active_license account)])}
@@ -809,6 +892,108 @@
          :message   "Please add a link to this member's copy of the Member Move Out Template task in Asana."}])]))
 
 
+(defmethod transition-status :inter_xfer
+  [account transition]
+  (let [pname (format/make-first-name-possessive (:name account))]
+    [ant/card
+     {:title (str pname "Inter-Community Transfer Info")
+      :extra (r/as-element
+              [:div
+               (when (some? (:asana_task transition))
+                 [:a
+                  {:href (:asana_task transition)
+                   :target "_blank"}
+                  [ant/button
+                   {:icon "check-square-o"}
+                   "Open in Asana"]]) " "
+               [ant/button
+                  {:icon     "edit"
+                   :on-click #(dispatch [:accounts.entry.reassign/edit transition])}
+                  "Edit"]])}
+     [:div.columns
+      [:div.column
+       [transition-status-item "Move-out date" (format/date-short (:date transition))]
+       (when (some? (:room_walkthrough_doc transition))
+         [:div
+          [:p.bold "Final  Walkthrough Docs"]
+          [:p [:a {:href (:room_walkthrough_doc transition) :target "_blank"} "Open in Google Drive"]]])]
+
+      [:div.column
+       (when (some? (:deposit_refund transition))
+         [transition-status-item "Security Deposit Refund Amount" (format/currency (:deposit_refund transition))])]]
+
+
+     (when (empty? (:asana_task transition))
+       [ant/alert
+        {:type      :warning
+         :style     {:margin "10px"}
+         :show-icon true
+         :message   "Please add a link to this member's copy of the Member Move Out Template task in Asana."}])
+
+
+     [ant/card
+      {:title (str pname "Next License")}
+      (let [{:keys [term starts ends rate property unit]} (:new_license transition)]
+        [:div.columns
+         [:div.column
+          [transition-status-item "Term" (str term " months")]
+          [transition-status-item "Duration" (str (format/date-short starts) " - " (format/date-short ends))]]
+         [:div.column
+          [transition-status-item "Unit" (str (get-in unit [:property :name]) " #" (:number unit))]
+          [transition-status-item "Rate" (format/currency rate)]]])]]))
+
+
+(defmethod transition-status :intra_xfer
+  [account transition]
+  (let [pname (format/make-first-name-possessive (:name account))]
+    [ant/card
+     {:title (str pname "Transfer Info")
+      :extra (r/as-element
+              [:div
+               (when (some? (:asana_task transition))
+                 [:a
+                  {:href (:asana_task transition)
+                   :target "_blank"}
+                  [ant/button
+                   {:icon "check-square-o"}
+                   "Open in Asana"]]) " "
+               [ant/button
+                {:icon     "edit"
+                 :on-click #(dispatch [:accounts.entry.reassign/edit])}
+                "Edit"]])}
+     [:div.columns
+      [:div.column
+       [transition-status-item "Move-out date" (format/date-short (:date transition))]
+       (when (some? (:room_walkthrough_doc transition))
+         [:div
+          [:p.bold "Final  Walkthrough Docs"]
+          [:p [:a {:href (:room_walkthrough_doc transition) :target "_blank"} "Open in Google Drive"]]])]
+
+      [:div.column
+       (when (some? (:deposit_refund transition))
+         [transition-status-item "Security Deposit Refund Amount" (format/currency (:deposit_refund transition))])]]
+
+
+     (when (empty? (:asana_task transition))
+       [ant/alert
+        {:type      :warning
+         :style     {:margin "10px"}
+         :show-icon true
+         :message   "Please add a link to this member's copy of the Member Move Out Template task in Asana."}])
+
+
+     [ant/card
+      {:title (str pname "Next License")}
+      (let [{:keys [term starts ends rate property unit]} (:new_license transition)]
+        [:div.columns
+         [:div.column
+          [transition-status-item "Term" (str term " months")]
+          [transition-status-item "Duration" (str (format/date-short starts) " - " (format/date-short ends))]]
+         [:div.column
+          [transition-status-item "Unit" (str (get-in unit [:property :name]) " #" (:number unit))]
+          [transition-status-item "Rate" (format/currency rate)]]])]]))
+
+
 (defn membership-orders-list [account orders]
   [ant/card
    {:title (str (format/make-first-name-possessive (:name account)) "Helping Hands Orders")}
@@ -839,6 +1024,7 @@
     [:div.columns
      [move-out-modal account]
      [renewal-modal account]
+     [reassign-modal account]
      [:div.column
       [membership/license-summary license
        (when is-active {:content [membership-actions account]})]]
