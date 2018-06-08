@@ -256,6 +256,7 @@
      {:dispatch-n [[:modal/show db/reassign-modal-key]
                    [:properties/query]
                    [:accounts.entry.reassign/update :community current-community-id]
+                   [:accounts.entry.reassign/update :type :xfer-intra]
                    [:property/fetch current-community-id]]})))
 
 
@@ -263,16 +264,23 @@
  :accounts.entry.reassign/update
  [(path db/path)]
  (fn [db [_ k v]]
+   (js/console.log "updating... " k v)
    (assoc-in db [:reassign-form k] v)))
 
 
 (reg-event-fx
  :accounts.entry.reassign/select-community
  [(path db/path)]
- (fn [{db :db} [_ community]]
-   (let [community (tb/str->int community)]
+ (fn [{db :db} [_ community license]]
+   (let [community (tb/str->int community)
+         current-community (get-in license [:property :id])]
+     (js/console.log "current community is " current-community)
+     (js/console.log "selected community is " community)
      {:dispatch-n [[:accounts.entry.reassign/update :community community]
-                   [:property/fetch community]]})))
+                   [:property/fetch community]
+                   (if (= community current-community)
+                     [:accounts.entry.reassign/update :type :xfer-intra]
+                     [:accounts.entry.reassign/update :type :xfer-inter])]})))
 
 
 (reg-event-fx
