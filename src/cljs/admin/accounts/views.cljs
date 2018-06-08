@@ -576,6 +576,7 @@
     [form/date-picker
      {:style         {:width "50%"}
       :value         (:date @form)
+      :disabled      (:editing @form)
       :on-change     #(dispatch [:accounts.entry.transition/update :date %])}]]
 
    ;; TODO - validate/sanitize this link.
@@ -760,7 +761,7 @@
                   [ant/button
                    {:icon "check-square-o"}
                    "Open in Asana"]]) " "
-               #_[ant/button
+               [ant/button
                 {:icon     "edit"
                  :on-click #(dispatch [:accounts.entry.transition/show transition])}
                 "Edit"]])}
