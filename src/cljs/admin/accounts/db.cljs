@@ -12,6 +12,14 @@
   ::reassign)
 
 
+(def transition-modal-key
+  ::transition)
+
+
+(def renewal-modal-key
+  ::renewal)
+
+
 (def default-params
   {:selected-view "member"
    :sort-order    :asc
@@ -25,7 +33,8 @@
          :units            []
          :tab              nil
          :create-form      {}
-         :reassign-form    {}}})
+         :reassign-form    {}
+         :transition-form  {}}})
 
 
 ;; entry ========================================================================

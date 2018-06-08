@@ -54,6 +54,27 @@
    :resolve     :member-license/reassign!}
 
 
+  :move_out_create
+  {:type        :license
+   :description "Begins the move-out process for a member."
+   :args        {:params {:type :member_license_transition_create_params}}
+   :resolve     :license-transition/create!}
+
+
+  :move_out_update
+  {:type        :license
+   :description "Updates move-out information for a member."
+   :args        {:params {:type :member_license_transition_mutation_params}}
+   :resolve     :license-transition/update!}
+
+
+  :renewal_create
+  {:type        :license
+   :description "Creates a license for a member renewing their membership in the same unit."
+   :args        {:params {:type :member_license_transition_create_params}}
+   :resolve     :license-transition/create!}
+
+
   ;; notes ========================================================================
 
 

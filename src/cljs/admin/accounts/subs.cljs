@@ -129,6 +129,85 @@
        form))))
 
 
+;; transition ===================================================================
+
+
+(reg-sub
+ :accounts.entry.transition/form-data
+ :<- [db/path]
+ (fn [db [_ k]]
+   (let [form (:transition-form db)]
+     (if (some? k)
+       (get form k)
+       form))))
+
+
+;; notes ========================================================================
+
+
+(reg-sub
+ :accounts.entry.note/editing
+ :<- [db/path]
+ (fn [db [_ id]]
+   (get-in db [:editing-notes id])))
+
+
+(reg-sub
+ :accounts.entry.create-note/showing?
+ :<- [db/path]
+ (fn [db _]
+   (get db :showing-create-note)))
+
+
+(reg-sub
+ :accounts.entry.create-note/form-data
+ :<- [db/path]
+ (fn [db [_ account-id]]
+   (get-in db [:create-form account-id])))
+
+
+(reg-sub
+ :accounts.entry/can-create-note?
+ :<- [db/path]
+ (fn [db [_ account-id]]
+   (let [{:keys [subject content]} (get-in db [:create-form account-id])]
+     (and (not (string/blank? subject))
+          (not (string/blank? content))))))
+
+
+(reg-sub
+ :accounts.entry.notes/pagination
+ :<- [db/path]
+ (fn [db _]
+   (let [total (count (:notes db))]
+     (assoc (:notes-pagination db) :total total))))
+
+
+(reg-sub
+ :accounts.entry/notes
+ :<- [db/path]
+ :<- [:accounts.entry.notes/pagination]
+ (fn [[db {:keys [size page]}] _]
+   (let [notes (:notes db)]
+     (->> notes
+          (drop (* (dec page) size))
+          (take size)))))
+
+
+(reg-sub
+ :accounts.entry.note/comment-form-shown?
+ :<- [db/path]
+ (fn [db [_ note-id]]
+   (boolean (get-in db [:commenting-notes note-id :shown]))))
+
+
+(reg-sub
+ :accounts.entry.note/comment-text
+ :<- [db/path]
+ (fn [db [_ note-id]]
+   (get-in db [:commenting-notes note-id :text])))
+
+
 ;; orders =======================================================================
 
 

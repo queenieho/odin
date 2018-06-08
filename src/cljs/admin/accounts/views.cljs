@@ -16,7 +16,8 @@
             [iface.utils.formatters :as format]
             [re-frame.core :refer [subscribe dispatch]]
             [reagent.core :as r]
-            [toolbelt.core :as tb]))
+            [toolbelt.core :as tb]
+            [iface.components.form :as form]))
 
 
 ;; ==============================================================================
@@ -407,9 +408,15 @@
 ;; membership ===================================================================
 
 
+(defn- reassign-community-option
+  [{:keys [id name] :as community}]
+  [ant/select-option {:value (str id)} name])
+
 (defn- reassign-unit-option
-  [{:keys [id code number occupant] :as unit}]
-  [ant/select-option {:value (str id)}
+  [{:keys [id code number occupant] :as unit} current-unit-id]
+  [ant/select-option
+   {:value (str id)
+    :disabled (= id current-unit-id)}
    (if (some? occupant)
      (format/format "Unit #%d (occupied by %s until %s)"
                     number
@@ -437,17 +444,33 @@
 
 
 (defn- reassign-modal [account]
-  (let [is-visible    (subscribe [:modal/visible? db/reassign-modal-key])
-        units-loading (subscribe [:ui/loading? :property/fetch])
-        rate-loading  (subscribe [:ui/loading? :accounts.entry.reassign/fetch-rate])
-        units         (subscribe [:property/units (get-in account [:property :id])])
-        form          (subscribe [:accounts.entry.reassign/form-data])
-        license       (:active_license account)]
+  (let [is-visible          (subscribe [:modal/visible? db/reassign-modal-key])
+        communities-loading (subscribe [:ui/loading? :properties/query])
+        units-loading       (subscribe [:ui/loading? :property/fetch])
+        rate-loading        (subscribe [:ui/loading? :accounts.entry.reassign/fetch-rate])
+        form                (subscribe [:accounts.entry.reassign/form-data])
+        communities         (subscribe [:properties/list])
+        units               (subscribe [:property/units (:community @form)])
+        license             (:active_license account)]
     [ant/modal
-     {:title     (str "Reassign " (:name account))
+     {:title     (str "Transfer: " (:name account))
       :visible   @is-visible
       :on-cancel #(dispatch [:modal/hide db/reassign-modal-key])
       :footer    (r/as-element [reassign-modal-footer account @form])}
+
+     ;; community selection
+     [ant/form-item {:label "Which community?"}
+      (if @communities-loading
+        [:div.has-text-centered
+         [ant/spin {:tip "Fetching communities..."}]]
+        [ant/select
+         {:style     {:width "100%"}
+          :value     (str (:community @form))
+          :on-change #(dispatch [:accounts.entry.reassign/select-community % license])}
+         (doall
+          (map
+           #(with-meta (reassign-community-option %) {:key (:id %)})
+           @communities))])]
 
      ;; unit selection
      [ant/form-item {:label "Which unit?"}
@@ -457,15 +480,15 @@
         [ant/select
          {:style     {:width "100%"}
           :value     (str (:unit @form))
-          :on-change #(dispatch [:accounts.entry.reassign/select-unit % (:term license)])}
+          :on-change #(dispatch [:accounts.entry.reassign/select-unit % (:term license) :accounts.entry.reassign/update])}
          (doall
           (map-indexed
-           #(with-meta (reassign-unit-option %2) {:key %1})
+           #(with-meta (reassign-unit-option %2 (get-in license [:unit :id])) {:key %1})
            @units))])]
 
      ;; rate selection
      [ant/form-item
-      {:label "What should his/her rate change to?"}
+      {:label "What should their rate change to?"}
       (if @rate-loading
         [:div.has-text-centered
          [ant/spin {:tip "Fetching current rate..."}]]
@@ -476,19 +499,314 @@
           :on-change #(dispatch [:accounts.entry.reassign/update :rate %])}])]]))
 
 
-(defn membership-actions [account]
+(defn- move-out-confirmation [account form]
+  (let [license-id (get-in account [:active_license :id])]
+    (ant/modal-confirm
+     {:title   "Confirm Move-Out"
+      :content "Are you sure you want to continue? This action can't easily be undone and will send an email notification to the member."
+      :on-ok   #(dispatch [:accounts.entry/move-out! license-id @form])
+      :ok-type :danger
+      :ok-text "Yes - Confirm Move-out"})))
+
+
+(defn move-out-modal-footer
+  [account form]
   [:div
-   [reassign-modal account]
    [ant/button
-    {:icon     "swap"
-     :on-click #(dispatch [:accounts.entry.reassign/show account])}
-    "Reassign"]])
+    {:size     :large
+     :on-click #(dispatch [:accounts.entry.transition/hide])}
+    "Cancel"]
+   (if (:editing @form)
+     (let [license-id    (get-in account [:active_license :id])
+           transition-id (get-in account [:active_license :transition :id])]
+       [ant/button
+        {:type     :primary
+         :size     :large
+         :on-click #(dispatch [:accounts.entry/update-move-out! license-id transition-id @form])}
+        "Update Move-out Data"])
+     [ant/button
+      {:type     :danger
+       :size     :large
+       :disabled (or
+                  (nil? (:date @form))
+                  (nil? (:written-notice @form)))
+       :on-click #(move-out-confirmation account form)}
+      "Begin Move-out Process"])])
+
+
+(def asana-transition-templates
+  {:move-out   "https://app.asana.com/0/306571089298787/622139719994873"
+   :renewal    "https://app.asana.com/0/306571089298787/655446069485967"
+   :xfer-intra "https://app.asana.com/0/306571089298787/622124213884611"})
+
+
+(defn move-out-start []
+  [:div
+   [ant/alert
+    {:type        :warning
+     :show-icon   true
+     :message     "Before you begin:"
+     :description "Ensure that you have received written notice from the member stating their intent to move out."}]
+
+   [:br]
+   [:div.has-text-centered
+    [ant/button
+     {:size     :large
+      :on-click #(dispatch [:accounts.entry.transition/update :written-notice true])}
+     "Written notice has been given"]]])
+
+
+(defn- move-out-form-item
+  [question input]
+  [:div
+   {:style {:margin-bottom "1em"}}
+   question
+   input])
+
+
+(defn- default-moment
+  [m]
+  (or m (js/moment (.getTime (js/Date.)))))
+
+
+(defn move-out-additional-form
+  [form]
+  [:div
+   ;; TODO - validate/sanitize this link.
+   [move-out-form-item
+    [ant/tooltip
+     {:title "Link to Google Drive Doc"}
+     [:p.bold "Final Walkthrough Notes"]]
+    [ant/input
+     {:placeholder "paste the google drive link here..."
+      :value       (:room-walkthrough-doc @form)
+      :on-change   #(dispatch [:accounts.entry.transition/update :room-walkthrough-doc (.. % -target -value)])}]]
+
+   [move-out-form-item
+    [ant/tooltip
+     {:title     "To be added after Ops has reviewed the final walkthrough details"
+      :placement "topLeft"}
+     [:p.bold "Security Desposit Refund Amount"]]
+    [ant/input-number
+     {:style     {:width "50%"}
+      :value     (:deposit-refund @form)
+      :on-change #(dispatch [:accounts.entry.transition/update :deposit-refund %])}]]])
+
+
+(defn move-out-form [form]
+  [:div
+   [move-out-form-item
+    [:p.bold "What date is the member moving out?"]
+    [form/date-picker
+     {:style         {:width "50%"}
+      :value         (:date @form)
+      :disabled      (:editing @form)
+      :on-change     #(dispatch [:accounts.entry.transition/update :date %])}]]
+
+   ;; TODO - validate/sanitize this link.
+   [move-out-form-item
+    [:span [:span.bold "Asana Move-out Task"]
+     [ant/tooltip
+      {:placement "topLeft"
+       :title     (r/as-element
+                   [:div "Make a copy of the " [:a {:href (:move-out asana-transition-templates) :target "_blank"} "Member Move Out Template"] " Asana task. Paste the link to your copy of that task in this input."])}
+      [ant/icon {:type "question-circle"}]]]
+    [ant/input
+     {:placeholder "paste the asana link here..."
+      :value       (:asana-task @form)
+      :on-change   #(dispatch [:accounts.entry.transition/update :asana-task (.. % -target -value)])}]]
+
+   (if (:editing @form)
+     [move-out-additional-form form]
+     [ant/alert
+      {:type      :info
+       :show-icon true
+       :message   "You'll have the opportunity to add more information about this move-out later."}])])
+
+
+(defn move-out-modal
+  [account]
+  (let [form (subscribe [:accounts.entry.transition/form-data])]
+    [ant/modal
+     {:title       (str "Move-out: " (:name account))
+      :visible     @(subscribe [:modal/visible? db/transition-modal-key])
+      :after-close #(dispatch [:accounts.entry.transition/clear])
+      :on-cancel   #(dispatch [:accounts.entry.transition/hide])
+      :footer      (r/as-element [move-out-modal-footer account form])}
+
+     (if (nil? (:written-notice @form))
+       [move-out-start]
+       [move-out-form form])]))
+
+
+(defn renewal-confirmation
+  [account form]
+  (let [license (:active_license account)]
+    (ant/modal-confirm
+     {:title   "Confirm License Renewal"
+      :content "Are you sure you want to continue? This action can't easily be undone and will send an email notification to the member."
+      :on-ok   #(dispatch [:accounts.entry/renew-license! license @form])
+      :ok-type :primary
+      :ok-text "Yes - Confirm License Renewal"})))
+
+
+(defn renewal-modal-footer
+  [account form]
+  [:div
+   [ant/button
+    {:size     :large
+     :on-click #(dispatch [:modal/hide db/renewal-modal-key])}
+    "Cancel"]
+   (if (:editing @form)
+     (let [license-id    (get-in account [:active_license :id])
+           transition-id (get-in account [:active_license :transition :id])]
+       [ant/button
+        {:type     :primary
+         :size     :large
+         :on-click #(dispatch [:accounts.entry/update-move-out! license-id transition-id @form])}
+        "Update Renewal Info"])
+     [ant/button
+      {:type     :danger
+       :size     :large
+       :disabled false ;; TODO - disable when no term?
+       :on-click #(renewal-confirmation account form)}
+      "Renew License"])])
+
+(def radio-style
+  {:display     "block"
+   :height      "30px"
+   :line-height "30px"})
+
+(defn renewal-modal
+  [account]
+  (let [form    (subscribe [:accounts.entry.transition/form-data])
+        license (:active_license account)]
+    [ant/modal
+     {:title       (str "Renewal: " (:name account))
+      :visible     @(subscribe [:modal/visible? db/renewal-modal-key])
+      :after-close #(dispatch [:accounts.entry.transition/clear])
+      :on-cancel   #(dispatch [:modal/hide db/renewal-modal-key])
+      :footer      (r/as-element [renewal-modal-footer account form])}
+     [move-out-form-item
+      [:p.bold "What will the member's new license term be?"]
+      [ant/select
+       {:style         {:width "50%"}
+        :default-value "3"
+        :on-change     #(dispatch [:accounts.entry.reassign/update-term license (int %)])}
+       [ant/select-option {:value "3"} "3 months"]
+       [ant/select-option {:value "6"} "6 months"]
+       [ant/select-option {:value "12"} "12 months"]]]
+
+     [move-out-form-item
+      [:p.bold "Will the member's monthly rate change?"
+       [ant/tooltip
+        {:placement "right"
+         :title     (r/as-element
+                     [:div "Please consult with the Operations team before changing the member's rate."])}
+        [ant/icon {:type  "question-circle"
+                   :style {:margin-left 10}}]]]
+      [ant/radio-group
+       {:on-change #(dispatch [:accounts.entry.transition/update :rate-changing (.. % -target -value)])
+        :disabled  (nil? (:rate @form))
+        :value     (:rate-changing @form)}
+       [ant/radio (assoc {:value false} :style radio-style) "No - it will not change"]
+       [ant/radio (assoc {:value true} :style radio-style) "Yes - it will change to..."
+        (when (true? (:rate-changing @form))
+          [ant/input-number {:style       {:width       "50%"
+                                           :margin-left 10}
+                             :size        :small
+                             :min         0
+                             :formatter   #(str "$"%)
+                             :placeholder "new rate..."
+                             :value       (:rate @form)
+                             :on-change   #(dispatch [:accounts.entry.transition/update :rate %])}])]]]]))
+
+(defn membership-actions [account]
+  (when (nil? (:transition (:active_license account)))
+    [:div
+     [reassign-modal account]
+     [ant/button
+      {:icon     "swap"
+       :on-click #(dispatch [:accounts.entry.reassign/show account])}
+      "Reassign"]
+     [ant/button
+      {:icon     "retweet"
+       :on-click #(dispatch [:accounts.entry.renewal/show (:active_license account)])}
+      "Renew License"]
+     [ant/button
+      {:icon     "home"
+       :type     :danger
+       :ghost    true
+       :on-click #(dispatch [:accounts.entry.transition/show (get-in account [:active_license :transition])])}
+      "Move-out"]]))
 
 
 (defn- render-status [_ {status :status}]
   [ant/tooltip {:title status}
    [ant/icon {:class (order/status-icon-class (keyword status))
               :type  (order/status-icon (keyword status))}]])
+
+
+(defn transition-status-item
+  [label value]
+  [:div
+   [:p.bold label]
+   [:p value]])
+
+
+(defmulti transition-status (fn [_ transition] (:type transition)))
+
+
+(defmethod transition-status :renewal
+  [account transition]
+  (let [pname (format/make-first-name-possessive (:name account))
+        new-license (:new_license transition)]
+    [ant/card
+     {:title (str pname "License Renewal")}
+     [:div.columns
+      [:div.column
+       [transition-status-item "Term" (str (:term new-license) " months")]
+       [transition-status-item "Duration" (str (format/date-short (:starts new-license)) " - " (format/date-short (:ends new-license)))]]
+      [:div.column
+       [transition-status-item "Rate" (format/currency (:rate new-license))]]]]))
+
+
+(defmethod transition-status :move_out
+  [account transition]
+  (let [pname (format/make-first-name-possessive (:name account))]
+    [ant/card
+     {:title (str pname "Move-out Information")
+      :extra (r/as-element
+              [:div
+               (when (some? (:asana_task transition))
+                 [:a
+                  {:href (:asana_task transition)
+                   :target "_blank"}
+                  [ant/button
+                   {:icon "check-square-o"}
+                   "Open in Asana"]]) " "
+               [ant/button
+                {:icon     "edit"
+                 :on-click #(dispatch [:accounts.entry.transition/show transition])}
+                "Edit"]])}
+     [:div.columns
+      [:div.column
+       [transition-status-item "Move-out date" (format/date-short (:date transition))]
+       (when (some? (:room_walkthrough_doc transition))
+         [:div
+          [:p.bold "Final  Walkthrough Docs"]
+          [:p [:a {:href (:room_walkthrough_doc transition) :target "_blank"} "Open in Google Drive"]]])]
+
+      [:div.column
+       (when (some? (:deposit_refund transition))
+         [transition-status-item "Security Deposit Refund Amount" (format/currency (:deposit_refund transition))])
+       (when (some? (:early_termination_fee transition))
+         [transition-status-item "Early Termination Fee Amount" (format/currency (:early_termination_fee transition))])]]
+     (when (empty? (:asana_task transition))
+       [ant/alert
+        {:type      :warning
+         :show-icon true
+         :message   "Please add a link to this member's copy of the Member Move Out Template task in Asana."}])]))
 
 
 (defn membership-orders-list [account orders]
@@ -514,15 +832,19 @@
 
 
 (defn membership-view [account]
-  (let [license   (most-current-license account)
-        is-active (= :active (:status license))
-        orders    @(subscribe [:account/orders (:id account)])]
+  (let [license    (most-current-license account)
+        is-active  (= :active (:status license))
+        transition (:transition (:active_license account))
+        orders     @(subscribe [:account/orders (:id account)])]
     [:div.columns
+     [move-out-modal account]
+     [renewal-modal account]
      [:div.column
       [membership/license-summary license
        (when is-active {:content [membership-actions account]})]]
      [:div.column
       (when is-active [status-bar account])
+      (when (not (nil? transition)) [transition-status account transition])
       (when is-active [membership-orders-list account orders])]]))
 
 
