@@ -408,6 +408,10 @@
 ;; membership ===================================================================
 
 
+(defn- reassign-community-option
+  [{:keys [id name] :as community}]
+  [ant/select-option {:value (str id)} name])
+
 (defn- reassign-unit-option
   [{:keys [id code number occupant] :as unit}]
   [ant/select-option {:value (str id)}
@@ -438,17 +442,36 @@
 
 
 (defn- reassign-modal [account]
-  (let [is-visible    (subscribe [:modal/visible? db/reassign-modal-key])
-        units-loading (subscribe [:ui/loading? :property/fetch])
-        rate-loading  (subscribe [:ui/loading? :accounts.entry.reassign/fetch-rate])
-        units         (subscribe [:property/units (get-in account [:property :id])])
-        form          (subscribe [:accounts.entry.reassign/form-data])
-        license       (:active_license account)]
+  (let [is-visible          (subscribe [:modal/visible? db/reassign-modal-key])
+        communities-loading (subscribe [:ui/loading? :properties/query])
+        units-loading       (subscribe [:ui/loading? :property/fetch])
+        rate-loading        (subscribe [:ui/loading? :accounts.entry.reassign/fetch-rate])
+        communities         (subscribe [:properties/list])
+        units               (subscribe [:property/units (get-in account [:property :id])])
+        form                (subscribe [:accounts.entry.reassign/form-data])
+        license             (:active_license account)]
+    (js/console.log "communities are totes " @communities)
+    (js/console.log "current community id is " (get-in license [:property :id]))
     [ant/modal
      {:title     (str "Reassign " (:name account))
       :visible   @is-visible
       :on-cancel #(dispatch [:modal/hide db/reassign-modal-key])
       :footer    (r/as-element [reassign-modal-footer account @form])}
+
+     ;; community selection
+     [ant/form-item {:label "Which community?"}
+      (if @communities-loading
+        [:div.has-text-centered
+         [ant/spin {:tip "Fetching communities..."}]]
+        [ant/select
+         {:style     {:width "100%"}
+          :value     (str (:community @form))
+          :default-value (str (get-in license [:property :id]))
+          :on-change #(dispatch [:accounts.entry.reassign/update :community %])}
+         (doall
+          (map
+           #(with-meta (reassign-community-option %) {:key (:id %)})
+           @communities))])]
 
      ;; unit selection
      [ant/form-item {:label "Which unit?"}
@@ -739,14 +762,14 @@
   [account transition]
   (let [pname (format/make-first-name-possessive (:name account))
         new-license (:new_license transition)]
-      [ant/card
-       {:title (str pname "License Renewal")}
-       [:div.columns
-        [:div.column
-         [transition-status-item "Term" (str (:term new-license) " months")]
-         [transition-status-item "Duration" (str (format/date-short (:starts new-license)) " - " (format/date-short (:ends new-license)))]]
-        [:div.column
-         [transition-status-item "Rate" (format/currency (:rate new-license))]]]]))
+    [ant/card
+     {:title (str pname "License Renewal")}
+     [:div.columns
+      [:div.column
+       [transition-status-item "Term" (str (:term new-license) " months")]
+       [transition-status-item "Duration" (str (format/date-short (:starts new-license)) " - " (format/date-short (:ends new-license)))]]
+      [:div.column
+       [transition-status-item "Rate" (format/currency (:rate new-license))]]]]))
 
 
 (defmethod transition-status :move_out

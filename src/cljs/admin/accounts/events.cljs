@@ -252,8 +252,11 @@
  :accounts.entry.reassign/show
  [(path db/path)]
  (fn [_ [_ account]]
-   {:dispatch-n [[:modal/show db/reassign-modal-key]
-                 [:property/fetch (get-in account [:property :id])]]}))
+   (let [current-community-id (get-in account [:property :id])]
+     {:dispatch-n [[:modal/show db/reassign-modal-key]
+                   [:properties/query]
+                   [:accounts.entry.reassign/update :community current-community-id]
+                   [:property/fetch current-community-id]]})))
 
 
 (reg-event-db
