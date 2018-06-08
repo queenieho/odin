@@ -9,7 +9,8 @@
             [member.routes :as routes]
             [reagent.core :as r]
             [re-frame.core :refer [dispatch subscribe]]
-            [toolbelt.core :as tb]))
+            [toolbelt.core :as tb]
+            [clojure.string :as string]))
 
 
 ;; =============================================================================
@@ -52,7 +53,8 @@
     [:i.fa.fa-3x {:class (case type
                            :rent    "fa-home"
                            :deposit "fa-shield"
-                           :fee "fa-exclamation-circle"
+                           :order   "fa-smile-o"
+                           :fee     "fa-exclamation-circle"
                            "")}]]])
 
 
@@ -145,6 +147,7 @@
 ;; Rent
 ;; =============================================================================
 
+
 (defn- rent-overdue? [payment]
   (t/is-before-now (:due payment)))
 
@@ -229,29 +232,38 @@
 ;; ==============================================================================
 
 
-(defn- generate-fee-description
-  [{:keys [subtypes] :as payment}]
-  (if (some #{:room-reassignment} subtypes)
+(defn- generate-other-description
+  [{:keys [subtypes type pstart pend] :as payment}]
+  (cond
+    (= type :order)
+    (str (:description payment)
+         (when (and pstart pend)
+           (str " (" (format/date-month-day pstart) "-" (format/date-month-day pend) ")")))
+
+    (and (= type :fee) (some #{:room-reassignment} subtypes))
     "Room Reassignment"
+
+    :otherwise
     ""))
 
 
 (defn other-payments-card
   "Renders a card for payments that are neither rent nor deposits, with a CTA to pay"
   [sources payment]
+  (.log js/console payment)
   [ant/card
    [:div.columns
     [:div.column.is-2
-     [render-card-icon :fee :unpaid]]
+     [render-card-icon (:type payment) :unpaid]]
     [:div.column
      [payments-ui/make-payment-modal payment
       :on-confirm (fn [payment-id source-id _]
-                    (dispatch [:member/pay-fee! payment-id source-id]))
-      :loading @(subscribe [:ui/loading? :member/pay-fee!])
+                    (dispatch [:member.payment/pay! payment-id source-id]))
+      :loading @(subscribe [:ui/loading? :member.payment/pay!])
       :sources @sources
-      :desc (generate-fee-description payment)]
-     [:h4.bold "Fee"]
-     [:p.fs2 (generate-fee-description payment)]
+      :desc (generate-other-description payment)]
+     [:h4.bold (-> payment :type name string/capitalize)]
+     [:p.fs2 (generate-other-description payment)]
      [ant/tooltip
       {:title (when (empty? @sources)
                 (r/as-element [link-bank-tooltip-title]))}
@@ -266,7 +278,7 @@
 (defn other-payments-cards
   "Renders cards for payments which are due, and which are neither rent nor deposits"
   []
-  (let [sources  (subscribe [:payment.sources/verified-banks])
+  (let [sources  (subscribe [:payment/sources])
         payments (subscribe [:member.payments/due])]
     [:div
      (map
@@ -279,6 +291,7 @@
 ;; =============================================================================
 ;; Membership + License
 ;; =============================================================================
+
 
 (defn membership-summary []
   (let [loading? (subscribe [:ui/loading? :payments/fetch])]
