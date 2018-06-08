@@ -75,6 +75,20 @@
    :resolve     :license-transition/create!}
 
 
+  :transfer_create
+  {:type        :license
+   :description "Creates a license for a member who is transferring their membership to a different unit."
+   :args        {:params {:type :member_license_transition_create_params}}
+   :resolve     :license-transition/create!}
+
+
+  :transfer_update
+  {:type        :license
+   :description "Updates transfer information for a member"
+   :args        {:params {:type :member_license_transition_mutation_params}}
+   :resolve     :license-transition/update!}
+
+
   ;; notes ========================================================================
 
 
