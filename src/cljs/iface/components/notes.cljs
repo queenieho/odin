@@ -1,4 +1,5 @@
 (ns iface.components.notes
+  (:refer-clojure :exclude [comment])
   (:require [antizer.reagent :as ant]
             [iface.utils.formatters :as format]
             [reagent.core :as r]
