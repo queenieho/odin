@@ -59,7 +59,7 @@
                  [akiroz.re-frame/storage "0.1.2"]
                  ;; DB
                  [starcity/teller "1.2.1"]
-                 [starcity/blueprints "2.6.0-SNAPSHOT"
+                 [starcity/blueprints "2.6.0"
                   :exclusions [com.datomic/datomic-free
                                com.andrewmcveigh/cljs-time
                                com.google.guava/guava
