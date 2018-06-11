@@ -61,6 +61,8 @@
                                           :domain  (config/mailgun-domain config)
                                           :sender  (config/mailgun-sender config)
                                           :send-to "developers@starcity.com"}
+                     :tipe               {:api-key    (config/tipe-api-key config)
+                                          :org-secret (config/tipe-secret config)}
                      :slack              {:webhook-url (config/slack-webhook-url config)
                                           :username    (config/slack-username config)
                                           :channel     "#debug"}

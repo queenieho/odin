@@ -110,23 +110,23 @@
 
 
 ;; ==============================================================================
-;; Pay Fee ======================================================================
+;; pay payment ==================================================================
 ;; ==============================================================================
 
 
+;; TODO: Make more generic
 (reg-event-fx
- :member/pay-fee!
+ :member.payment/pay!
  (fn [_ [k payment-id source-id]]
    {:dispatch [:ui/loading k true]
-    :graphql {:mutation [[:pay_fee {:id payment-id
-                                    :source source-id}
-                          [:id]]]
-              :on-success [::pay-fee-success k payment-id]
-              :on-failure [:graphql/failure k]}}))
+    :graphql  {:mutation   [[:payment_pay {:id payment-id :source source-id}
+                             [:id]]]
+               :on-success [::pay-success k payment-id]
+               :on-failure [:graphql/failure k]}}))
 
 
 (reg-event-fx
- ::pay-fee-success
+ ::pay-success
  (fn [{db :db} [_ k modal-id _]]
    (let [account-id (get-in db [:account :id])]
      {:dispatch-n [[:ui/loading k false]

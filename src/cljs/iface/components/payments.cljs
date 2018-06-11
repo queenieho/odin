@@ -260,12 +260,10 @@
    [:div.columns
     [:div.column.is-narrow
      [:span.icon.is-large [:i {:class (str "fa fa-3x " (icon-class type))}]]]
-    [:div.column
+    [:div.column.is-two-thirds
      [:h3 (translate (keyword "payment.for" (name (:type payment))))]
      (when (some? description)
-       [:h3 description])
-     (when (some? (:description payment))
-       [:h4 (string/capitalize (:description payment))])]
+       [:p.fs2 description])]
 
     [:div.column.align-right
      [:h3 (format/currency amount)]

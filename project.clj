@@ -1,4 +1,4 @@
-(defproject odin "1.13.1-SNAPSHOT"
+(defproject odin "1.14.0-SNAPSHOT"
   :description "The all-dashboard."
   :url "http://my.starcity.com"
   :license {:name "Eclipse Public License"
@@ -59,7 +59,7 @@
                  [akiroz.re-frame/storage "0.1.2"]
                  ;; DB
                  [starcity/teller "1.2.1"]
-                 [starcity/blueprints "2.5.6"
+                 [starcity/blueprints "2.6.0-SNAPSHOT"
                   :exclusions [com.datomic/datomic-free
                                com.andrewmcveigh/cljs-time
                                com.google.guava/guava

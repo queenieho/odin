@@ -54,6 +54,41 @@
    :resolve     :member-license/reassign!}
 
 
+  :move_out_create
+  {:type        :license
+   :description "Begins the move-out process for a member."
+   :args        {:params {:type :member_license_transition_create_params}}
+   :resolve     :license-transition/create!}
+
+
+  :move_out_update
+  {:type        :license
+   :description "Updates move-out information for a member."
+   :args        {:params {:type :member_license_transition_mutation_params}}
+   :resolve     :license-transition/update!}
+
+
+  :renewal_create
+  {:type        :license
+   :description "Creates a license for a member renewing their membership in the same unit."
+   :args        {:params {:type :member_license_transition_create_params}}
+   :resolve     :license-transition/create!}
+
+
+  :transfer_create
+  {:type        :license
+   :description "Creates a license for a member who is transferring their membership to a different unit."
+   :args        {:params {:type :member_license_transition_create_params}}
+   :resolve     :license-transition/create!}
+
+
+  :transfer_update
+  {:type        :license
+   :description "Updates transfer information for a member"
+   :args        {:params {:type :member_license_transition_mutation_params}}
+   :resolve     :license-transition/update!}
+
+
   ;; notes ========================================================================
 
 
@@ -180,14 +215,14 @@
    :resolve     :payment/pay-deposit!}
 
 
-  :pay_fee
+  :payment_pay
   {:type        :payment
-   :description "Make a fee payment."
+   :description "Make a payment."
    :args        {:id     {:type        (non-null :ID)
-                          :description "Id of the payment entity."}
+                          :description "ID of the payment."}
                  :source {:type        (non-null String)
-                          :description "ID of the source to use for the payment. Must be a bank account."}}
-   :resolve     :payment/pay-fee!}
+                          :description "ID of the source to use for the payment."}}
+   :resolve     :payment/pay!}
 
 
   ;; payment sources ==============================================================

@@ -196,3 +196,20 @@
 (defn aws-secret-key
   [config]
   (get-in config [:secrets :aws :secret-key]))
+
+
+;; ==============================================================================
+;; tipe =========================================================================
+;; ==============================================================================
+
+
+(defn tipe-secret
+  "The https://tipe.io organization secret."
+  [config]
+  (get-in config [:secrets :tipe :org-secret]))
+
+
+(defn tipe-api-key
+  "The https://tipe.io api key."
+  [config]
+  (get-in config [:secrets :tipe :api-key]))
