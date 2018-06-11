@@ -1,0 +1,77 @@
+$button-padding: 0.625rem 1rem;
+$button-radius: 1.2rem;
+
+.button {
+  @extend h4;
+  @extend .fast-opacity;
+  display: inline-block;
+  border-radius: $button-radius;
+  background-color: $blue;
+  border-style: solid;
+  border-width: $border-width;
+  border-color: $blue;
+  text-decoration: none;
+  color: white;
+  padding: $button-padding;
+  outline: none;
+  cursor: pointer;
+  &:hover {
+    opacity: 0.9;
+    text-decoration: none;
+    color: white;
+  }
+  &:focus {
+    outline:none;
+  }
+}
+
+.button-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  &:hover {
+    opacity: 0.5;
+  }
+}
+
+.button-text {
+  background-color: transparent;
+  color: $blue;
+  border-color: transparent;
+  padding-left: 0;
+  &:hover {
+    color: $link-hover;
+  }
+  &.button-disabled:hover {
+    color: $blue;
+  }
+}
+
+.button-secondary {
+  @extend .fast-all;
+  background-color: transparent;
+  border-color: $blue;
+  color: $blue;
+  &:hover {
+    background-color: $blue;
+    color: white;
+  }
+  &.button-disabled:hover {
+    background-color: transparent;
+    color: $blue;
+  }
+}
+
+.button-upload {
+  @extend .fast-all;
+  width: 100%;
+  background: white;
+  font-weight: bold;
+  padding: $spacing-medium;
+  color: $black;
+  text-align: center;
+  border: $border-width dashed $line-gray;
+  cursor: pointer;
+  &:hover {
+    border-color: $light-gray;
+  }
+}

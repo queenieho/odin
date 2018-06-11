@@ -101,13 +101,13 @@
   (let [account (->requester req)]
     (facade/app req "apply"
                 :title "Application Dashboard"
-                :fonts ["https://fonts.googleapis.com/css?family=Work+Sans"]
+                :fonts ["https://fonts.googleapis.com/css?family=Caveat|Eczar:700|Work+Sans:400,600"]
                 :json [["stripe"  {:key (config/stripe-public-key (->config req))}]
                        ["account" {:id    (td/id account)
                                    :name  (account/short-name account)
                                    :email (account/email account)}]]
                 :stylesheets [facade/font-awesome]
-                :css-bundles ["antd.css" "styles.css" "ptm.css"])))
+                :css-bundles ["antd.css" "ptm.css"])))
 
 
 ;; ==============================================================================

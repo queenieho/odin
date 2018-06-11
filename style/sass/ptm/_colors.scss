@@ -1,0 +1,23 @@
+$black: #2E2B2C;
+$dark-gray: #5E5E5E;
+$gray: #8E8E8E;
+$light-gray: #B7B7B7;
+$line-gray: #E6E6E6;
+$bg-gray: #FCFCFC;
+$blue: #1186C9;
+$green: #11C956;
+$red: #EE433B;
+$light-yellow: #FFFDDD;
+
+body {
+  background-color: $bg-gray;
+}
+
+// Still assessing whether we want these or not, or if we want these all built into the components.
+.text-green {
+  color: $green !important;
+}
+
+.text-red {
+  color: $red !important;
+}

@@ -1,0 +1,80 @@
+$footer-wizard-height: 70px;
+$button-left-margin: 1rem;
+
+// in the future we will likely have other footers,
+// reminder to clean up and abstract our BEM styles
+// when we get there
+
+// Footer for Next/Previous controls
+.footer-wizard {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  background-color: white;
+  border-top: $border-width solid $line-gray;
+  border-left: $border-width solid $line-gray;
+  width: calc(100vw -  #{$nav-primary-width});
+  padding: 1rem 3rem;
+  z-index: 998;
+
+  // footer for large displays
+  .footer-large {
+    .footer-left {
+      width: 20%;
+      display: inline-block;
+    }
+    .footer-right {
+      display: inline-block;
+      width: 80%;
+      float: right;
+      & > * {
+        float: right;
+      }
+      button {
+        margin-left: $button-left-margin;
+      }
+    }
+  }
+
+  //footer for small displays
+  .footer-small {
+    @extend h4;
+    padding: 0;
+    display: none;
+    text-align: center;
+    .footer-half {
+      width: 50%;
+      float: left;
+      &:first-child {
+        border-right: solid $border-width $line-gray;
+      }
+    }
+    .footer-full {
+      width: 100%;
+    }
+    .footer-link {
+      padding: 1.2rem 0;
+      display: block;
+      &.active {
+        background-color: $blue;
+        color: white;
+      }
+    }
+  }
+}
+
+
+// Mobile Specific Styles
+@media screen and (max-width: $breakpoint-small) {
+  .footer-wizard {
+    width: 100%;
+    padding: 0;
+    box-shadow: $shallow-shadow;
+  }
+  .footer-large {
+    display: none;
+  }
+  .footer-small {
+    display: block !important;
+  }
+}

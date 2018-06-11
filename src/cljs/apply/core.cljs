@@ -2,6 +2,7 @@
   (:require [accountant.core :as accountant]
             [antizer.reagent :as ant]
             [apply.content :as content]
+            [apply.events]
             [apply.routes :as routes]
             [apply.subs]
             [day8.re-frame.http-fx]
@@ -20,13 +21,17 @@
 (defn- welcome-1 [{name :name}]
   [:section.main.main-no-nav.center
    [:div.w-60-l.w-100.center
-    [:h1.tc "welcome to starcity,"]
+    [:h1.tc "Welcome to starcity,"]
     [:h2.tc name]]
    [:div.page-content.w-90-l.w-100.center.tc
-    [:p.tc "You've taken your first step... blah blah blah."]
-    [:p.tc "Send me a message"]
+    [:p.tc "You've taken your first step to joining a Starcity community."]
+    [:p.tc "We're looking forward to getting to know you."]
+    [:br]
+    [:p.tc "I'm here to help you with your application. If you have a"]
+    [:p.tc "question, click on the Q&A icon to send me a message."]
+    [:br]
     [:button.button.bt5
-     {:href "/welcome2"}
+     {:on-click #(.log js/console "click!" name)}
      "Let's go!"]]])
 
 
@@ -71,6 +76,6 @@
                             {:dispatch [:ui/loading k false]})})
 
 
-    ;; (rf/dispatch-sync [:app/init account])
+    (rf/dispatch-sync [:app/init account])
     (iroutes/hook-browser-navigation! routes/app-routes)
     (render)))

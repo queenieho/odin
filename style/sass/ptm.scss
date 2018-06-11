@@ -1,0 +1,42 @@
+//  Vendor
+
+// need to add tachyons to npm
+@import "../../node_modules/tachyons-sass/tachyons.scss";
+
+//  Global Variables
+$border-width: 1px !default;
+$border-radius: 4px !default;
+$shallow-shadow: 1px 2px 5px rgba(0,0,0,0.1) !default;
+$medium-shadow: 2px 2px 13px rgba(0,0,0,0.1) !default;
+$deep-shadow: 1em 0 2em rgba(46,43,44,.1) !default;
+$breakpoint-small: 40em !default;
+$breakpoint-large: 60em !default;
+
+
+//  Global Styles (Atoms)
+@import "ptm/_colors.scss";
+@import "ptm/_icons.scss";
+@import "ptm/_typography.scss";
+@import "ptm/_transitions.scss";
+
+
+//  Components (Molecules)
+@import "ptm/_alert.scss";
+@import "ptm/_button.scss";
+@import "ptm/_forms.scss";
+@import "ptm/_progress-mobile.scss";
+@import "ptm/_tabs.scss";
+@import "ptm/_pill.scss";
+@import "ptm/_toast.scss";
+
+
+//  Components (Organisms)
+@import "ptm/_card.scss";
+@import "ptm/_lightbox.scss";
+@import "ptm/_map.scss";
+@import "ptm/_navigation.scss";
+@import "ptm/_footer.scss";
+
+
+//  Templates
+@import "ptm/_layout.scss";

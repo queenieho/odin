@@ -1,0 +1,77 @@
+$tabs-link-padding: 12px 16px;
+
+.tabs {
+  @extend h4;
+  list-style-type: none;
+  padding-left: 0;
+}
+
+.tabs-item {
+  background: white;
+  position: relative;
+}
+
+.tabs-link {
+  padding: $tabs-link-padding;
+  display: block;
+  color: $gray;
+  &.active {
+    color: $blue;
+  }
+  // hover over tab that contains a tag, make tab hover state
+  &:hover + .pill {
+    background: $blue;
+  }
+}
+
+.tabs-vertical {
+  border-left: $border-width solid $line-gray;
+  border-top: $border-width solid $line-gray;
+  border-right: $border-width solid $line-gray;
+  margin: 0;
+  .tabs-link {
+    border-bottom: $border-width solid $line-gray;
+  }
+  .tabs-item {
+    &:last-child {
+      border-bottom: none;
+    }
+    // if the tab contains a tag, position the tag
+    .pill {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+    }
+  }
+}
+
+.tabs-nowrap {
+  white-space: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  -ms-overflow-style: -ms-autohiding-scrollbar;
+  position: relative;
+}
+
+
+.tabs-horizontal {
+  .tabs-item {
+    display: inline;
+    padding: 12px 0;
+    border-top: $border-width solid $line-gray;
+    border-left: $border-width solid $line-gray;
+    border-bottom: $border-width solid $line-gray;
+    &:last-child {
+      border-right: $border-width solid $line-gray;
+    }
+    // if the tab contains a tag, position the tag
+    .pill {
+      position: relative;
+      margin-right: $spacing-small;
+      margin-left: -$spacing-small;
+    }
+  }
+  .tabs-link {
+    display: inline-block;
+  }
+}
