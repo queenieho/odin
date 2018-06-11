@@ -5,7 +5,9 @@
 
 (def app-routes
   [""
-   [["/logout" :logout]
+   [["/welcome" :welcome]
+
+    ["/logout" :logout]
 
     [true :home]]])
 
@@ -37,4 +39,4 @@
 (reg-event-fx
  ::home
  (fn [_ _]
-   {:route (path-for :overview)}))
+   {:route (path-for :welcome)}))

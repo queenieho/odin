@@ -3,6 +3,7 @@
             [antizer.reagent :as ant]
             [apply.content :as content]
             [apply.routes :as routes]
+            [apply.subs]
             [day8.re-frame.http-fx]
             [goog.dom :as gdom]
             [iface.components.layout :as layout]
@@ -11,13 +12,34 @@
             [reagent.core :as r]
             [re-frame.core :as rf :refer [dispatch subscribe]]))
 
-(defmethod content/view :home [route]
-  [:h1 "This is the application home"])
+
+(defn logout []
+  [:div.tr
+   [:a {:href "/logout"} "Log Out"]])
+
+(defn- welcome-1 [{name :name}]
+  [:section.main.main-no-nav.center
+   [:div.w-60-l.w-100.center
+    [:h1.tc "welcome to starcity,"]
+    [:h2.tc name]]
+   [:div.page-content.w-90-l.w-100.center.tc
+    [:p.tc "You've taken your first step... blah blah blah."]
+    [:p.tc "Send me a message"]
+    [:button.button.bt5
+     {:href "/welcome2"}
+     "Let's go!"]]])
+
+
+(defmethod content/view :welcome [{:keys [requester] :as route}]
+  [:div
+   [welcome-1 requester]
+   [:div.bg-top]])
 
 
 (defn layout []
   (let [route (subscribe [:route/current])]
     [layout/layout
+     [logout]
      [layout/content
       [content/view @route]]]))
 
@@ -49,6 +71,6 @@
                             {:dispatch [:ui/loading k false]})})
 
 
-    (rf/dispatch-sync [:app/init account])
+    ;; (rf/dispatch-sync [:app/init account])
     (iroutes/hook-browser-navigation! routes/app-routes)
     (render)))
