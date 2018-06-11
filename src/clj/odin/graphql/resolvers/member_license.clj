@@ -20,7 +20,8 @@
             [toolbelt.core :as tb]
             [toolbelt.datomic :as td]
             [clojure.string :as string]
-            [blueprints.models.license :as license]))
+            [blueprints.models.license :as license]
+            [teller.property :as tproperty]))
 
 ;; ==============================================================================
 ;; helpers ======================================================================
@@ -180,10 +181,23 @@
                          rate
                          :member-license.status/pending))
 
+(def transfer-fee-amount
+  "The amount charged to a member who is transferring from one unit to another."
+  250.0)
+
+(defn- create-transfer-fee!
+  [teller license]
+  (let [account (member-license/account license)
+        customer (tcustomer/by-account teller account)
+        property (tproperty/by-community teller (member-license/property license))]
+    (tpayment/create! customer transfer-fee-amount :payment.type/fee
+                      {:property property
+                       :subtypes [:room-reassignment]})))
+
 
 (defn create-license-transition!
   "Creates a license transition for a member's license"
-  [{:keys [conn requester] :as ctx}
+  [{:keys [conn teller requester] :as ctx}
    {{:keys [current_license type date asana_task deposit_refund new_license_params]} :params}
    _]
   (let [type        (keyword (string/replace (name type) "_" "-"))
@@ -201,16 +215,19 @@
                                                 :early-termination-fee etf
                                                 :new-license (when (some? new_license_params)
                                                                new-license)))]
+
+    (when (or (= type :inter-xfer) (= type :intra-xfer))
+      (create-transfer-fee! teller license))
     @(d/transact conn (tb/conj-when
                        [transition
                         (events/transition-created transition)
                         (source/create requester)]
                        new-license
                        (when (and (moving-out-after-license-end? license date) (= type :move-out))
-                         {:db/id (td/id current_license)
+                         {:db/id               (td/id current_license)
                           :member-license/ends (one-day-before date)})
                        (when (or (= type :inter-xfer) (= type :intra-xfer))
-                         {:db/id (td/id current_license)
+                         {:db/id               (td/id current_license)
                           :member-license/ends (one-day-before date)})
                        (when (some? new_license_params)
                          {:db/id (td/id account) :account/licenses new-license})))
