@@ -131,7 +131,8 @@
 
 
 (defn footer
-  "The footer."
+  "The footer component, which renders `destructive`, `primary`, and `secondary`
+  calls to action."
   [footer-items]
   [:footer.footer-wizard
    [footer-large footer-items]
@@ -139,7 +140,8 @@
 
 
 (defn layout
-  "we're not done with it."
+  "The main layout component, which defines the nav, footer, and main content for
+  the current view."
   []
   (let [{:keys [nav progress footer pre]} (r/props (r/current-component))]
     [:div
