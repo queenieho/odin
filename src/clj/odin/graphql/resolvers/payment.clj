@@ -3,6 +3,7 @@
             [blueprints.models.events :as events]
             [blueprints.models.order :as order]
             [blueprints.models.payment :as payment]
+            [blueprints.models.property :as property]
             [blueprints.models.security-deposit :as deposit]
             [blueprints.models.service :as service]
             [blueprints.models.source :as source]
@@ -129,34 +130,35 @@
 (defn description
   "A description of this `payment`. Varies based on payment type."
   [{:keys [teller conn]} _ payment]
-  (letfn [(-rent-desc [payment]
-            (->> [(tpayment/period-start payment) (tpayment/period-end payment)]
-                 (map date/short)
-                 (apply format "rent for %s-%s")))
-          (-order-desc [payment]
-            (let [order        (order/by-payment (d/db conn) (teller/entity payment))
-                  service-desc (service/name (order/service order))]
-              (or (when-let [d (order/summary order)]
-                    (format "%s (%s)" d service-desc))
-                  service-desc)))
-          (-late-fee-desc [payment]
-            (let [parent (tpayment/associated-to payment)]
-              (format "late fee (%s)" (-rent-desc parent))))
-          (-fee-desc [payment]
-            (if-let [subtypes (tpayment/subtypes payment)]
-              (->> (map name subtypes)
-                   (interpose ", ")
-                   (apply str)
-                   (format "fee (%s)"))
-              "fee"))]
-    (println (tpayment/type payment))
-    (case (tpayment/type payment)
-      :payment.type/rent     (-rent-desc payment)
-      :payment.type/order    (-order-desc payment)
-      :payment.type/deposit  (deposit-desc teller (tcustomer/account (tpayment/customer payment)) payment)
-      :payment.type/late-fee (-late-fee-desc payment)
-      :payment.type/fee      (-fee-desc payment)
-      nil)))
+  (let [account  (-> payment tpayment/customer tcustomer/account)
+        property (account/current-property (d/db conn) account)]
+    (letfn [(-rent-desc [payment]
+              (->> [(tpayment/period-start payment) (tpayment/period-end payment)]
+                   (map (comp date/short #(date/tz-uncorrected % (property/time-zone property))))
+                   (apply format "rent for %s-%s")))
+            (-order-desc [payment]
+              (let [order        (order/by-payment (d/db conn) (teller/entity payment))
+                    service-desc (service/name (order/service order))]
+                (or (when-let [d (order/summary order)]
+                      (format "%s (%s)" d service-desc))
+                    service-desc)))
+            (-late-fee-desc [payment]
+              (let [parent (tpayment/associated-to payment)]
+                (format "late fee (%s)" (-rent-desc parent))))
+            (-fee-desc [payment]
+              (if-let [subtypes (tpayment/subtypes payment)]
+                (->> (map name subtypes)
+                     (interpose ", ")
+                     (apply str)
+                     (format "fee (%s)"))
+                "fee"))]
+      (case (tpayment/type payment)
+        :payment.type/rent     (-rent-desc payment)
+        :payment.type/order    (-order-desc payment)
+        :payment.type/deposit  (deposit-desc teller (tcustomer/account (tpayment/customer payment)) payment)
+        :payment.type/late-fee (-late-fee-desc payment)
+        :payment.type/fee      (-fee-desc payment)
+        nil))))
 
 
 (defn due
@@ -170,23 +172,6 @@
   [{teller :teller} _ payment]
   (when (should-assess-late-fee? teller payment)
     (* late-fee-percent (tpayment/amount payment))))
-
-
-(comment
-
-  (def teller odin.teller/teller)
-
-  (def conn odin.datomic/conn)
-
-  (let [payment (tpayment/by-entity teller (d/entity (d/db conn) 285873023223314))]
-    (should-assess-late-fee? teller payment))
-
-
-  (map (juxt td/id tpayment/due)
-       (tpayment/query teller {:payment-types [:payment.type/rent]
-                               :statuses      [:payment.status/due]}))
-
-  )
 
 
 (defn late-fee-paid
@@ -375,10 +360,6 @@
 ;; create =======================================================================
 
 
-;; =============================================================================
-;; Create Payments
-
-
 (defmulti create-payment!* (fn [_ params] (:type params)))
 
 
@@ -539,9 +520,9 @@
 
 (defmethod authorization/authorized? :payment/pay-deposit!
   [{teller :teller} account params]
-  (let [payment  (tpayment/by-id teller (:id params))
-        customer (tcustomer/by-account teller account)]
-    (= customer (tpayment/customer payment))))
+  (let [source (tsource/by-id teller (:source params))
+        customer (tsource/customer source)]
+    (= customer (tcustomer/by-account teller account))))
 
 
 (defmethod authorization/authorized? :payment/pay!
