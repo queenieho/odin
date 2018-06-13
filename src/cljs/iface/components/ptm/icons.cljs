@@ -291,12 +291,3 @@
   [{:keys [class type] :as props}]
   [:svg {:class class}
    [:use {:xlinkHref (str "#" type)}]])
-
-(comment
-  ;; intended usage:
-  [icon
-   {:type "credit-card"
-    :class "nav-icon"}]
-
-
-  )
