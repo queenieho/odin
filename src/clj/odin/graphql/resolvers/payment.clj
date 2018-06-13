@@ -138,11 +138,24 @@
                   service-desc (service/name (order/service order))]
               (or (when-let [d (order/summary order)]
                     (format "%s (%s)" d service-desc))
-                  service-desc)))]
+                  service-desc)))
+          (-late-fee-desc [payment]
+            (let [parent (tpayment/associated-to payment)]
+              (format "late fee (%s)" (-rent-desc parent))))
+          (-fee-desc [payment]
+            (if-let [subtypes (tpayment/subtypes payment)]
+              (->> (map name subtypes)
+                   (interpose ", ")
+                   (apply str)
+                   (format "fee (%s)"))
+              "fee"))]
+    (println (tpayment/type payment))
     (case (tpayment/type payment)
-      :payment.type/rent    (-rent-desc payment)
-      :payment.type/order   (-order-desc payment)
-      :payment.type/deposit (deposit-desc teller (tcustomer/account (tpayment/customer payment)) payment)
+      :payment.type/rent     (-rent-desc payment)
+      :payment.type/order    (-order-desc payment)
+      :payment.type/deposit  (deposit-desc teller (tcustomer/account (tpayment/customer payment)) payment)
+      :payment.type/late-fee (-late-fee-desc payment)
+      :payment.type/fee      (-fee-desc payment)
       nil)))
 
 
