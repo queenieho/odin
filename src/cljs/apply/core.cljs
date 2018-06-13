@@ -12,7 +12,8 @@
             [iface.utils.routes :as iroutes]
             [reagent.core :as r]
             [re-frame.core :as rf :refer [dispatch subscribe]]
-            [iface.components.ptm.icons :as icons]))
+            [iface.components.ptm.icons :as icons]
+            [iface.components.ptm.ui :as ui]))
 
 
 (defn logout []
@@ -30,7 +31,7 @@
     [:p.tc "We're looking forward to getting to know you."]
     [:br]
     [:p.tc "I'm here to help you with your application. If you have a"]
-    [:p.tc "question, click on the `Q&A` icon to send me a message."]
+    [:p.tc "question, click on the " (icons/icon {:type "help" :class "icon-small"}) " icon to send me a message."]
     [:br]
     [:div
      [ant/avatar
@@ -38,9 +39,14 @@
     [:h3 "- Matt (the chatlio king)"]
     [:br]
     [:br]
-    [:button.button.mt5
-     {:on-click #(swap! toggle not)}
+
+    [ui/button
+     {:on-click #(.log js/console "yes, this is dog")
+      :type     :secondary
+      :class    "mt5"}
      "Let's go!"]
+
+    [ui/pill {:active false} "pill"]
     ]])
 
 
