@@ -36,7 +36,7 @@
     [:div
      [ant/avatar
       {:icon "user"}]]
-    [:h3 "- Matt (the chatlio king)"]
+    [:h3 "- Mattlio from Chatlio"]
     [:br]
     [:br]
 
@@ -46,8 +46,7 @@
       :class    "mt5"}
      "Let's go!"]
 
-    [ui/pill {:active false} "pill"]
-    ]])
+    [ui/pill {:active false} "pill"]]])
 
 
 (defn- welcome-2 []
