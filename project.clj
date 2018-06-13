@@ -58,7 +58,7 @@
                  [cljsjs/moment "2.17.1-1"]
                  [akiroz.re-frame/storage "0.1.2"]
                  ;; DB
-                 [starcity/teller "1.2.1"]
+                 [starcity/teller "1.2.2"]
                  [starcity/blueprints "2.6.0"
                   :exclusions [com.datomic/datomic-free
                                com.andrewmcveigh/cljs-time
