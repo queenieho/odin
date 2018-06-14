@@ -4,6 +4,30 @@
             [devtools.defaults :as d]
             [toolbelt.core :as tb]))
 
+;; specs ========================================================================
+
+
+(s/def ::label
+  (s/or :string string? :element vector?))
+
+(s/def ::optional
+  boolean?)
+
+(s/def ::help
+  string?)
+
+(s/def ::error
+  boolean?)
+
+(s/def ::value
+  some?)
+
+(s/def ::placeholder
+  string?)
+
+
+;; components ===================================================================
+
 
 (defn form []
   (into [:form] (r/children (r/current-component))))
@@ -21,12 +45,21 @@
    (when help
      [:p.small.red help])])
 
+(s/fdef form-item
+  :args (s/cat :props (s/keys :opt-un [::label
+                                       ::optional
+                                       ::help
+                                       ::error])))
+
 
 (defn text [{:keys [error] :as props}]
   [:input (-> props
               (merge {:type  "text"
                       :class (when error "error")})
               (dissoc :error))])
+
+(s/fdef text
+  :args (s/cat :props (s/keys :opt-un [::error])))
 
 
 (defn number [{:keys [error] :as props}]
@@ -35,21 +68,30 @@
                       :class (when error "error")})
               (dissoc :error))])
 
+(s/fdef number
+  :args (s/cat :props (s/keys :opt-un [::error])))
+
 
 (defn textarea [{:keys [error] :as props}]
   [:textarea (-> props
                  (merge {:class (when error "error")})
                  (dissoc :error))])
 
+(s/fdef textarea
+  :args (s/cat :props (s/keys :opt-un [::error])))
+
 
 (defn select-option [{:keys [value] :as props}]
   (into [:option props]
         (r/children (r/current-component))))
 
+(s/fdef select-option
+  :args (s/cat :props (s/keys :req-un [::value])))
 
-(defn select [{:keys [error placeholder] :as props}]
+
+(defn select [{:keys [error placeholder value] :as props}]
   (let [props' (-> props
-                   (assoc :default-value (when placeholder ""))
+                   (tb/assoc-when :value (when (and (= value nil) placeholder) ""))
                    (dissoc :error :placeholder))]
     [:div.select {:class (when error "select error")}
      (into [:select props'
@@ -59,6 +101,10 @@
                 :disabled true}
                placeholder])]
            (r/children (r/current-component)))]))
+
+(s/fdef select
+  :args (s/cat :props (s/keys :opt-un [::error
+                                       ::placeholder])))
 
 
 (defn checkbox [{:keys [error value id] :as props}]

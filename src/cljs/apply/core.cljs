@@ -33,7 +33,7 @@
         [:p "Some placeholder text here"]]
        [:div.page-content.w-90-l.w-100
 
-        (.log js/console "checked" (:check @form) (:checked @form))
+        (.log js/console "select" (:select @form))
 
         [form/form
          [form/form-item
@@ -92,13 +92,13 @@
          [form/form-item
           {:label "Select"
            ;; :help  "Error!"
-           :error true
+           ;; :error true
            }
           [form/select
            {:value       (:select @form)
-            :on-change   #(swap! form assoc :select (:value %))
-            :rows        5
-            :placeholder "some placeholder text"}
+            :on-change   #(swap! form assoc :select (.. % -target -value))
+            :placeholder "some placeholder text"
+            }
            [form/select-option {:value 1} "one"]
            [form/select-option {:value 2} "two"]]]
 
