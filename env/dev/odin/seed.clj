@@ -93,7 +93,7 @@
 
 
 (defn- seed-properties [teller]
-  (let [fees (tproperty/construct-fees (tproperty/fee 5))]
+  (let [fees (tproperty/construct-fees (tproperty/format-fee 5))]
     (when-not (tproperty/by-id teller "52gilbert")
       (tproperty/create! teller "52gilbert" "52 Gilbert" "jesse@starcity.com"
                          {:fees      fees
@@ -130,7 +130,18 @@
                         {:subtypes [:fee :redicuous-fee]
                          :due    (date/end-of-day (java.util.Date.) tz)
                          :period [(date/beginning-of-month (java.util.Date.) tz)
-                                  (date/end-of-month (java.util.Date.) tz)]}))))
+                                  (date/end-of-month (java.util.Date.) tz)]})
+      ;; Late payments
+      (tpayment/create! customer 2000.0 :payment.type/rent
+                        {:subtypes [:fee :old-rent]
+                         :due    #inst "2018-01-06"
+                         :period [#inst "2018-01-01"
+                                  #inst "2018-01-31"]})
+      (tpayment/create! customer 2000.0 :payment.type/rent
+                        {:subtypes [:fee :old-rent]
+                         :due    #inst "2018-02-06"
+                         :period [#inst "2018-02-01"
+                                  #inst "2018-02-28"]}))))
 
 
 (defn seed-teller [teller]
