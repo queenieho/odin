@@ -13,7 +13,8 @@
             [reagent.core :as r]
             [re-frame.core :as rf :refer [dispatch subscribe]]
             [iface.components.ptm.icons :as icons]
-            [iface.components.ptm.ui.form :as form]))
+            [iface.components.ptm.ui.form :as form]
+            [toolbelt.core :as tb]))
 
 
 (defn logout []
@@ -22,7 +23,8 @@
 
 
 (defn- personal-information []
-  (let [form (r/atom {:name nil})]
+  (let [form (r/atom {:name  nil
+                      :check #{}})]
     (fn []
       [:div
        [:div.w-60-l.w-100
@@ -31,7 +33,7 @@
         [:p "Some placeholder text here"]]
        [:div.page-content.w-90-l.w-100
 
-        (.log js/console (:num @form))
+        (.log js/console "checked" (:check @form) (:checked @form))
 
         [form/form
          [form/form-item
@@ -49,12 +51,12 @@
            :error true
            :help  "This is a required field"}
           [form/number
-           {:value     (:num @form)
+           {:value       (:num @form)
             :placeholder "select a number"
-            :step 5
-            :min 5
-            :max 25
-            :on-change #(swap! form assoc :num (.. % -target -value))}]]
+            :step        5
+            :min         5
+            :max         25
+            :on-change   #(swap! form assoc :num (.. % -target -value))}]]
 
          [form/form-item
           {:label "Radios"}
@@ -62,14 +64,26 @@
            {:value     (:radio @form)
             :on-change #(swap! form assoc :radio (.. % -target -checked))
             :name      "radio"}
-           [form/radio-option {:id 1} "thing one"]
-           [form/radio-option {:id 2} "thing two"]
-           [form/radio-option {:id 3} "thing three"]]]
+           [form/radio-option {:value 1} "thing one"]
+           [form/radio-option {:value 2} "thing two"]
+           [form/radio-option {:value 3} "thing three"]]]
+
+         [form/form-item
+          {:label "select all that apply"}
+          [form/checkbox-group
+           {:value     (:check @form)
+            :on-change #(let [click-id (tb/str->int (.. % -target -id))
+                              ids      (if (.. % -target -checked)
+                                         (conj (:check @form) click-id)
+                                         (remove (fn [id]
+                                                   (= click-id id)) (:check @form)))]
+                          (swap! form assoc :check ids))}
+           [form/checkbox {:id 1} "check 1"]
+           [form/checkbox {:id 2} "check 2"]]]
 
          [form/form-item
           {:label "Checkbox"
-           :error true
-           }
+           :error true}
           [form/checkbox
            {:value     (:checked @form)
             :on-change #(swap! form assoc :checked (.. % -target -checked))}

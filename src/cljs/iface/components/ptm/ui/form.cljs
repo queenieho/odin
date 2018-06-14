@@ -61,15 +61,26 @@
            (r/children (r/current-component)))]))
 
 
-(defn checkbox [{:keys [error] :as props}]
+(defn checkbox [{:keys [error value id] :as props}]
   (let [props' (-> props
-                   (merge {:type "checkbox"})
+                   (merge {:type "checkbox"
+                           ;; :checked (some #(= % id) value)
+                           })
                    (dissoc :error))]
     [:div {:class (if error "checkbox error" "checkbox")}
      (into [:label
             [:input props']
             [:span.checkbox-style]]
            (r/children (r/current-component)))]))
+
+
+(defn checkbox-group [{:keys [error name on-change value] :as props}]
+  (let [children (map
+                  #(update % 1 tb/assoc-when
+                           :error error
+                           :on-change on-change)
+                  (r/children (r/current-component)))]
+    (into [:div] children)))
 
 
 (defn radio-option [{:keys [] :as props}]
