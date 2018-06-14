@@ -1,40 +1,45 @@
 (ns iface.components.ptm.ui.form
   (:require [cljs.spec.alpha :as s]
             [reagent.core :as r]
-            [devtools.defaults :as d]))
+            [devtools.defaults :as d]
+            [toolbelt.core :as tb]))
 
 
 (defn form []
   (into [:form] (r/children (r/current-component))))
 
 
-;; is there a way to pass props from form item into it's children?
-;; this way we can pass error states from here instead of from outside
 (defn form-item [{:keys [label optional help error] :as props}]
   [:div
    [:label {:for label} label]
    (when optional
      [:span.small [:em " Optional"]])
-   (into [:div]
-         ;; if error == true, give input the error style
-         (r/children (r/current-component)))
+   (let [children (map
+                   #(update % 1 tb/assoc-when :error error)
+                   (r/children (r/current-component)))]
+     (into [:div] children))
    (when help
      [:p.small.red help])])
 
 
 (defn text [{:keys [error] :as props}]
-  (let [props' (-> props
-                   (merge {:type "text"
-                           :class (when error "error")})
-                   (dissoc :error))]
-    [:input props']))
+  [:input (-> props
+              (merge {:type  "text"
+                      :class (when error "error")})
+              (dissoc :error))])
+
+
+(defn number [{:keys [error] :as props}]
+  [:input (-> props
+              (merge {:type  "number"
+                      :class (when error "error")})
+              (dissoc :error))])
 
 
 (defn textarea [{:keys [error] :as props}]
-  (let [props' (-> props
-                   (merge {:class (when error "error")})
-                   (dissoc :error))]
-    [:textarea props']))
+  [:textarea (-> props
+                 (merge {:class (when error "error")})
+                 (dissoc :error))])
 
 
 (defn select-option [{:keys [value] :as props}]
@@ -67,9 +72,7 @@
            (r/children (r/current-component)))]))
 
 
-;; ideally we can implement radio groups like select and select options
-;; but need to find out how to alter props in a child component
-(defn radio [{:keys [] :as props}]
+(defn radio-option [{:keys [] :as props}]
   (let [props' (-> props
                    (merge {:type "radio"})
                    (dissoc :label))]
@@ -81,8 +84,7 @@
 
 
 (defn radio-group [{:keys [name options] :as props}]
-  [:div
-   (map
-    #(with-meta
-      [radio (assoc % :name name) (:label %)] {:key (:value %)})
-    options)])
+  (let [children (map
+                  #(update % 1 tb/assoc-when :name name)
+                  (r/children (r/current-component)))]
+    (into [:div] children)))

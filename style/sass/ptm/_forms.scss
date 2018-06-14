@@ -25,7 +25,8 @@ label {
   line-height: $p-line-height;
 }
 
-input[type="text"], textarea {
+input[type="text"],
+input[type="number"], textarea {
   @extend .medium-border;
   font-family: $sans-serif;
   border-radius: $button-radius;
