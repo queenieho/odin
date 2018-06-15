@@ -13,12 +13,108 @@
             [reagent.core :as r]
             [re-frame.core :as rf :refer [dispatch subscribe]]
             [iface.components.ptm.icons :as icons]
-            [iface.components.ptm.ui :as ui]))
+            [iface.components.ptm.ui.form :as form]
+            [toolbelt.core :as tb]))
 
 
 (defn logout []
   [:div.tr
    [:a {:href "/logout"} "Log Out"]])
+
+
+(defn- personal-information []
+  (let [form (r/atom {:name  nil
+                      :check #{}})]
+    (fn []
+      [:div
+       [:div.w-60-l.w-100
+        [:h4.section-label "Personal info"]
+        [:h1 "Please fill out your personal information"]
+        [:p "Some placeholder text here"]]
+       [:div.page-content.w-90-l.w-100
+
+        (.log js/console "select" (:select @form))
+
+        [form/form
+         [form/form-item
+          {:label "Name"
+           ;; :optional true
+           :error true
+           :help  "This is a required field"}
+          [form/text
+           {:value     (:name @form)
+            :on-change #(swap! form assoc :name (.. % -target -value))}]]
+
+         [form/form-item
+          {:label "Number"
+           ;; :optional true
+           :error true
+           :help  "This is a required field"}
+          [form/number
+           {:value       (:num @form)
+            :placeholder "select a number"
+            :step        5
+            :min         5
+            :max         25
+            :on-change   #(swap! form assoc :num (.. % -target -value))}]]
+
+         [form/form-item
+          {:label "Radios"}
+          [form/radio-group
+           {:value     (:radio @form)
+            :on-change #(swap! form assoc :radio (.. % -target -checked))
+            :name      "radio"}
+           [form/radio-option {:value 1} "thing one"]
+           [form/radio-option {:value 2} "thing two"]
+           [form/radio-option {:value 3} "thing three"]]]
+
+         [form/form-item
+          {:label "select all that apply"}
+          [form/checkbox-group
+           {:value     (:check @form)
+            :on-change #(let [click-id (tb/str->int (.. % -target -id))
+                              ids      (if (.. % -target -checked)
+                                         (conj (:check @form) click-id)
+                                         (remove (fn [id]
+                                                   (= click-id id)) (:check @form)))]
+                          (swap! form assoc :check ids))}
+           [form/checkbox {:id 1} "check 1"]
+           [form/checkbox {:id 2} "check 2"]]]
+
+         [form/form-item
+          {:label "Checkbox"
+           :error true}
+          [form/checkbox
+           {:value     (:checked @form)
+            :on-change #(swap! form assoc :checked (.. % -target -checked))}
+           "This is a thing to check"]]
+
+         [form/form-item
+          {:label "Select"
+           ;; :help  "Error!"
+           ;; :error true
+           }
+          [form/select
+           {:value       (:select @form)
+            :on-change   #(swap! form assoc :select (.. % -target -value))
+            :placeholder "some placeholder text"
+            }
+           [form/select-option {:value 1} "one"]
+           [form/select-option {:value 2} "two"]]]
+
+         [form/form-item
+          {:label "Textarea"
+           :help  "Error!"}
+          [form/textarea
+           {:value       (:textarea @form)
+            :on-change   #(swap! form assoc :textarea (.. % -target -value))
+            :rows        5
+            :error       true
+            :placeholder "some placeholder text"}]]
+         ]
+
+
+        ]])))
 
 
 (defn- welcome-1 [{name :name} toggle]
@@ -40,13 +136,13 @@
     [:br]
     [:br]
 
-    [ui/button
-     {:on-click #(.log js/console "yes, this is dog")
-      :type     :secondary
-      :class    "mt5"}
-     "Let's go!"]
+    #_[ui/button
+       {:on-click #(.log js/console "yes, this is dog")
+        :type     :secondary
+        :class    "mt5"}
+       "Let's go!"]
 
-    [ui/pill {:active false} "pill"]]])
+    #_[ui/pill {:active false} "pill"]]])
 
 
 (defn- welcome-2 []
@@ -119,9 +215,11 @@
   [layout/layout
    {:nav    [nav]
     :footer [footer]
-    :pre    (list [:div.bg-top {:key 1}]
-                  #_(icons/icon {:type "logomark"}))}
-   [welcome-1 {:name "Bob Loblaw"} (r/atom false)]])
+    ;; :pre    (list [:div.bg-top {:key 1}]
+    ;;               #_(icons/icon {:type "logomark"}))
+    }
+   [personal-information]
+   #_[welcome-1 {:name "Bob Loblaw"} (r/atom false)]])
 
 
 ;; ==============================================================================
