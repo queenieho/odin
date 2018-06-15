@@ -18,7 +18,6 @@
 ;; alert components ==================================================================
 
 
-
 (defn- alert-style [type]
   (case type
     :warning "alert-yellow"
@@ -84,17 +83,3 @@
 (s/fdef alert-danger
   :args (s/cat :props (s/keys :req-un [::message]
                               :opt-un [::icon])))
-
-
-(comment
-
-  [alert/alert "this is a generic thing"]
-  [alert/alert-warning
-   {:icon "http://via.placeholder.com/32x32"
-    :message "This is a warning message"}]
-  [alert/alert-info {:message "this is an informational message"}]
-  [alert/alert-success {:message "success!!! you did it!"}]
-  [alert/alert-danger {:message "danger! danger! high voltage!"}]
-
-
-  )
