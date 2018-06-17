@@ -2,19 +2,16 @@
   (:require [antizer.reagent :as ant]
             [iface.loading :as loading]
             [iface.utils.routes :as iur]
-            [toolbelt.core :as tb]
-            [reagent.core :as r]))
+            [reagent.core :as r]
+            [apply.db :as db]))
 
-
-(defmulti view
-  (fn [route]
-    (iur/route-dispatch view route)))
+(defmulti view db/route->step)
 
 
 (defmethod view :default [{:keys [page path root params]}]
   [ant/card {:title "View not found"}
-   [:p [:b "Page: "] page]
-   [:p [:b "Path: "] path]
+   [:p [:b "Page: "] (pr-str page)]
+   [:p [:b "Path: "] (pr-str path)]
    [:p [:b "Root: "] root]
    [:p [:b "Params: "] params]])
 
