@@ -14,6 +14,7 @@
             [re-frame.core :as rf :refer [dispatch subscribe]]
             [iface.components.ptm.icons :as icons]
             [iface.components.ptm.ui.form :as form]
+            [iface.components.ptm.ui.card :as card]
             [toolbelt.core :as tb]))
 
 
@@ -22,7 +23,7 @@
    [:a {:href "/logout"} "Log Out"]])
 
 
-(defn- personal-information []
+(defn- cards-ui []
   (let [form (r/atom {:name  nil
                       :check #{}})]
     (fn []
@@ -33,86 +34,19 @@
         [:p "Some placeholder text here"]]
        [:div.page-content.w-90-l.w-100
 
-        (.log js/console "select" (:select @form))
+        [:div.cf.mt5
+         [:div.w-third-l.w-100.fl.pr4-l.pr0
+          [card/single
+           {:class "card"
+            :tag "most common"
+            :img "http://placekitten.com/120/100"
+            :title "Option 1"
+            :subtitle "$200"
+            :description "This is option one, please use me"}
+           [:h3.ma0 "Test"]]]]
 
-        [form/form
-         [form/form-item
-          {:label "Name"
-           ;; :optional true
-           :error true
-           :help  "This is a required field"}
-          [form/text
-           {:value     (:name @form)
-            :on-change #(swap! form assoc :name (.. % -target -value))}]]
-
-         [form/form-item
-          {:label "Number"
-           ;; :optional true
-           :error true
-           :help  "This is a required field"}
-          [form/number
-           {:value       (:num @form)
-            :placeholder "select a number"
-            :step        5
-            :min         5
-            :max         25
-            :on-change   #(swap! form assoc :num (.. % -target -value))}]]
-
-         [form/form-item
-          {:label "Radios"}
-          [form/radio-group
-           {:value     (:radio @form)
-            :on-change #(swap! form assoc :radio (.. % -target -checked))
-            :name      "radio"}
-           [form/radio-option {:value 1} "thing one"]
-           [form/radio-option {:value 2} "thing two"]
-           [form/radio-option {:value 3} "thing three"]]]
-
-         [form/form-item
-          {:label "select all that apply"}
-          [form/checkbox-group
-           {:value     (:check @form)
-            :on-change #(let [click-id (tb/str->int (.. % -target -id))
-                              ids      (if (.. % -target -checked)
-                                         (conj (:check @form) click-id)
-                                         (remove (fn [id]
-                                                   (= click-id id)) (:check @form)))]
-                          (swap! form assoc :check ids))}
-           [form/checkbox {:id 1} "check 1"]
-           [form/checkbox {:id 2} "check 2"]]]
-
-         [form/form-item
-          {:label "Checkbox"
-           :error true}
-          [form/checkbox
-           {:value     (:checked @form)
-            :on-change #(swap! form assoc :checked (.. % -target -checked))}
-           "This is a thing to check"]]
-
-         [form/form-item
-          {:label "Select"
-           ;; :help  "Error!"
-           ;; :error true
-           }
-          [form/select
-           {:value       (:select @form)
-            :on-change   #(swap! form assoc :select (.. % -target -value))
-            :placeholder "some placeholder text"
-            }
-           [form/select-option {:value 1} "one"]
-           [form/select-option {:value 2} "two"]]]
-
-         [form/form-item
-          {:label "Textarea"
-           :help  "Error!"}
-          [form/textarea
-           {:value       (:textarea @form)
-            :on-change   #(swap! form assoc :textarea (.. % -target -value))
-            :rows        5
-            :error       true
-            :placeholder "some placeholder text"}]]
-         ]
-
+        [ant/card
+         [:h3.ma0 "Test ant"]]
 
         ]])))
 
@@ -218,7 +152,7 @@
     ;; :pre    (list [:div.bg-top {:key 1}]
     ;;               #_(icons/icon {:type "logomark"}))
     }
-   [personal-information]
+   [cards-ui]
    #_[welcome-1 {:name "Bob Loblaw"} (r/atom false)]])
 
 
