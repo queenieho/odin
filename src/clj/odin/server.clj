@@ -75,6 +75,7 @@
    "onboarding.js" ["/js/cljs/onboarding.js"]
    "apply.js"      ["/js/cljs/apply.js"]
    "antd.css"      ["/assets/css/antd.css"]
+   "antd-ptm.css"  ["/assets/css/antd-ptm.css"]
    "styles.css"    ["/assets/css/styles.css"]
    "ptm.css"       ["/assets/css/ptm.css"]})
 
