@@ -102,7 +102,7 @@
 
 
 (reg-sub
- :note.mentions.options/members
+ :note.mentions/options
  :<- [:accounts]
- (fn [accounts _]
-   (filter #(= :member (:role %)) accounts)))
+ (fn [accounts [_ type]]
+   (filter #(= type (:role %)) accounts)))

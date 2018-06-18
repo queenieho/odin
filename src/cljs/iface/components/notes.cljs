@@ -163,8 +163,8 @@
   (goog.object/getValueByKeys opt "props" "children"))
 
 
-(defn create-modal [{:keys [is-creating form members properties loading
-                                 on-cancel on-change on-submit can-submit]}]
+(defn create-modal [{:keys [is-creating form members applicants onboarding properties
+                            loading on-cancel on-change on-submit can-submit]}]
   [ant/modal
    {:title     "Create a note"
     :visible   is-creating
@@ -191,6 +191,24 @@
            :key   id}
           name])
        members)]
+     [ant/select-opt-group
+      {:label "Applicants"}
+      (map
+       (fn [{:keys [name id]}]
+         [ant/select-option
+          {:value (str id)
+           :key   id}
+          name])
+       applicants)]
+     [ant/select-opt-group
+      {:label "Onboarding"}
+      (map
+       (fn [{:keys [name id]}]
+         [ant/select-option
+          {:value (str id)
+           :key   id}
+          name])
+       onboarding)]
      [ant/select-opt-group
       {:label "Communities"}
       (map
