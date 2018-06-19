@@ -30,3 +30,18 @@ $alert-icon-size: 32px;
   background-color: $light-yellow;
   border-color: adjust-color($light-yellow, $lightness: -10%, $saturation: -30%);
 }
+
+.alert-green {
+  background-color: #ebf8f2;
+  border-color: adjust-color(#ebf8f2, $lightness: -10%, $saturation: -30%);
+}
+
+.alert-blue {
+  background-color: #ecf6fd;
+  border-color: adjust-color(#ecf6fd, $lightness: -10%, $saturation: -30%);
+}
+
+.alert-red {
+  background-color: #fef0ef;
+  border-color: adjust-color(#fef0ef, $lightness: -10%, $saturation: -30%);
+}
