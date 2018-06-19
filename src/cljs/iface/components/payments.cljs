@@ -29,12 +29,13 @@
         :payment.method/stripe-invoice "Stripe Invoice"
         :payment.method/check          "Check"
 
-        :payment.type/rent     "Rent Payment"
-        :payment.type/deposit  "Security Deposit"
-        :payment.type/order    "Order"
-        :payment.type/fee      "Fee"
-        :payment.type/late-fee "Late Fee"
-        :payment.type/other    "Uncategorized"
+        :payment.type/application-fee "Application Fee"
+        :payment.type/rent            "Rent Payment"
+        :payment.type/deposit         "Security Deposit"
+        :payment.type/order           "Order"
+        :payment.type/fee             "Fee"
+        :payment.type/late-fee        "Late Fee"
+        :payment.type/other           "Uncategorized"
 
         :payments            "Payments"
         :sources             "Payment Methods"
@@ -118,11 +119,12 @@
              [:span.icon.extra-small [:i {:class (str "fa " icon)}]]
              txt])]
     (case status
-      "rent"     (-tag "fa-home" "Rent Payment")
-      "deposit"  (-tag "fa-shield" "Security Deposit")
-      "order"    (-tag "fa-smile-o" "Service Order")
-      "late_fee" (-tag "fa-exclamation-circle" "Late Fee")
-      "fee"      (-tag "fa-exclamation-circle" "Fee")
+      "application_fee" (-tag "fa-home" "Application Fee")
+      "rent"            (-tag "fa-home" "Rent Payment")
+      "deposit"         (-tag "fa-shield" "Security Deposit")
+      "order"           (-tag "fa-smile-o" "Service Order")
+      "late_fee"        (-tag "fa-exclamation-circle" "Late Fee")
+      "fee"             (-tag "fa-exclamation-circle" "Fee")
       [:span])))
 
 
@@ -136,11 +138,13 @@
                    :placement "right"}
       [:span.icon.has-tooltip {:class icon-size}
        (case reason
-         "rent"     [:i.fa.fa-home                 {:class icon-size}]
-         "deposit"  [:i.fa.fa-shield               {:class icon-size}]
-         "order"    [:i.fa.fa-smile-o              {:class icon-size}]
-         "late_fee" [:i.fa.fa-exclamation-circle   {:class icon-size}]
-         "fee"      [:i.fa.fa-exclamation-circle   {:class icon-size}])]])))
+         "application_fee" [:i.fa.fa-exclamation-circle   {:class icon-size}]
+         "rent"            [:i.fa.fa-home                 {:class icon-size}]
+         "deposit"         [:i.fa.fa-shield               {:class icon-size}]
+         "order"           [:i.fa.fa-smile-o              {:class icon-size}]
+         "late_fee"        [:i.fa.fa-exclamation-circle   {:class icon-size}]
+         "fee"             [:i.fa.fa-exclamation-circle   {:class icon-size}]
+         [:span])]])))
 
 
 (defn render-payment-date
@@ -253,10 +257,12 @@
 
 (defn- icon-class [payment-type]
   (case payment-type
-    :deposit  "fa-shield"
-    :rent     "fa-home"
-    :late-fee "fa-exclamation-circle"
-    :order    "fa-smile-o"
+    :application-fee "fa-exclamation-circle"
+    :fee             "fa-exclamation-circle"
+    :deposit         "fa-shield"
+    :rent            "fa-home"
+    :late-fee        "fa-exclamation-circle"
+    :order           "fa-smile-o"
     ""))
 
 

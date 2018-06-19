@@ -135,7 +135,7 @@
     (letfn [(-rent-desc [payment]
               (->> [(tpayment/period-start payment) (tpayment/period-end payment)]
                    (map (comp date/short #(date/tz-uncorrected % (property/time-zone property))))
-                   (apply format "rent for %s-%s")))
+                   (apply format "Rent for %s-%s")))
             (-order-desc [payment]
               (let [order        (order/by-payment (d/db conn) (teller/entity payment))
                     service-desc (service/name (order/service order))]
@@ -144,20 +144,23 @@
                     service-desc)))
             (-late-fee-desc [payment]
               (let [parent (tpayment/associated-to payment)]
-                (format "late fee (%s)" (-rent-desc parent))))
+                (format "Late fee (%s)" (-rent-desc parent))))
+            (-application-fee-desc [payment]
+              (str "Starcity application fee"))
             (-fee-desc [payment]
               (if-let [subtypes (tpayment/subtypes payment)]
                 (->> (map name subtypes)
                      (interpose ", ")
                      (apply str)
-                     (format "fee (%s)"))
-                "fee"))]
+                     (format "Fee (%s)"))
+                "Fee"))]
       (case (tpayment/type payment)
-        :payment.type/rent     (-rent-desc payment)
-        :payment.type/order    (-order-desc payment)
-        :payment.type/deposit  (deposit-desc teller (tcustomer/account (tpayment/customer payment)) payment)
-        :payment.type/late-fee (-late-fee-desc payment)
-        :payment.type/fee      (-fee-desc payment)
+        :payment.type/rent            (-rent-desc payment)
+        :payment.type/order           (-order-desc payment)
+        :payment.type/deposit         (deposit-desc teller (tcustomer/account (tpayment/customer payment)) payment)
+        :payment.type/late-fee        (-late-fee-desc payment)
+        :payment.type/application-fee (-application-fee-desc payment)
+        :payment.type/fee             (-fee-desc payment)
         nil))))
 
 
