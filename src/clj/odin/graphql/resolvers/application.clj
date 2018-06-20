@@ -6,11 +6,14 @@
             [blueprints.models.income-file :as income-file]
             [blueprints.models.license :as license]
             [blueprints.models.source :as source]
+            [blueprints.models.unit :as unit]
             [clj-time.core :as t]
             [clojure.string :as string]
             [com.walmartlabs.lacinia.resolve :as resolve]
             [datomic.api :as d]
-            [toolbelt.datomic :as td]))
+            [toolbelt.datomic :as td]
+            [teller.customer :as tcustomer]
+            [teller.property :as tproperty]))
 
 ;; ==============================================================================
 ;; fields -----------------------------------------------------------------------
@@ -96,7 +99,7 @@
 
 (defn approve!
   "Approve an application for membership."
-  [{:keys [conn requester]} {:keys [application params]} _]
+  [{:keys [conn requester teller]} {:keys [application params]} _]
   (let [application (d/entity (d/db conn) application)
         account     (application/account application)]
     (cond
@@ -107,8 +110,12 @@
       (resolve/resolve-as nil {:message "Application must be in `submitted` status for approval!"})
 
       :otherwise
-      (let [license (license/by-term (d/db conn) (:term params))
-            unit    (d/entity (d/db conn) (:unit params))]
+      (let [license   (license/by-term (d/db conn) (:term params))
+            unit      (d/entity (d/db conn) (:unit params))
+            community (unit/property unit)
+            property  (tproperty/by-community teller community)]
+        (when-let [customer (tcustomer/by-account teller account)]
+          (tcustomer/set-property! customer property))
         @(d/transact conn (conj (approval/approve requester account unit license (:move_in params))
                                 (events/account-approved account)
                                 (source/create requester)))
