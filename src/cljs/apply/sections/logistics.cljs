@@ -1,6 +1,7 @@
 (ns apply.sections.logistics
   (:require [apply.content :as content]
             [apply.sections.logistics.move-in-date]
+            [apply.sections.logistics.choose-date]
             [apply.db :as db]))
 
 

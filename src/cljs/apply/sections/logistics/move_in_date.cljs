@@ -2,16 +2,15 @@
   (:require [apply.content :as content]
             [antizer.reagent :as ant]
             [re-frame.core :refer [dispatch subscribe]]
-            [iface.utils.log :as log]
             [apply.events :as events]
-            [apply.db :as db]))
+            [apply.db :as db]
+            [iface.utils.log :as log]))
 
 
 (def step :logistics/move-in-date)
 
 
 ;; db ===========================================================================
-
 
 
 (defmethod db/next-step step
