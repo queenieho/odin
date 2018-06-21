@@ -20,11 +20,6 @@
     :logistics/occupancy))
 
 
-#_(defmethod db/previous-step step
-  [db]
-  )
-
-
 (defmethod db/has-back-button? :logistics/move-in-date
   [_]
   false)

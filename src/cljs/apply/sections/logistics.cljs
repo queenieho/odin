@@ -6,9 +6,12 @@
             [apply.sections.logistics.get-notified]
             [apply.sections.logistics.occupancy]
             [apply.sections.logistics.co-occupant]
+            [apply.sections.logistics.pets]
+            [apply.sections.logistics.dog]
+            [apply.sections.logistics.pets-other]
             [apply.db :as db]))
 
 
-#_(defmethod db/section-complete? :logistics
+(defmethod db/section-complete? :logistics
     [db section]
     false)
