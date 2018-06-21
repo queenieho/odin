@@ -59,6 +59,12 @@
       (past-first-courtesy? payments))))
 
 
+(defn- payment->order [db payment]
+  (if-let [subs (tpayment/subscription payment)]
+    (order/by-subscription db subs)
+    (order/by-payment db payment)))
+
+
 ;; ==============================================================================
 ;; fields =======================================================================
 ;; ==============================================================================
@@ -137,7 +143,7 @@
                    (map (comp date/short #(date/tz-uncorrected % (property/time-zone property))))
                    (apply format "Rent for %s-%s")))
             (-order-desc [payment]
-              (let [order        (order/by-payment (d/db conn) (teller/entity payment))
+              (let [order        (payment->order (d/db conn) payment)
                     service-desc (service/name (order/service order))]
                 (or (when-let [d (order/summary order)]
                       (format "%s (%s)" d service-desc))
@@ -202,7 +208,7 @@
 (defn order
   "The order associated with this `payment`, if any."
   [{conn :conn} _ payment]
-  (order/by-payment (d/db conn) (teller/entity payment)))
+  (payment->order (d/db conn) payment))
 
 
 (defn paid-on
