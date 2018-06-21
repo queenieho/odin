@@ -15,6 +15,7 @@
             [teller.customer :as tcustomer]
             [teller.payment :as tpayment]
             [teller.plan :as tplan]
+            [teller.property :as tproperty]
             [teller.source :as tsource]
             [teller.subscription :as tsubscription]
             [toolbelt.core :as tb]))
@@ -127,18 +128,27 @@
 (defn- fetch-or-create-customer!
   "Produce the customer for `requester` if there is one; otherwise, createa a
   new customer."
-  [teller account]
-  (if-let [customer (tcustomer/by-account teller account)]
-    customer
-    (tcustomer/create! teller (account/email account) {:account account})))
+  [teller db account]
+  (let [community (account/current-property db account)
+        property  (tproperty/by-community teller community)]
+    (if-let [customer (tcustomer/by-account teller account)]
+      (do
+        ;; when the customer isn't connected to this property...
+        (when-not (tcustomer/connected? customer property)
+          ;; connect it and set this property to the default
+          (tcustomer/set-property! customer property))
+        (tcustomer/by-account teller account))
+      ;; otherwise create it with current property as the default
+      (tcustomer/create! teller (account/email account) {:account  account
+                                                         :property property}))))
 
 
 (defn add-source!
   "Add a new source to the requester's Stripe customer, or create the customer
   and add the source if it doesn't already exist."
-  [{:keys [teller requester] :as ctx} {:keys [token]} _]
+  [{:keys [teller conn requester] :as ctx} {:keys [token]} _]
   (try
-    (let [customer (fetch-or-create-customer! teller requester)]
+    (let [customer (fetch-or-create-customer! teller (d/db conn) requester)]
       (tsource/add-source! customer token))
     (catch Throwable t
       (timbre/error t ::add-source! {:email (account/email requester)})
