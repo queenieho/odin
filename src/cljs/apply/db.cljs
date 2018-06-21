@@ -99,22 +99,12 @@
 (defmulti next-step step-dispatch)
 
 
-(defmethod next-step :logistics/move-in-date
+#_(defmethod next-step :logistics/move-in-date
   [db]
   ;; NOTE: inspection of `db` is needed for a proper implementation of this step
   ;; because some options within the step itself allow one to skip selection of
   ;; a date, and in one case triggers a separate flow.
   :logistics.move-in-date/choose-date)
-
-
-(defmethod next-step :logistics.move-in-date/choose-date
-  [db]
-  :logistics/occupancy)
-
-
-(defmethod next-step :logistics/occupancy
-  [db]
-  :logistics/pets)
 
 
 (defmethod next-step :logistics/pets
@@ -243,9 +233,10 @@
 ;; implementation of this function and have it just return `true`
 (defn has-next-button? [db]
   true
-  #_(let [step (step-dispatch db)]
+  (let [step (step-dispatch db)]
     (boolean
      (#{:logistics.move-in-date/choose-date
+        :logistics.occupancy/co-occupant
         :logistics.pets/dog
         :logistics.pets/other
         :community/select

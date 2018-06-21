@@ -147,6 +147,7 @@
  (fn [step _]
    (case step
      :logistics.move-in-date/choose-date (lbl "occupancy")
+     :logistics.occupancy/co-occupant    (lbl "pets")
      :logistics.pets/dog                 (lbl "communities")
      :logistics.pets/other               (lbl "communities")
      :community/select                   (lbl "term length")
