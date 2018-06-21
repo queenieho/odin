@@ -64,7 +64,9 @@
 (defn payments
   "The payments made towards this `order`."
   [{teller :teller} _ order]
-  (map (partial tpayment/by-entity teller) (order/payments order)))
+  (if-let [subs (order/subscription order)]
+    (subscription/payments (subscription/by-entity teller subs))
+    (map (partial tpayment/by-entity teller) (order/payments order))))
 
 
 (defn- property-for-account [db account]
