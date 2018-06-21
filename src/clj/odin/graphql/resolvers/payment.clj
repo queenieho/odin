@@ -133,21 +133,31 @@
       (str "second " partial-deposit-desc))))
 
 
+(defn- period-desc [db payment]
+  (when (and (some? (tpayment/period-start payment))
+             (some? (tpayment/period-end payment)))
+    (let [customer (tpayment/customer payment)
+          account   (tcustomer/account customer)
+          property  (account/current-property db account)]
+      (->> [(tpayment/period-start payment) (tpayment/period-end payment)]
+           (map (comp date/short #(date/tz-uncorrected % (property/time-zone property))))
+           (apply format " from %s-%s")))))
+
+
 (defn description
   "A description of this `payment`. Varies based on payment type."
   [{:keys [teller conn]} _ payment]
   (let [account  (-> payment tpayment/customer tcustomer/account)
         property (account/current-property (d/db conn) account)]
     (letfn [(-rent-desc [payment]
-              (->> [(tpayment/period-start payment) (tpayment/period-end payment)]
-                   (map (comp date/short #(date/tz-uncorrected % (property/time-zone property))))
-                   (apply format "Rent for %s-%s")))
+              (str "Rent" (period-desc (d/db conn) payment)))
             (-order-desc [payment]
               (let [order        (payment->order (d/db conn) payment)
                     service-desc (service/name (order/service order))]
-                (or (when-let [d (order/summary order)]
-                      (format "%s (%s)" d service-desc))
-                    service-desc)))
+                (str (or (when-let [d (order/summary order)]
+                           (format "%s (%s)" d service-desc))
+                         service-desc)
+                     (period-desc (d/db conn) payment))))
             (-late-fee-desc [payment]
               (let [parent (tpayment/associated-to payment)]
                 (format "Late fee (%s)" (-rent-desc parent))))
