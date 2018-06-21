@@ -1,7 +1,9 @@
 (ns apply.sections.logistics
-  (:require [apply.content :as content]))
+  (:require [apply.content :as content]
+            [apply.sections.logistics.move-in-date]
+            [apply.db :as db]))
 
 
-(defmethod content/view :logistics/move-in-date
-  [_]
-  [:div "This is the move-in-date view."])
+#_(defmethod db/section-complete? :logistics
+    [db section]
+    false)

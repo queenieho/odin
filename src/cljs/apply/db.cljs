@@ -30,13 +30,13 @@
 
 (defn bootstrap [account]
   (merge
-   {:lang    :en
-    :account account
-    nav-path nav-items
-    :route   {:page      :home
-              :path      [:home]
-              :params    {}
-              :requester account}}
+   {:lang            :en
+    :account         account
+    nav-path         nav-items
+    :route           {:page      :home
+                      :path      [:home]
+                      :params    {}
+                      :requester account}}
    loading/db))
 
 
@@ -89,8 +89,8 @@
 
 
 (defn- step-data [db]
-  (let [step (-> db :route route->step)]
-    (get db step-dispatch {})))
+  (let [step (step-dispatch db)]
+    (get db step {})))
 
 
 ;; next =========================================================================
@@ -260,11 +260,6 @@
 
 
 (defmulti has-back-button? step-dispatch)
-
-
-(defmethod has-back-button? :logistics/move-in-date
-  [_]
-  false)
 
 
 (defmethod has-back-button? :default [db]
