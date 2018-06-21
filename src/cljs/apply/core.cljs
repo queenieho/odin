@@ -14,41 +14,12 @@
             [re-frame.core :as rf :refer [dispatch subscribe]]
             [iface.components.ptm.icons :as icons]
             [iface.components.ptm.ui.form :as form]
-            [iface.components.ptm.ui.card :as card]
             [toolbelt.core :as tb]))
 
 
 (defn logout []
   [:div.tr
    [:a {:href "/logout"} "Log Out"]])
-
-
-(defn- cards-ui []
-  (let [form (r/atom {:name  nil
-                      :check #{}})]
-    (fn []
-      [:div
-       [:div.w-60-l.w-100
-        [:h4.section-label "Personal info"]
-        [:h1 "Please fill out your personal information"]
-        [:p "Some placeholder text here"]]
-       [:div.page-content.w-90-l.w-100
-
-        [:div.cf.mt5
-         [:div.w-third-l.w-100.fl.pr4-l.pr0
-          [card/single
-           {:class "card"
-            :tag "most common"
-            :img "http://placekitten.com/120/100"
-            :title "Option 1"
-            :subtitle "$200"
-            :description "This is option one, please use me"}
-           [:h3.ma0 "Test"]]]]
-
-        [ant/card
-         [:h3.ma0 "Test ant"]]
-
-        ]])))
 
 
 (defn- welcome-1 [{name :name} toggle]
@@ -152,8 +123,7 @@
     ;; :pre    (list [:div.bg-top {:key 1}]
     ;;               #_(icons/icon {:type "logomark"}))
     }
-   [cards-ui]
-   #_[welcome-1 {:name "Bob Loblaw"} (r/atom false)]])
+   [welcome-1 {:name "Bob Loblaw"} (r/atom false)]])
 
 
 ;; ==============================================================================
