@@ -477,11 +477,11 @@
         units               (subscribe [:property/units (:community @form)])
         license             (:active_license account)]
     [ant/modal
-     {:title     (str "Transfer: " (:name account))
-      :visible   @is-visible
+     {:title       (str "Transfer: " (:name account))
+      :visible     @is-visible
       :after-close #(dispatch [:accounts.entry.reassign/clear])
-      :on-cancel #(dispatch [:accounts.entry.reassign/hide])
-      :footer    (r/as-element [reassign-modal-footer account @form])}
+      :on-cancel   #(dispatch [:accounts.entry.reassign/hide])
+      :footer      (r/as-element [reassign-modal-footer account @form])}
 
      (when-not (:editing @form)
        [:div
@@ -517,7 +517,7 @@
 
        ;; rate selection
        [ant/form-item
-        {:label "What should their rate change to?"}
+        {:label (format/format "What should their rate change to (currently $%.0f)?" (:rate license))}
         (if @rate-loading
           [:div.has-text-centered
            [ant/spin {:tip "Fetching current rate..."}]]
