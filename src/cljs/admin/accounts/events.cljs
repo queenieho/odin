@@ -363,12 +363,12 @@
  :accounts.entry/reassign!
  [(path db/path)]
  (fn [_ [k account form]]
-   {:dispatch  [:ui/loading k true]
-    :graphql {:mutation
-              [[:transfer_create {:params (reassign-form->transition-params account form)}
-                [:id [:account [:id]]]]]
-              :on-success [::reassign-unit-success k]
-              :on-failure [:graphql/failure k]}}))
+   {:dispatch [:ui/loading k true]
+    :graphql  {:mutation
+               [[:transfer_create {:params (reassign-form->transition-params account form)}
+                 [:id [:account [:id]]]]]
+               :on-success [::reassign-unit-success k]
+               :on-failure [:graphql/failure k]}}))
 
 
 (reg-event-fx
@@ -376,18 +376,18 @@
  [(path db/path)]
  (fn [{db :db} [k account form]]
    (let [transition (get-in account [:active_license :transition])
-         params (tb/assoc-when
-                 {:id (:id transition)
-                  :current_license (get-in account [:active_license :id])}
-                 :room_walkthrough_doc (:room-walkthrough-doc form)
-                 :asana_task (:asana-task form)
-                 :deposit_refund (:deposit-refund form))]
+         params     (tb/assoc-when
+                     {:id              (:id transition)
+                      :current_license (get-in account [:active_license :id])}
+                     :room_walkthrough_doc (:room-walkthrough-doc form)
+                     :asana_task (:asana-task form)
+                     :deposit_refund (:deposit-refund form))]
      {:dispatch [:ui/loading k true]
-      :graphql {:mutation
-                [[:transfer_update {:params params}
-                  [:id [:account [:id]]]]]
-                :on-success [::reassign-update-success k]
-                :on-failure [:graphql/failure k]}})))
+      :graphql  {:mutation
+                 [[:transfer_update {:params params}
+                   [:id [:account [:id]]]]]
+                 :on-success [::reassign-update-success k]
+                 :on-failure [:graphql/failure k]}})))
 
 
 (reg-event-fx
