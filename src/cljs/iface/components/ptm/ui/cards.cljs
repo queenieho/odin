@@ -78,10 +78,14 @@
     props
     {:align  :left
      :footer (cond
-               (and selected count) [:a.text-link.text-green
-                                     (str count " Selected")]
-               selected             [:a.text-link.text-green
-                                     [ant/icon {:type "check"}] " Selected"]
+               (and selected count) [:div
+                                     [:a.text-link.text-green
+                                      (str count " Selected")]
+                                     [:img.icon-x {:src "/assets/images/ptm/icons/ic-x.svg"}]]
+               selected             [:div
+                                     [:a.text-link.text-green
+                                      [ant/icon {:type "check"}] " Selected"]
+                                     [:img.icon-x {:src "/assets/images/ptm/icons/ic-x.svg"}]]
                :else                [:a.text-link "Select"])})])
 
 
