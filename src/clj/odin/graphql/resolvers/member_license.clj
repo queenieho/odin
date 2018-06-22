@@ -152,6 +152,7 @@
         (reassign-autopay! ctx params)
         (d/entity (d/db conn) license)))))
 
+
 (def early-termination-rate
   "The amount (in US Dollars) per day that is charged as part of the Early Termination Fee"
   10)
@@ -187,13 +188,15 @@
                          rate
                          :member-license.status/pending))
 
+
 (def transfer-fee-amount
   "The amount charged to a member who is transferring from one unit to another."
   250.0)
 
+
 (defn- create-transfer-fee!
   [teller license]
-  (let [account (member-license/account license)
+  (let [account  (member-license/account license)
         customer (tcustomer/by-account teller account)
         property (tproperty/by-community teller (member-license/property license))]
     (tpayment/create! customer transfer-fee-amount :payment.type/fee
@@ -208,6 +211,9 @@
    _]
   (let [type        (keyword (string/replace (name type) "_" "-"))
         license     (d/entity (d/db conn) current_license)
+        tz          (member-license/time-zone license)
+        date        (date/beginning-of-day date tz)
+        notice_date (when-let [d notice_date] (date/beginning-of-day notice_date tz))
         account     (member-license/account license)
         new-license (when (some? new_license_params)
                       (create-pending-license-tx conn new_license_params))
@@ -232,12 +238,13 @@
                        new-license
                        (when (and (moving-out-after-license-end? license date) (= type :move-out))
                          {:db/id               (td/id current_license)
-                          :member-license/ends (one-day-before date)})
+                          :member-license/ends (one-day-before (date/end-of-day date tz))})
                        (when (or (= type :inter-xfer) (= type :intra-xfer))
                          {:db/id               (td/id current_license)
-                          :member-license/ends (one-day-before date)})
+                          :member-license/ends (one-day-before (date/end-of-day date tz))})
                        (when (some? new_license_params)
-                         {:db/id (td/id account) :account/licenses new-license})))
+                         {:db/id            (td/id account)
+                          :account/licenses new-license})))
     (d/entity (d/db conn) current_license)))
 
 
