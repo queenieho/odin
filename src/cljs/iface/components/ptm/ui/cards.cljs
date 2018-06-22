@@ -78,15 +78,15 @@
     props
     {:align  :left
      :footer (cond
-               (and selected count) [:div
-                                     [:a.text-link.text-green
-                                      (str count " Selected")]
-                                     [:img.icon-x {:src "/assets/images/ptm/icons/ic-x.svg"}]]
-               selected             [:div
-                                     [:a.text-link.text-green
-                                      [ant/icon {:type "check"}] " Selected"]
-                                     [:img.icon-x {:src "/assets/images/ptm/icons/ic-x.svg"}]]
-               :else                [:a.text-link "Select"])})])
+               (and selected count)  [:div
+                                      [:a.text-link.text-green
+                                       (str count " Selected")]
+                                      [:img.icon-x {:src "/assets/images/ptm/icons/ic-x.svg"}]]
+               selected              [:div
+                                      [:a.text-link.text-green
+                                       [ant/icon {:type "check"}] " Selected"]
+                                      [:img.icon-x {:src "/assets/images/ptm/icons/ic-x.svg"}]]
+               :else                 [:a.text-link "Select"])})])
 
 
 (def card-count
@@ -103,7 +103,7 @@
                   #(update % 1 tb/assoc-when
                            :width card-width
                            :on-click (fn [val] (on-change val))
-                           :selected (when (and (seq? value)
+                           :selected (when (and (coll? value)
                                                 (some (fn [v] (= (:value (second %)) v)) value))
                                        true)
                            :count (when show-count
