@@ -573,49 +573,47 @@
           {:style     {:width "50%"}
            :value     (:move-in-date @form)
            :disabled  (:editing @form)
-           :on-change #(dispatch [:accounts.entry.reassign/update :move-in-date %])}]]])
-
-
-     [ant/form-item
-      {:label (r/as-element
-               [:span [:span.bold "Asana Transfer Task"]
-                [ant/tooltip
-                 {:placement "topLeft"
-                  :title     (r/as-element
-                              [:div "Make a copy of the "
-                               [:a {:href (:intra-xfer asana-transition-templates) :target "_blank"} "Member Transfer Template"]
-                               " Asana task. Paste the link to your copy of that task in this input."])}
-                 [ant/icon {:type "question-circle-o"}]]])}
-      [ant/input
-       {:placeholder "paste the asana link here..."
-        :value       (:asana-task @form)
-        :size        "default"
-        :on-change   #(dispatch [:accounts.entry.reassign/update :asana-task (.. % -target -value)])}]]
-
-     (when (:editing @form)
-       [:div
+           :on-change #(dispatch [:accounts.entry.reassign/update :move-in-date %])}]]
         [ant/form-item
          {:label (r/as-element
-                  [ant/tooltip
-                   {:title "Link to Google Drive Doc"}
-                   [:span.bold "Final Walkthrough Notes"]])}
+                  [:span [:span.bold "Asana Transfer Task"]
+                   [ant/tooltip
+                    {:placement "topLeft"
+                     :title     (r/as-element
+                                 [:div "Make a copy of the "
+                                  [:a {:href (:intra-xfer asana-transition-templates) :target "_blank"} "Member Transfer Template"]
+                                  " Asana task. Paste the link to your copy of that task in this input."])}
+                    [ant/icon {:type "question-circle-o"}]]])}
          [ant/input
-          {:placeholder "paste the google drive link here..."
-           :value       (:room-walkthrough-doc @form)
+          {:placeholder "paste the asana link here..."
+           :value       (:asana-task @form)
            :size        "default"
-           :on-change   #(dispatch [:accounts.entry.reassign/update :room-walkthrough-doc (.. % -target -value)])}]]
+           :on-change   #(dispatch [:accounts.entry.reassign/update :asana-task (.. % -target -value)])}]]
 
-        [ant/form-item
-         {:label (r/as-element
-                  [ant/tooltip
-                   {:title     "To be added after Ops has reviewed the final walkthrough details"
-                    :placement "topLeft"}
-                   [:span.bold "Security Desposit Refund Amount"]] )}
-         [ant/input-number
-          {:style     {:width "50%"}
-           :value     (:deposit-refund @form)
-           :size      "default"
-           :on-change #(dispatch [:accounts.entry.reassign/update :deposit-refund %])}]]])]))
+        (when (:editing @form)
+          [:div
+           [ant/form-item
+            {:label (r/as-element
+                     [ant/tooltip
+                      {:title "Link to Google Drive Doc"}
+                      [:span.bold "Final Walkthrough Notes"]])}
+            [ant/input
+             {:placeholder "paste the google drive link here..."
+              :value       (:room-walkthrough-doc @form)
+              :size        "default"
+              :on-change   #(dispatch [:accounts.entry.reassign/update :room-walkthrough-doc (.. % -target -value)])}]]
+
+           [ant/form-item
+            {:label (r/as-element
+                     [ant/tooltip
+                      {:title     "To be added after Ops has reviewed the final walkthrough details"
+                       :placement "topLeft"}
+                      [:span.bold "Security Desposit Refund Amount"]] )}
+            [ant/input-number
+             {:style     {:width "50%"}
+              :value     (:deposit-refund @form)
+              :size      "default"
+              :on-change #(dispatch [:accounts.entry.reassign/update :deposit-refund %])}]]])])]))
 
 
 (defn- move-out-confirmation [account form]
