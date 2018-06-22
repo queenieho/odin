@@ -60,6 +60,8 @@
    :fields      {:current_license    {:type (non-null :Long)}
                  :type               {:type :license_transition_type}
                  :deposit_refund     {:type Float}
+                 :fee                {:type        Boolean
+                                      :description "Should a room transfer fee be applied? Only applies when type is #{:intra-xfer, :inter-xfer}"}
                  :date               {:type (non-null :Instant)}
                  :notice_date        {:type :Instant}
                  :asana_task         {:type String}

@@ -305,6 +305,7 @@
    (let [current-community-id (get-in account [:property :id])]
      {:dispatch-n [[:modal/show db/reassign-modal-key]
                    [:properties/query]
+                   [:accounts.entry.reassign/update :fee true]
                    [:accounts.entry.reassign/update :community current-community-id]
                    [:accounts.entry.reassign/update :type :intra-xfer]
                    [:property/fetch current-community-id]]})))
@@ -355,16 +356,18 @@
 
 
 (defn- reassign-form->transition-params
-  [account {:keys [type move-out-date unit rate move-in-date asana-task term]}]
+  [account {:keys [type move-out-date unit rate move-in-date asana-task term fee]}]
   (tb/assoc-when
    {:current_license    (get-in account [:active_license :id])
     :type               (keyword (string/replace (name type) "-" "_"))
     :date               (.toISOString move-out-date)
+    :fee                fee
     :new_license_params {:unit unit
                          :rate rate
                          :term (or term (get-in account [:active_license :term]))
                          :date (.toISOString move-in-date)}}
    :asana_task asana-task))
+
 
 (reg-event-fx
  :accounts.entry/reassign!

@@ -590,6 +590,12 @@
            :size        "default"
            :on-change   #(dispatch [:accounts.entry.reassign/update :asana-task (.. % -target -value)])}]]
 
+        (when-not (:editing @form)
+          [ant/form-item
+           [ant/checkbox {:checked   (:fee @form)
+                          :on-change #(dispatch [:accounts.entry.reassign/update :fee (.. % -target -checked)])}
+            "Should the member be assessed a room transfer fee?"]])
+
         (when (:editing @form)
           [:div
            [ant/form-item
