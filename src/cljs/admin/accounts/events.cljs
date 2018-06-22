@@ -157,6 +157,7 @@
  (fn [{db :db} [_ query]]
    {:route (db/params->route (assoc (:params db) :q query))}))
 
+
 ;; ==============================================================================
 ;; entry ========================================================================
 ;; ==============================================================================
@@ -246,6 +247,37 @@
      [:account/fetch (get-in response [:data :approve_application :account :id])]]}))
 
 
+;; ==============================================================================
+;; license transitions ==========================================================
+;; ==============================================================================
+
+
+(reg-event-fx
+ :accounts.entry.transition/fetch-rate
+ [(path db/path)]
+ (fn [_ [k unit-id term on-success]]
+   {:dispatch [:ui/loading k true]
+    :graphql  {:query
+               [[:unit {:id unit-id}
+                 [[:rates [:rate :term]]
+                  [:property [[:rates [:rate :term]]]]]]]
+               :on-success [::fetch-rate-success k term on-success]
+               :on-failure [:graphql/failure k]}}))
+
+
+(reg-event-fx
+ ::fetch-rate-success
+ [(path db/path)]
+ (fn [_ [_ k term on-success response]]
+   (let [urates (get-in response [:data :unit :rates])
+         prates (get-in response [:data :unit :property :rates])
+         rate   (->> [urates prates]
+                     (map (comp :rate (partial tb/find-by (comp #{term} :term)))) ; oh my
+                     (apply max))]
+     {:dispatch-n [[:ui/loading k false]
+                   (conj (vec on-success) rate)]})))
+
+
 ;; reassign =====================================================================
 
 
@@ -302,13 +334,14 @@
  :accounts.entry.reassign/select-community
  [(path db/path)]
  (fn [{db :db} [_ community license]]
-   (let [community (tb/str->int community)
-         current-community (get-in license [:property :id])]
+   (let [community         (tb/str->int community)
+         current-community (get-in license [:property :id])
+         type              (if (= community current-community)
+                             :intra-xfer
+                             :inter-xfer)]
      {:dispatch-n [[:accounts.entry.reassign/update :community community]
                    [:property/fetch community]
-                   (if (= community current-community)
-                     [:accounts.entry.reassign/update :type :intra-xfer]
-                     [:accounts.entry.reassign/update :type :inter-xfer])]})))
+                   [:accounts.entry.reassign/update :type type]]})))
 
 
 (reg-event-fx
@@ -317,47 +350,21 @@
  (fn [db [_ unit term]]
    (let [unit (tb/str->int unit)]
      {:dispatch-n [[:accounts.entry.reassign/update :unit unit]
-                   [:accounts.entry.reassign/fetch-rate unit term :accounts.entry.reassign/update]]})))
-
-
-(reg-event-fx
- :accounts.entry.reassign/fetch-rate
- [(path db/path)]
- (fn [_ [k unit-id term on-success]]
-   {:dispatch [:ui/loading k true]
-    :graphql  {:query
-               [[:unit {:id unit-id}
-                 [[:rates [:rate :term]]
-                  [:property [[:rates [:rate :term]]]]]]]
-               :on-success [::fetch-rate-success k term on-success]
-               :on-failure [:graphql/failure k]}}))
-
-
-(reg-event-fx
- ::fetch-rate-success
- [(path db/path)]
- (fn [_ [_ k term on-success response]]
-   (let [urates (get-in response [:data :unit :rates])
-         prates (get-in response [:data :unit :property :rates])
-         rate   (->> [urates prates]
-                     (map (comp :rate (partial tb/find-by (comp #{term} :term)))) ; oh my
-                     (apply max))]
-     {:dispatch-n [[:ui/loading k false]
-                   [on-success :rate rate]]})))
+                   [:accounts.entry.transition/fetch-rate unit term
+                    [:accounts.entry.reassign/update :rate]]]})))
 
 
 (defn- reassign-form->transition-params
-  [account {:keys [type move-out-date unit rate move-in-date asana-task] :as form-data}]
-  (let [result (tb/assoc-when
-                {:current_license    (get-in account [:active_license :id])
-                 :type               (keyword (string/replace (name type) "-" "_"))
-                 :date               (.toISOString move-out-date)
-                 :new_license_params {:unit unit
-                                      :rate rate
-                                      :term (get-in account [:active_license :term])
-                                      :date (.toISOString move-in-date)}}
-                :asana_task asana-task)]
-    result))
+  [account {:keys [type move-out-date unit rate move-in-date asana-task term]}]
+  (tb/assoc-when
+   {:current_license    (get-in account [:active_license :id])
+    :type               (keyword (string/replace (name type) "-" "_"))
+    :date               (.toISOString move-out-date)
+    :new_license_params {:unit unit
+                         :rate rate
+                         :term (or term (get-in account [:active_license :term]))
+                         :date (.toISOString move-in-date)}}
+   :asana_task asana-task))
 
 (reg-event-fx
  :accounts.entry/reassign!
@@ -412,6 +419,17 @@
                    [:payment-sources/fetch account-id]
                    [:notify/success ["Transfer created!"]]
                    [:account/fetch account-id]]})))
+
+
+(reg-event-fx
+ :accounts.entry.reassign/update-term
+ [(path db/path)]
+ (fn [db [k unit term]]
+   {:dispatch-n [[:accounts.entry.reassign/update :term term]
+                 [:accounts.entry.transition/fetch-rate
+                  unit
+                  term
+                  [:accounts.entry.reassign/update :rate]]]}))
 
 
 ;; move-out transition ==========================================================
@@ -587,14 +605,14 @@
 
 
 (reg-event-fx
- :accounts.entry.reassign/update-term
+ :accounts.entry.transition/update-term
  [(path db/path)]
  (fn [db [k license term]]
    {:dispatch-n [[:accounts.entry.transition/update :term term]
-                 [:accounts.entry.reassign/fetch-rate (get-in license [:unit :id]) term :accounts.entry.transition/update]]}))
-
-
-
+                 [:accounts.entry.transition/fetch-rate
+                  (get-in license [:unit :id])
+                  term
+                  [:accounts.entry.transition/update :rate]]]}))
 
 
 ;; payment ======================================================================

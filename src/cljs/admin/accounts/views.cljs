@@ -21,6 +21,24 @@
 
 
 ;; ==============================================================================
+;; helpers ======================================================================
+;; ==============================================================================
+
+
+(defn- term-select
+  [{:keys [disabled value on-change]}]
+  [ant/select
+   {:style         {:width "50%"}
+    :value         (str value)
+    :default-value "3"
+    :disabled      disabled
+    :on-change     (comp on-change int)}
+   [ant/select-option {:value "3"} "3 months"]
+   [ant/select-option {:value "6"} "6 months"]
+   [ant/select-option {:value "12"} "12 months"]])
+
+
+;; ==============================================================================
 ;; list view ====================================================================
 ;; ==============================================================================
 
@@ -67,6 +85,7 @@
      [ant/tooltip {:title (str (format/date-short starts) "-"
                                (format/date-short ends))}
       [:div.has-text-centered term]])))
+
 
 (def render-rent-status
   (table/wrap-cljs
@@ -398,9 +417,9 @@
     [:div.columns
      [:div.column
       (doall
-         (map
-          #(with-meta [notes/note-card %] {:key (:id %)})
-          @notes))
+       (map
+        #(with-meta [notes/note-card %] {:key (:id %)})
+        @notes))
       (when-not (empty? @notes)
         [notes/pagination])]]))
 
@@ -471,7 +490,7 @@
   (let [is-visible          (subscribe [:modal/visible? db/reassign-modal-key])
         communities-loading (subscribe [:ui/loading? :properties/query])
         units-loading       (subscribe [:ui/loading? :property/fetch])
-        rate-loading        (subscribe [:ui/loading? :accounts.entry.reassign/fetch-rate])
+        rate-loading        (subscribe [:ui/loading? :accounts.entry.transition/fetch-rate])
         form                (subscribe [:accounts.entry.reassign/form-data])
         communities         (subscribe [:properties/list])
         units               (subscribe [:property/units (:community @form)])
@@ -485,65 +504,76 @@
 
      (when-not (:editing @form)
        [:div
-       ;; community selection
+        ;; community selection
         [ant/form-item {:label "Which community?"}
-        (if @communities-loading
-          [:div.has-text-centered
-           [ant/spin {:tip "Fetching communities..."}]]
-          [ant/select
-           {:style                       {:width "100%"}
-            :dropdown-match-select-width false
-            :value                       (str (:community @form))
-            :on-change                   #(dispatch [:accounts.entry.reassign/select-community % license])}
-           (doall
-            (map
-             #(with-meta (reassign-community-option %) {:key (:id %)})
-             @communities))])]
+         (if @communities-loading
+           [:div.has-text-centered
+            [ant/spin {:tip "Fetching communities..."}]]
+           [ant/select
+            {:style                       {:width "100%"}
+             :dropdown-match-select-width false
+             :value                       (str (:community @form))
+             :on-change                   #(dispatch [:accounts.entry.reassign/select-community % license])}
+            (doall
+             (map
+              #(with-meta (reassign-community-option %) {:key (:id %)})
+              @communities))])]
 
-       ;; unit selection
+        ;; unit selection
         [ant/form-item {:label "Which unit?"}
-        (if @units-loading
-          [:div.has-text-centered
-           [ant/spin {:tip "Fetching units..."}]]
-          [ant/select
-           {:style                       {:width "50%"}
-            :dropdown-match-select-width false
-            :value                       (str (:unit @form))
-            :on-change                   #(dispatch [:accounts.entry.reassign/select-unit % (:term license) :accounts.entry.reassign/update])}
-           (doall
-            (map-indexed
-             #(with-meta (reassign-unit-option %2 (get-in license [:unit :id])) {:key %1})
-             @units))])]
+         (if @units-loading
+           [:div.has-text-centered
+            [ant/spin {:tip "Fetching units..."}]]
+           [ant/select
+            {:style                       {:width "50%"}
+             :dropdown-match-select-width false
+             :value                       (str (:unit @form))
+             :on-change                   #(dispatch [:accounts.entry.reassign/select-unit
+                                                      %
+                                                      (or (:term @form) (:term license))])}
+            (doall
+             (map-indexed
+              #(with-meta (reassign-unit-option %2 (get-in license [:unit :id])) {:key %1})
+              @units))])]
 
-       ;; rate selection
-       [ant/form-item
-        {:label (format/format "What should their rate change to (currently $%.0f)?" (:rate license))}
-        (if @rate-loading
-          [:div.has-text-centered
-           [ant/spin {:tip "Fetching current rate..."}]]
-          [ant/input-number
-           {:style     {:width "100%"}
-            :value     (:rate @form)
-            :disabled  (nil? (:unit @form))
-            :on-change #(dispatch [:accounts.entry.reassign/update :rate %])}])]
+        [ant/form-item {:label "What will the member's new license term be?"}
+         (if @rate-loading
+           [:div.has-text-centered
+            [ant/spin {:tip "Fetching default rate..."}]]
+           [term-select
+            {:value     (or (:term @form) (:term license))
+             :disabled  (nil? (:unit @form))
+             :on-change #(dispatch [:accounts.entry.reassign/update-term (:unit @form) %])}])]
+
+        ;; rate selection
+        [ant/form-item
+         {:label (format/format "What should their rate change to (currently $%.0f)?" (:rate license))}
+         (if @rate-loading
+           [:div.has-text-centered
+            [ant/spin {:tip "Fetching current rate..."}]]
+           [ant/input-number
+            {:style     {:width "100%"}
+             :value     (:rate @form)
+             :disabled  (nil? (:unit @form))
+             :on-change #(dispatch [:accounts.entry.reassign/update :rate %])}])]
 
 
-       [ant/form-item
-        {:label "What date will the member move out of their old unit?"}
-        [form/date-picker
-         {:style     {:width "50%"}
-          :value     (:move-out-date @form)
-          :disabled  (:editing @form)
-          :on-change #(dispatch [:accounts.entry.reassign/update :move-out-date %])}]]
+        [ant/form-item
+         {:label "What date will the member move out of their old unit?"}
+         [form/date-picker
+          {:style     {:width "50%"}
+           :value     (:move-out-date @form)
+           :disabled  (:editing @form)
+           :on-change #(dispatch [:accounts.entry.reassign/update :move-out-date %])}]]
 
 
-       [ant/form-item
-        {:label "What date will the member move in to their new unit?"}
-        [form/date-picker
-         {:style     {:width "50%"}
-          :value     (:move-in-date @form)
-          :disabled  (:editing @form)
-          :on-change #(dispatch [:accounts.entry.reassign/update :move-in-date %])}]]])
+        [ant/form-item
+         {:label "What date will the member move in to their new unit?"}
+         [form/date-picker
+          {:style     {:width "50%"}
+           :value     (:move-in-date @form)
+           :disabled  (:editing @form)
+           :on-change #(dispatch [:accounts.entry.reassign/update :move-in-date %])}]]])
 
 
      [ant/form-item
@@ -585,8 +615,7 @@
           {:style     {:width "50%"}
            :value     (:deposit-refund @form)
            :size      "default"
-           :on-change #(dispatch [:accounts.entry.reassign/update :deposit-refund %])}]]])
-     ]))
+           :on-change #(dispatch [:accounts.entry.reassign/update :deposit-refund %])}]]])]))
 
 
 (defn- move-out-confirmation [account form]
@@ -756,10 +785,12 @@
        :on-click #(renewal-confirmation account form)}
       "Renew License"])])
 
+
 (def radio-style
   {:display     "block"
    :height      "30px"
    :line-height "30px"})
+
 
 (defn renewal-modal
   [account]
@@ -773,13 +804,9 @@
       :footer      (r/as-element [renewal-modal-footer account form])}
      [move-out-form-item
       [:p.bold "What will the member's new license term be?"]
-      [ant/select
-       {:style         {:width "50%"}
-        :default-value "3"
-        :on-change     #(dispatch [:accounts.entry.reassign/update-term license (int %)])}
-       [ant/select-option {:value "3"} "3 months"]
-       [ant/select-option {:value "6"} "6 months"]
-       [ant/select-option {:value "12"} "12 months"]]]
+      [term-select
+       {:value     (:term @form)
+        :on-change #(dispatch [:accounts.entry.transition/update-term license %])}]]
 
      [move-out-form-item
       [:p.bold "Will the member's monthly rate change?"
@@ -804,6 +831,7 @@
                              :placeholder "new rate..."
                              :value       (:rate @form)
                              :on-change   #(dispatch [:accounts.entry.transition/update :rate %])}])]]]]))
+
 
 (defn membership-actions [account]
   (when (nil? (:transition (:active_license account)))
@@ -907,9 +935,9 @@
                    {:icon "check-square-o"}
                    "Open in Asana"]]) " "
                [ant/button
-                  {:icon     "edit"
-                   :on-click #(dispatch [:accounts.entry.reassign/edit transition])}
-                  "Edit"]])}
+                {:icon     "edit"
+                 :on-click #(dispatch [:accounts.entry.reassign/edit transition])}
+                "Edit"]])}
      [:div.columns
       [:div.column
        [transition-status-item "Move-out date" (format/date-short (:date transition))]
