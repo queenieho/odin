@@ -6,6 +6,9 @@
             [antizer.reagent :as ant]))
 
 
+;; helpers ==============================
+
+
 (defn- get-card-align [type]
   (case type
     :center " centered"
@@ -18,6 +21,24 @@
     :third "w-third-l w-100 fl pr4-l pr0"
     :half  "w-50-l w-100 fl pr4-l pr0"
     "w-third-l w-100 fl pr4-l pr0"))
+
+
+(defn- card-data [tag title subtitle description footer]
+  [:div
+   (when tag
+     [:h4.top-0.right-1.absolute
+      [:div.pill tag]])
+   (when (or title subtitle description)
+     [:div.card-description
+      (when title [:h3.ma0 title])
+      (when subtitle [:h4.ma0 subtitle])
+      (when description [:p.mb0.mt3 description])])
+   (when footer
+     [:div.card-footer
+      footer])])
+
+
+;; single cards =================================================================
 
 
 ;; it would be nice to have a full bleed image style
@@ -38,17 +59,7 @@
     (when img
       [:div.card-illo
        [:img.v-mid {:src img}]])
-    (when tag
-      [:h4.top-0.right-1.absolute
-       [:div.pill tag]])
-    (when (or title subtitle description)
-      [:div.card-description
-       (when title [:h3.ma0 title])
-       (when subtitle [:h4.ma0 subtitle])
-       (when description [:p.mb0.mt3 description])])
-    (when footer
-      [:div.card-footer
-       footer])]])
+    [card-data tag title subtitle description footer]]])
 
 
 (defn single-h1 [{:keys [value on-click title subtitle footer width disabled]
@@ -60,14 +71,29 @@
      :on-click (when-let [c on-click]
                  #(c value))
      :class    (when-not disabled
-                 "card-interactive")
-     }
+                 "card-interactive")}
     [:div.card-illo
      [:h1.mt2-ns.mt0.mb0 title]
      [:h4.ma0 subtitle]]
     (when footer
       [:div.card-footer
        footer])]])
+
+
+;; multiple selection cards =====================================================
+
+
+(defn- get-selection-footer [selected count]
+  (cond
+    (and selected count) [:div
+                          [:a.text-link.text-green
+                           (str count " Selected")]
+                          [:img.icon-x {:src "/assets/images/ptm/icons/ic-x.svg"}]]
+    selected             [:div
+                          [:a.text-link.text-green
+                           [ant/icon {:type "check"}] " Selected"]
+                          [:img.icon-x {:src "/assets/images/ptm/icons/ic-x.svg"}]]
+    :else                [:a.text-link "Select"]))
 
 
 (defn multiple [{:keys [width selected count]
@@ -77,16 +103,10 @@
    (r/merge-props
     props
     {:align  :left
-     :footer (cond
-               (and selected count)  [:div
-                                      [:a.text-link.text-green
-                                       (str count " Selected")]
-                                      [:img.icon-x {:src "/assets/images/ptm/icons/ic-x.svg"}]]
-               selected              [:div
-                                      [:a.text-link.text-green
-                                       [ant/icon {:type "check"}] " Selected"]
-                                      [:img.icon-x {:src "/assets/images/ptm/icons/ic-x.svg"}]]
-               :else                 [:a.text-link "Select"])})])
+     :footer (get-selection-footer selected count)})])
+
+
+;; carousel =====================================================================
 
 
 (defn- carousel-next [{on-click :on-click}]
@@ -147,33 +167,23 @@
           images))]])))
 
 
-(defn carousel-card [{:keys  [value tag title subtitle description align
-                              on-click footer width disabled images]
-                      :or {align :center
-                           width :third}}]
+(defn carousel-card [{:keys [value tag title subtitle description align on-click
+                             footer width images selected count]
+                      :or   {align :left
+                             width :third}}]
   [:div
    {:class (get-card-width width)}
-   [:div.card
+   [:div.card.card-interactive
     {:value value
-     :class (str
-             (when-not disabled
-               "card-interactive")
-             (get-card-align align))}
+     :class (get-card-align align)}
     [carousel images]
     [:div
      {:on-click (when-let [c on-click]
                   #(c value))}
-     (when tag
-       [:h4.top-0.right-1.absolute
-        [:div.pill tag]])
-     (when (or title subtitle description)
-       [:div.card-description
-        (when title [:h3.ma0 title])
-        (when subtitle [:h4.ma0 subtitle])
-        (when description [:p.mb0.mt3 description])])
-     (when footer
-       [:div.card-footer
-        footer])]]])
+     [card-data tag title subtitle description (get-selection-footer selected count)]]]])
+
+
+;; group ========================================================================
 
 
 (def card-count

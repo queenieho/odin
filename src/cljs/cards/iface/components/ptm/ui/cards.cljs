@@ -229,3 +229,87 @@ Multiple Selection Cards are meant to be used like checkboxes. `multiple` cards 
   {:inspect-data true
    :heading      true
    :frame        false})
+
+
+(defcard-rg groups-card-carousel
+  "
+<br>
+### Carousel Card Groups
+Carousel Cards are meant to be used like checkboxes. `carousel-card` cards with a unique `:value` should be used for this type of groups. An `:images` prop with an array or list of image sources will be required for the carrousel.
+<br>
+<br>
+```clojure
+[cards/group
+ {:on-change  #(swap! data update :selected update-group-value %)
+  :value      (:selected @data)
+  :card-width :third
+  :show-count true}
+ [cards/carousel-card
+  {:title       \"Card 1\"
+   :tag         \"Most popular\"
+   :subtitle    \"best option\"
+   :description \"buy all the bundles!\"
+   :images      [\"http://placekitten.com/600/600\"
+                 \"http://placekitten.com/600/400\"
+                 \"http://placekitten.com/600/500\"
+                 \"http://placekitten.com/600/700\"]
+   :value       1}]
+ [cards/carousel-card
+  {:title       \"Card 2\"
+   :subtitle    \"best option\"
+   :description \"buy all the bundles!\"
+   :images      [\"http://placekitten.com/600/600\"
+                 \"http://placekitten.com/600/400\"
+                 \"http://placekitten.com/600/500\"
+                 \"http://placekitten.com/600/700\"]
+   :value       2}]
+ [cards/carousel-card
+  {:title       \"Card 3\"
+   :subtitle    \"best option\"
+   :description \"buy all the bundles!\"
+   :images      [\"http://placekitten.com/600/600\"
+                 \"http://placekitten.com/600/400\"
+                 \"http://placekitten.com/600/500\"
+                 \"http://placekitten.com/600/700\"]
+   :value       3}]]
+```
+"
+  (fn [data _]
+    [cards/group
+     {:on-change  #(swap! data update :selected update-group-value %)
+      :value      (:selected @data)
+      :card-width :third
+      :show-count true}
+     [cards/carousel-card
+      {:title       "Card 1"
+       :tag         "Most popular"
+       :subtitle    "best option"
+       :description "buy all the bundles!"
+       :images      ["http://placekitten.com/600/600"
+                     "http://placekitten.com/600/400"
+                     "http://placekitten.com/600/500"
+                     "http://placekitten.com/600/700"]
+       :value       1}]
+     [cards/carousel-card
+      {:title       "Card 2"
+       :subtitle    "best option"
+       :description "buy all the bundles!"
+       :images      ["http://placekitten.com/600/600"
+                     "http://placekitten.com/600/400"
+                     "http://placekitten.com/600/500"
+                     "http://placekitten.com/600/700"]
+       :value       2}]
+     [cards/carousel-card
+      {:title       "Card 3"
+       :subtitle    "best option"
+       :description "buy all the bundles!"
+       :images      ["http://placekitten.com/600/600"
+                     "http://placekitten.com/600/400"
+                     "http://placekitten.com/600/500"
+                     "http://placekitten.com/600/700"]
+       :value       3}]])
+
+  (r/atom {:selected []})
+  {:inspect-data true
+   :heading      true
+   :frame        false})
