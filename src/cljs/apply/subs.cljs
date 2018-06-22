@@ -154,6 +154,7 @@
      :personal/phone-number              (lbl "background check")
      :personal.background-check/info     (lbl "income verification")
      :personal/income                    (lbl "about you")
+     :personal.income/cosigner           (lbl "about you")
      :personal/about                     (lbl "finish & pay")
      :payment/review                     (lbl "finish & pay")
      "next")))

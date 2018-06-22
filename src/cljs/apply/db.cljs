@@ -99,66 +99,6 @@
 (defmulti next-step step-dispatch)
 
 
-#_(defmethod next-step :logistics/move-in-date
-  [db]
-  ;; NOTE: inspection of `db` is needed for a proper implementation of this step
-  ;; because some options within the step itself allow one to skip selection of
-  ;; a date, and in one case triggers a separate flow.
-  :logistics.move-in-date/choose-date)
-
-
-(defmethod next-step :logistics/pets
-  [db]
-  ;; NOTE: See above
-  :community/select)
-
-
-(defmethod next-step :logistics.pets/dog
-  [db]
-  :community/select)
-
-
-(defmethod next-step :logistics.pets/other
-  [db]
-  :community/select)
-
-
-(defmethod next-step :community/select
-  [db]
-  :community/term)
-
-
-(defmethod next-step :community/term
-  [db]
-  :personal/phone-number)
-
-
-(defmethod next-step :personal/phone-number
-  [db]
-  :personal/background-check)
-
-
-(defmethod next-step :personal/background-check
-  [db]
-  ;; NOTE: See above
-  :personal.background-check/info)
-
-
-(defmethod next-step :personal.background-check/info
-  [db]
-  :personal/income)
-
-
-(defmethod next-step :personal/income
-  [db]
-  :personal/about)
-
-
-(defmethod next-step :personal/about
-  [db]
-  :payment/review)
-
-
 (defmethod next-step :default [db _] first-step)
 
 
@@ -166,61 +106,6 @@
 
 
 (defmulti previous-step step-dispatch)
-
-
-(defmethod previous-step :payment/review
-  [db]
-  :personal/about)
-
-
-(defmethod previous-step :personal/about
-  [db]
-  :personal/income)
-
-
-(defmethod previous-step :personal/income
-  [db]
-  :personal/background)
-
-
-(defmethod previous-step :personal/background
-  [db]
-  :personal/phone-number)
-
-
-(defmethod previous-step :personal/phone-number
-  [db]
-  :community/term)
-
-
-(defmethod previous-step :community/term
-  [db]
-  :community/select)
-
-
-(defmethod previous-step :community/select
-  [db]
-  :logistics/pets)
-
-
-(defmethod previous-step :logistics.pets/dog
-  [db]
-  :logistics/pets)
-
-
-(defmethod previous-step :logistics.pets/other
-  [db]
-  :logistics/pets)
-
-
-(defmethod previous-step :logistics/pets
-  [db]
-  :logistics/occupancy)
-
-
-(defmethod previous-step :logistics/occupancy
-  [db]
-  :logistics/move-in-date)
 
 
 (defmethod previous-step :default [db _] first-step)
@@ -243,7 +128,9 @@
         :personal/phone-number
         :personal.background-check/info
         :personal/income
-        :personal/about}
+        :personal.income/cosigner
+        :personal/about
+        :payment/review}
       step))))
 
 

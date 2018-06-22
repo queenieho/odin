@@ -15,12 +15,12 @@
 
 (defmethod db/next-step step
   [db]
-  :next/step)
+  :community/select)
 
 
 (defmethod db/previous-step step
   [db]
-  :previous/step)
+  :logistics/pets)
 
 
 (defmethod db/has-back-button? step
