@@ -9,6 +9,7 @@
             [cards.member.services]
             [cards.iface.components.form]
             [cards.iface.components.menu]
+            [cards.iface.components.ptm.ui.button]
             [cards.iface.components.ptm.ui.cards]
             [cards.member.services.cart]))
 
