@@ -19,7 +19,7 @@
 (s/def ::type
   #{:primary :secondary :text :upload})
 
-(defn button [{:keys [disabled type] :as props}]
+#_(defn button [{:keys [disabled type] :as props}]
   (let [props' (-> props
                    (merge {:class (str
                                    (:class props) " "
