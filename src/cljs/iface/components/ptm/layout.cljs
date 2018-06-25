@@ -2,15 +2,17 @@
   (:require [antizer.reagent :as ant]
             [reagent.core :as r]
             [iface.components.ptm.icons :as icons]
-            [cljs.spec.alpha :as s]))
+            [cljs.spec.alpha :as s]
+            [toolbelt.core :as tb]))
 
 
 (defn- nav-icon
-  [{:keys [type active]}]
+  [{:keys [type active disabled]}]
   (icons/icon {:type  type
-               :class (if active
-                        "nav-icon active"
-                        "nav-icon")}))
+               :class (str (if active
+                             "nav-icon active"
+                             "nav-icon")
+                           (when disabled " disabled"))}))
 
 
 (defn- nav-item-class
@@ -33,15 +35,20 @@
 
 (defn nav-item
   "A single navigation item to be rendered within `nav` or `nav-footer`."
-  [{:keys [progress label link action icon] :or {link ""}}]
+  [{:keys [progress disabled label link action icon] :or {link ""}}]
   [:li {:class (nav-item-class progress)}
    (when (some? icon)
-     (nav-icon {:type   icon
-                :active (= progress :active)}))
-   [:a.nav-link {:class    (when (some? progress)
-                             "active")
-                 :href     link
-                 :on-click action}
+     (nav-icon {:type     icon
+                :disabled disabled
+                :active   (some? progress)}))
+   [:a.nav-link
+    (tb/assoc-when
+     {:class (str
+              (when (some? progress)
+                "active")
+              (when disabled " disabled"))}
+     :href     (when-not disabled link)
+     :on-click (when-not disabled action))
     (r/as-element label)]])
 
 (s/fdef nav-item

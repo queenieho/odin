@@ -40,6 +40,10 @@ $nav-icon-size: 32px;
     position: relative;
     &:hover .nav-icon {
       fill: $blue;
+
+      &.disabled {
+        fill: $gray;
+      }
     }
   }
 }
@@ -54,6 +58,7 @@ $nav-icon-size: 32px;
   &.active {
     fill: $blue;
   }
+
 }
 
 .nav-link {
@@ -63,6 +68,14 @@ $nav-icon-size: 32px;
   vertical-align:middle;
   &:hover, &.active {
     color: $blue;
+  }
+
+  &.disabled {
+    cursor: not-allowed;
+
+    &:hover {
+      color: $gray;
+    }
   }
 }
 

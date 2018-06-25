@@ -107,7 +107,7 @@
                                    :name  (account/short-name account)
                                    :email (account/email account)}]]
                 :stylesheets [facade/font-awesome]
-                :css-bundles ["antd.css" "ptm.css"])))
+                :css-bundles ["antd-ptm.css" "ptm.css"])))
 
 
 ;; ==============================================================================
