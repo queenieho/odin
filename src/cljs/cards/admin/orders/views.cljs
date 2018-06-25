@@ -3,7 +3,7 @@
                                                  defcard-doc
                                                  defcard-rg]])
   (:require [devcards.core]
-            [admin.orders.views :as orders]))
+            #_[admin.orders.views :as orders]))
 
 
 (defcard-doc
@@ -14,14 +14,14 @@
   )
 
 
-(defcard-rg order-menu
+#_(defcard-rg order-menu
   [orders/order-name {:name   "Test &amp; Order"
                       :rental false}]
   nil
   {:inspect-data true})
 
 
-(defcard-rg order-menu-rental
+#_(defcard-rg order-menu-rental
   [orders/order-name {:name   "Test &amp; Order"
                       :rental true}]
   nil
