@@ -872,7 +872,7 @@
 
 (defmethod transition-status :renewal
   [account transition]
-  (let [pname (format/make-first-name-possessive (:name account))
+  (let [pname (format/first-name-possessive (:name account))
         new-license (:new_license transition)]
     [ant/card
      {:title (str pname "License Renewal")}
@@ -886,7 +886,7 @@
 
 (defmethod transition-status :move_out
   [account transition]
-  (let [pname (format/make-first-name-possessive (:name account))]
+  (let [pname (format/first-name-possessive (:name account))]
     [ant/card
      {:title (str pname "Move-out Information")
       :extra (r/as-element
@@ -924,7 +924,7 @@
 
 (defmethod transition-status :inter_xfer
   [account transition]
-  (let [pname (format/make-first-name-possessive (:name account))]
+  (let [pname (format/first-name-possessive (:name account))]
     [ant/card
      {:title (str pname "Inter-Community Transfer Info")
       :extra (r/as-element
@@ -975,7 +975,7 @@
 
 (defmethod transition-status :intra_xfer
   [account transition]
-  (let [pname (format/make-first-name-possessive (:name account))]
+  (let [pname (format/first-name-possessive (:name account))]
     [ant/card
      {:title (str pname "Transfer Info")
       :extra (r/as-element
@@ -1026,7 +1026,7 @@
 
 (defn membership-orders-list [account orders]
   [ant/card
-   {:title (str (format/make-first-name-possessive (:name account)) "Helping Hands Orders")}
+   {:title (str (format/first-name-possessive (:name account)) "Helping Hands Orders")}
    [ant/table
     (let [service-route #(routes/path-for :services.orders/entry :order-id (.-id %))]
       {:columns     [{:title     ""
