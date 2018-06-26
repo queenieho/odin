@@ -199,7 +199,9 @@
      [:p (if (empty? communities)
            "N/A"
            (->> (for [c communities]
-                  [:a {:href (routes/path-for :properties/entry :property-id (:id c))} (:name c)])
+                  [:a {:href (when-let [cid (:id c)]
+                               (routes/path-for :properties/entry :property-id cid))}
+                   (:name c)])
                 (interpose ", ")
                 (into [:span])))]]
     [:div.column

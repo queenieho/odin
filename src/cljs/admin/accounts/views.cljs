@@ -257,7 +257,9 @@
   (let [{:keys [status property unit]} (most-current-license account)]
     [:span
      (if (= status :active) "Lives" [:i "Lived"])
-     " in " [:a {:href (routes/path-for :properties/entry :property-id (:id property))} (:name property)]
+     " in " [:a {:href (when-let [pid (:id property)]
+                         (routes/path-for :properties/entry :property-id pid))}
+             (:name property)]
      " in room #"
      [:b (:number unit)]]))
 
@@ -677,7 +679,7 @@
    [:div.has-text-centered
     [:p.bold "When did the member submit their written notice?"]
     [form/date-picker
-     {:style {:width "50%"}
+     {:style     {:width "50%"}
       :on-change #(dispatch [:accounts.entry.transition/add-notice %])}]]])
 
 
