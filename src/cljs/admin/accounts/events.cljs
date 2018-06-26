@@ -375,7 +375,7 @@
  (fn [_ [k account form]]
    {:dispatch [:ui/loading k true]
     :graphql  {:mutation
-               [[:transfer_create {:params (reassign-form->transition-params account form)}
+               [[:transition_create {:params (reassign-form->transition-params account form)}
                  [:id [:account [:id]]]]]
                :on-success [::reassign-unit-success k]
                :on-failure [:graphql/failure k]}}))
@@ -394,7 +394,7 @@
                      :deposit_refund (:deposit-refund form))]
      {:dispatch [:ui/loading k true]
       :graphql  {:mutation
-                 [[:transfer_update {:params params}
+                 [[:transition_update {:params params}
                    [:id [:account [:id]]]]]
                  :on-success [::reassign-update-success k]
                  :on-failure [:graphql/failure k]}})))
@@ -404,7 +404,7 @@
  ::reassign-update-success
  [(path db/path)]
  (fn [{db :db} [_ k response]]
-   (let [account-id (get-in response [:data :transfer_update :account :id])]
+   (let [account-id (get-in response [:data :transition_update :account :id])]
      {:dispatch-n [[:ui/loading k false]
                    [:modal/hide db/reassign-modal-key]
                    [:payment-sources/fetch account-id]
@@ -416,7 +416,7 @@
  ::reassign-unit-success
  [(path db/path)]
  (fn [_ [_ k response]]
-   (let [account-id (get-in response [:data :transfer_create :account :id])]
+   (let [account-id (get-in response [:data :transition_create :account :id])]
      {:dispatch-n [[:ui/loading k false]
                    [:modal/hide db/reassign-modal-key]
                    [:payment-sources/fetch account-id]
@@ -509,11 +509,11 @@
    {:dispatch-n [[:ui/loading k true]
                  [:accounts.entry.transition/hide]]
     :graphql    {:mutation
-                 [[:move_out_create {:params {:current_license license-id
-                                              :type            :move_out
-                                              :date            (.toISOString date)
-                                              :asana_task      asana-task
-                                              :notice_date     (.toISOString notice-date)}}
+                 [[:transition_create {:params {:current_license license-id
+                                                :type            :move_out
+                                                :date            (.toISOString date)
+                                                :asana_task      asana-task
+                                                :notice_date     (.toISOString notice-date)}}
                    [:id [:account [:id]]]]]
                  :on-success [::move-out-success k]
                  :on-failure [:graphql/failure k]}}))
@@ -547,13 +547,13 @@
  (fn [{db :db} [k {:keys [id ends] :as license} {:keys [unit term rate] :as form-data}]]
    (let [date (.toISOString (.add (js/moment ends) 1 "days"))]
      {:graphql {:mutation
-                [[:renewal_create {:params {:current_license    id
-                                            :date               date
-                                            :type               :renewal
-                                            :new_license_params {:unit unit
-                                                                 :term term
-                                                                 :rate rate
-                                                                 :date date}}}
+                [[:transition_create {:params {:current_license    id
+                                               :date               date
+                                               :type               :renewal
+                                               :new_license_params {:unit unit
+                                                                    :term term
+                                                                    :rate rate
+                                                                    :date date}}}
                   [:id [:account [:id]]]]]
                 :on-success [::renewal-success k]
                 :on-failure [:graphql/failure k]}})))
@@ -563,7 +563,7 @@
  ::renewal-success
  [(path db/path)]
  (fn [{db :db} [_ k response]]
-   (let [account-id (get-in response [:data :renewal_create :account :id])]
+   (let [account-id (get-in response [:data :transition_create :account :id])]
      {:dispatch-n [[:ui/loading k false]
                    [:notify/success ["Great! License renewed!"]]
                    [:account/fetch account-id]
@@ -574,7 +574,7 @@
  ::move-out-success
  [(path db/path)]
  (fn [db [_ k response]]
-   (let [account-id (get-in response [:data :move_out_create :account :id])]
+   (let [account-id (get-in response [:data :transition_create :account :id])]
      {:dispatch-n [[:ui/loading k false]
                    [:notify/success ["Move-out data created!"]]
                    [:account/fetch account-id]]})))
@@ -587,12 +587,12 @@
    {:dispatch-n [[:ui/loading k true]
                  [:accounts.entry.transition/hide]]
     :graphql    {:mutation
-                 [[:move_out_update {:params {:id                   transition-id
-                                              :current_license      license-id
-                                              :date                 (.toISOString date)
-                                              :deposit_refund       deposit-refund
-                                              :room_walkthrough_doc room-walkthrough-doc
-                                              :asana_task           asana-task}}
+                 [[:transition_update {:params {:id                   transition-id
+                                                :current_license      license-id
+                                                :date                 (.toISOString date)
+                                                :deposit_refund       deposit-refund
+                                                :room_walkthrough_doc room-walkthrough-doc
+                                                :asana_task           asana-task}}
                    [:id [:account [:id]]]]]
                  :on-success [::move-out-update-success k]
                  :on-failure [:graphql/failure k]}}))
@@ -601,7 +601,7 @@
 (reg-event-fx
  ::move-out-update-success
  (fn [db [_ k response]]
-   (let [account-id (get-in response [:data :move_out_update :account :id])]
+   (let [account-id (get-in response [:data :transition_update :account :id])]
      {:dispatch-n [[:ui/loading k false]
                    [:notify/success "Move-out data updated!"]
                    [:account/fetch account-id]]})))
