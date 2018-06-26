@@ -33,14 +33,41 @@
               :on-failure [:graphql/failure]}}))
 
 
-;; TODO -
+;; At this point, we'll assume that if we received a nil value for the
+;; application, then an application simply doesn't exist for that account. In
+;; that case, we should create one.
 (reg-event-fx
  ::init-fetch-application-success
  (fn [{db :db} [_ response]]
-   (let [application-id (get-in response [:data :account :application :id])]
-     (log/log "successfully fetched application:" application-id)
-     {:db (assoc db :application-id application-id)})))
+   (if-let [application-id (get-in response [:data :account :application :id])]
+     {:db (assoc db :application-id application-id)
+      :dispatch [:app.init/somehow-figure-out-where-they-left-off]}
+     {:dispatch [:app.init/create-application (get-in response [:data :account :id])]})))
 
+
+;;TODO
+(reg-event-fx
+ :app.init/somehow-figure-out-where-they-left-off
+ (fn [_ _]
+   (log/log "shrug emoji")))
+
+
+;;TODO
+(reg-event-fx
+ :app.init/create-application
+ (fn [_ [_ account-id]]
+   (log/log  "no application found for %s, creating new one..." account-id)
+   {:graphql {:mutation   [[:application_create {:account account-id}
+                            [:id]]]
+              :on-success [::init-create-application-success]
+              :on-failure [:graphql/failure]}}))
+
+
+(reg-event-fx
+ ::init-create-application-success
+ (fn [{db :db} [_ response]]
+   (let [application-id (get-in response [:data :application_create :id])]
+     {:db (assoc db :application-id application-id)})))
 
 ;; ==============================================================================
 ;; top-level ====================================================================
