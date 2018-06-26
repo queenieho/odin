@@ -12,6 +12,7 @@
             [apply.subs]
             [day8.re-frame.http-fx]
             [goog.dom :as gdom]
+            [cljsjs.moment]
             [iface.components.ptm.layout :as layout]
             [iface.modules.graphql :as graphql]
             [iface.utils.routes :as iroutes]
