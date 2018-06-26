@@ -11,7 +11,8 @@
             [com.walmartlabs.lacinia.resolve :as resolve]
             [datomic.api :as d]
             [toolbelt.datomic :as td]
-            [toolbelt.core :as tb]))
+            [toolbelt.core :as tb]
+            [taoensso.timbre :as timbre]))
 
 ;; ==============================================================================
 ;; fields -----------------------------------------------------------------------
@@ -116,6 +117,19 @@
         (d/entity (d/db conn) (:db/id application))))))
 
 
+(defn create!
+  "Create a new membership application."
+  [{:keys [conn requester]} {:keys [account]} _]
+  (let [account (d/entity (d/db conn) account)
+        application (application/create)]
+    @(d/transact conn
+                 [application
+                  {:db/id (td/id account)
+                   :account/application application}])
+    (application/by-account (d/db conn) account)))
+
+
+;;TODO - flexibilify!
 (defn update!
   "Update some attribute of a membership application."
   [{:keys [conn requester]} {:keys [application params]} _]
@@ -149,6 +163,7 @@
    :application/updated          last-updated
    ;; mutations
    :application/approve!         approve!
+   :application/create!          create!
    :application/update!          update!
    ;; income file
    :application.income-file/name income-file-name
