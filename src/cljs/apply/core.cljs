@@ -19,6 +19,7 @@
             [re-frame.core :as rf :refer [dispatch subscribe]]
             [iface.components.ptm.icons :as icons]
             [iface.components.ptm.ui :as ui]
+            [iface.components.ptm.ui.button :as button]
             [iface.components.ptm.ui.form :as form]
             [toolbelt.core :as tb]
             [iface.utils.log :as log]))
@@ -48,7 +49,7 @@
     [:br]
     [:br]
 
-    [ui/button
+    [button/button
      {:on-click #(swap! toggle not)
       :type     :secondary
       :class    "mt5"}
