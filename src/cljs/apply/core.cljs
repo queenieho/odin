@@ -49,7 +49,7 @@
     [:br]
     [:br]
 
-    [ui/button
+    [:button.button
      {:on-click #(swap! toggle not)
       :type     :secondary
       :class    "mt5"}
