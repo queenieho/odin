@@ -70,6 +70,12 @@
 
 
 (reg-event-fx
+ :step/advance
+ (fn [{db :db} [k params]]
+   {:route (next-route db params)}))
+
+
+(reg-event-fx
  :step.current/save
  (fn [{db :db} [k params]]
    (merge {:dispatch [:ui/loading k true]}

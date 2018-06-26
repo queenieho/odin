@@ -1,7 +1,17 @@
 (ns apply.sections.logistics
-  (:require [apply.content :as content]))
+  (:require [apply.content :as content]
+            [apply.sections.logistics.move-in-date]
+            [apply.sections.logistics.choose-date]
+            [apply.sections.logistics.outside-application-window]
+            [apply.sections.logistics.get-notified]
+            [apply.sections.logistics.occupancy]
+            [apply.sections.logistics.co-occupant]
+            [apply.sections.logistics.pets]
+            [apply.sections.logistics.dog]
+            [apply.sections.logistics.pets-other]
+            [apply.db :as db]))
 
 
-(defmethod content/view :logistics/move-in-date
-  [_]
-  [:div "This is the move-in-date view."])
+(defmethod db/section-complete? :logistics
+    [db section]
+    false)

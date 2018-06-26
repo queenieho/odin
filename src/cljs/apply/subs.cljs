@@ -147,12 +147,14 @@
  (fn [step _]
    (case step
      :logistics.move-in-date/choose-date (lbl "occupancy")
+     :logistics.occupancy/co-occupant    (lbl "pets")
      :logistics.pets/dog                 (lbl "communities")
      :logistics.pets/other               (lbl "communities")
      :community/select                   (lbl "term length")
      :personal/phone-number              (lbl "background check")
      :personal.background-check/info     (lbl "income verification")
      :personal/income                    (lbl "about you")
+     :personal.income/cosigner           (lbl "about you")
      :personal/about                     (lbl "finish & pay")
      :payment/review                     (lbl "finish & pay")
      "next")))
