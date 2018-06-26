@@ -95,7 +95,6 @@
 
 (defn- query-accounts
   [db params]
-  (timbre/debug (parse-gql-params params))
   (->> (parse-gql-params params)
        (apply concat)
        (apply account/query db)))
