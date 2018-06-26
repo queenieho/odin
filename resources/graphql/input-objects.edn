@@ -25,6 +25,14 @@
                  :unit     {:type (non-null :Long)}}}
 
 
+  :application_update_params
+  {:description "Inputs to update an application."
+   :fields      {:term        {:type Int}
+                 :move_in     {:type :Instant}
+                 :status      {:type :application_status}
+                 :updated     {:type :Instant}}}
+
+
   ;;; Check
   :create_check_params
   {:description "Inputs to create a check."

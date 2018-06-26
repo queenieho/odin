@@ -2,7 +2,8 @@
   (:require [apply.db :as db]
             [apply.routes :as routes]
             [re-frame.core :refer [reg-event-db reg-event-fx path]]
-            [toolbelt.core :as tb]))
+            [toolbelt.core :as tb]
+            [iface.utils.log :as log]))
 
 
 ;; ==============================================================================
@@ -13,7 +14,32 @@
 (reg-event-fx
  :app/init
  (fn [_ [_ account]]
-   {:db (db/bootstrap account)}))
+   {:db (db/bootstrap account)
+    :dispatch [:app.init/fetch-application account]}))
+
+
+;; We need to fetch the application when the app is first bootstrapped, so we
+;; can determine where the applicant last left off in the process. We must use
+;; the account id to find the correct application for this first request, then
+;; store the application id in the app db.
+(reg-event-fx
+ :app.init/fetch-application
+ (fn [_ [_ {:keys [id] :as account}]]
+   (log/log "fetching account:" id)
+   {:graphql {:query [[:account {:id id}
+                       [:name :id
+                        [:application [:id :term :move_in]]]]]
+              :on-success [::init-fetch-application-success]
+              :on-failure [:graphql/failure]}}))
+
+
+;; TODO -
+(reg-event-fx
+ ::init-fetch-application-success
+ (fn [{db :db} [_ response]]
+   (let [application-id (get-in response [:data :account :application :id])]
+     (log/log "successfully fetched application:" application-id)
+     {:db (assoc db :application-id application-id)})))
 
 
 ;; ==============================================================================
