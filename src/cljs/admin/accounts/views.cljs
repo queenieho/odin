@@ -684,11 +684,6 @@
       :on-change     #(dispatch [:accounts.entry.transition/add-notice %])}]]])
 
 
-(defn- default-moment
-  [m]
-  (or m (js/moment (.getTime (js/Date.)))))
-
-
 (defn move-out-additional-form
   [form]
   [:div
