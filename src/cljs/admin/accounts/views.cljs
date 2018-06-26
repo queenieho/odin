@@ -679,8 +679,9 @@
    [:div.has-text-centered
     [:p.bold "When did the member submit their written notice?"]
     [form/date-picker
-     {:style     {:width "50%"}
-      :on-change #(dispatch [:accounts.entry.transition/add-notice %])}]]])
+     {:style         {:width "50%"}
+      :disabled-date (constantly false)
+      :on-change     #(dispatch [:accounts.entry.transition/add-notice %])}]]])
 
 
 (defn- default-moment
