@@ -30,13 +30,13 @@
 
 (defn bootstrap [account]
   (merge
-   {:lang            :en
-    :account         account
-    nav-path         nav-items
-    :route           {:page      :home
-                      :path      [:home]
-                      :params    {}
-                      :requester account}}
+   {:lang    :en
+    :account account
+    nav-path nav-items
+    :route   {:page      :home
+              :path      [:home]
+              :params    {}
+              :requester account}}
    loading/db))
 
 
@@ -117,7 +117,6 @@
 ;; NOTE: If you want to see the next button for every step, comment out the
 ;; implementation of this function and have it just return `true`
 (defn has-next-button? [db]
-  true
   (let [step (step-dispatch db)]
     (boolean
      (#{:logistics.move-in-date/choose-date
