@@ -34,6 +34,16 @@
    :resolve     :application/approve!}
 
 
+  :application_update
+  {:type        :application
+   :description "Update an attribute of a membership application."
+   :args        {:application {:type        (non-null :Long)
+                               :description "The application to update."}
+                 :params      {:type        (non-null :application_update_params)
+                               :description "Required parameters to update the application."}}
+   :resolve     :application/update!}
+
+
   ;; checks =======================================================================
 
 

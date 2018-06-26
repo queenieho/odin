@@ -10,7 +10,8 @@
             [clojure.string :as string]
             [com.walmartlabs.lacinia.resolve :as resolve]
             [datomic.api :as d]
-            [toolbelt.datomic :as td]))
+            [toolbelt.datomic :as td]
+            [toolbelt.core :as tb]))
 
 ;; ==============================================================================
 ;; fields -----------------------------------------------------------------------
@@ -115,6 +116,23 @@
         (d/entity (d/db conn) (:db/id application))))))
 
 
+(defn update!
+  "Update some attribute of a membership application."
+  [{:keys [conn requester]} {:keys [application params]} _]
+  (let [application (d/entity (d/db conn) application)
+        account     (application/account application)]
+    (cond
+      (not (account/applicant? account))
+      (resolve/resolve-as nil {:message "Cannot update applications for non-applicant!"})
+
+      :otherwise
+      (do
+        @(d/transact conn [(tb/assoc-when
+                            {:db/id (td/id application)}
+                            :application/move-in (:move_in params))])
+        (d/entity (d/db conn) (:db/id application))))))
+
+
 ;; ==============================================================================
 ;; resolvers --------------------------------------------------------------------
 ;; ==============================================================================
@@ -131,6 +149,7 @@
    :application/updated          last-updated
    ;; mutations
    :application/approve!         approve!
+   :application/update!          update!
    ;; income file
    :application.income-file/name income-file-name
    :application.income-file/uri  income-file-uri})
