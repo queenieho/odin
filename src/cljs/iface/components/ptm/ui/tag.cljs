@@ -5,6 +5,28 @@
             [toolbelt.core :as tb]))
 
 
+;; specs ========================================================================
+
+
+(s/def ::on-click
+  fn?)
+
+(s/def ::value
+  some?)
+
+(s/def ::selected
+  boolean?)
+
+(s/def ::on-change
+  fn?)
+
+(s/def ::values
+  coll?)
+
+
+;; components ===================================================================
+
+
 (defn select [{:keys [selected on-click value]}]
   (into [:div.pill.mr1
          {:on-click (when-let [c on-click]
@@ -14,6 +36,11 @@
                       "pill-active"
                       "pill-inactive")}]
         (r/children (r/current-component))))
+
+(s/fdef select
+  :args (s/cat :props (s/keys :req-un [::on-click
+                                       ::value]
+                              :req-opt [::selected])))
 
 
 (defn group-select [{:keys [value on-change] :as props}]
@@ -28,6 +55,10 @@
            {:value value}]
           children)))
 
+(s/fdef group-select
+  :args (s/cat :props (s/keys :req-un [::value
+                                       ::on-change])))
+
 
 (defn delete [{:keys [value values on-click]}]
   [:div.pill.pill-active.mr1
@@ -37,6 +68,11 @@
    [:span.delete.ml1
     {:on-click #(on-click value)}
     "×"]])
+
+(s/fdef delete
+  :args (s/cat :props (s/keys :req-un [::value
+                                       ::values
+                                       ::on-click])))
 
 
 (defn group-delete [{:keys [value on-change]}]
@@ -48,3 +84,7 @@
     (into [:div
            {:value value}]
           children)))
+
+(s/fdef group-delete
+  :args (s/cat :props (s/keys :req-un [::value
+                                       ::on-change])))
