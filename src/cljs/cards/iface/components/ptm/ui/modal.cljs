@@ -24,28 +24,28 @@
 
 
 (def communities
-  [{:value            "414bryant"
-    :images           ["http://placekitten.com/1600/1600"
-                       "http://placekitten.com/1600/1400"
-                       "http://placekitten.com/1600/1500"
-                       "http://placekitten.com/1600/1700"]
-    :name             "SoMa South Park"
-    :price            "From $2000"
-    :units-available  18
-    :intro            "Join our community in sunny Downtown Oakland, an eclectic and diverse neighborhood steps from the business district, nightlife, shops, and transportation. Just a short bike ride or drive and you can enjoy a picnic at Lake Merritt, a stroll through the Oakland Musuem of California, or kick back to watch a flick on a couch at The New Parkway."
-    :building-details "This large historic building has 7 floors, each boasting 2,300 square feet. There are 122 total units. The architecture is blah blah more details about the building."
-    :neighborhood     "Downtown Oakland, unlike others, is not just a central business disctrict. It is the cross-section of culture and communities. Lorem ipsum dolor sit amet. Just a stones’ throw away you’ll find your next favorite dive bar, cocktail, or brunch spot. Lorem ipsum dolor sit amet."
-    :community-desc   "You’ll be joining a diverse, low-key community who takes pride in representing Oakland and spreading the Town’s unique cultural legacy. We are generous in spirit and welcome people from all walks of life to live with us. You’ll frequently find the common spaces occupied with quiet studiers during the day and people cooking and watching TV at night, with the occasional fun event or craft night."
-    :amenities        [{:label "Private, furnished bedroom"
-                        :img   "/assets/images/ptm/icons/ic-atom.svg"}
-                       {:label "High-speed wifi"
-                        :img   "/assets/images/ptm/icons/ic-atom.svg"}
-                       {:label "All utilities included"
-                        :img   "/assets/images/ptm/icons/ic-atom.svg"}
-                       {:label "Bike storage"
-                        :img   "/assets/images/ptm/icons/ic-atom.svg"}
-                       {:label "Shared media library"
-                        :img   "/assets/images/ptm/icons/ic-atom.svg"}]}
+  [{:value           "414bryant"
+    :images          ["http://placekitten.com/1600/1600"
+                      "http://placekitten.com/1600/1400"
+                      "http://placekitten.com/1600/1500"
+                      "http://placekitten.com/1600/1700"]
+    :name            "SoMa South Park"
+    :price           "From $2000"
+    :units-available 18
+    :intro           "Join our community in sunny Downtown Oakland, an eclectic and diverse neighborhood steps from the business district, nightlife, shops, and transportation. Just a short bike ride or drive and you can enjoy a picnic at Lake Merritt, a stroll through the Oakland Musuem of California, or kick back to watch a flick on a couch at The New Parkway."
+    :building-desc   "This large historic building has 7 floors, each boasting 2,300 square feet. There are 122 total units. The architecture is blah blah more details about the building."
+    :neighborhood    "Downtown Oakland, unlike others, is not just a central business disctrict. It is the cross-section of culture and communities. Lorem ipsum dolor sit amet. Just a stones’ throw away you’ll find your next favorite dive bar, cocktail, or brunch spot. Lorem ipsum dolor sit amet."
+    :community-desc  "You’ll be joining a diverse, low-key community who takes pride in representing Oakland and spreading the Town’s unique cultural legacy. We are generous in spirit and welcome people from all walks of life to live with us. You’ll frequently find the common spaces occupied with quiet studiers during the day and people cooking and watching TV at night, with the occasional fun event or craft night."
+    :amenities       [{:label "Private, furnished bedroom"
+                       :img   "/assets/images/ptm/icons/ic-atom.svg"}
+                      {:label "High-speed wifi"
+                       :img   "/assets/images/ptm/icons/ic-atom.svg"}
+                      {:label "All utilities included"
+                       :img   "/assets/images/ptm/icons/ic-atom.svg"}
+                      {:label "Bike storage"
+                       :img   "/assets/images/ptm/icons/ic-atom.svg"}
+                      {:label "Shared media library"
+                       :img   "/assets/images/ptm/icons/ic-atom.svg"}]}
 
    {:value            "2072mission"
     :images           ["http://placekitten.com/1600/1600"
@@ -56,7 +56,7 @@
     :price            "From $1400"
     :units-available  5
     :intro            "Join our community in The Mission District, an eclectic and diverse neighborhood steps from the business district, nightlife, shops, and transportation. Just a short bike ride or drive and you can enjoy a picnic at Lake Merritt, a stroll through the Oakland Musuem of California, or kick back to watch a flick on a couch at The New Parkway."
-    :building-details "This medium building has 2 floors, each boasting 2,300 square feet. There are 122 total units. The architecture is blah blah more details about the building."
+    :building-desc "This medium building has 2 floors, each boasting 2,300 square feet. There are 122 total units. The architecture is blah blah more details about the building."
     :neighborhood     "Something cool about The Mission having lots of arts and mexican food."
     :community-desc   "We party hard and yoga."
     :amenities        [{:label "Private, furnished bedroom"
@@ -95,7 +95,7 @@ Here's a list of the needed props to use this component:
 <br>
 `:intro` (string) - brief introduction to the community.
 <br>
-`:building-details` (string) - Description of the building.
+`:building-desc` (string) - Description of the building.
 <br>
 `:neighborhood` (string) - Description of the neighborhood.
 <br>
@@ -125,7 +125,7 @@ Here's a list of the needed props to use this component:
   :price            \"From $2000\"
   :units-available  18
   :intro            \"Join our community in sunny Downtown Oakland, an eclectic and diverse neighborhood steps from the business district, nightlife, shops, and transportation. Just a short bike ride or drive and you can enjoy a picnic at Lake Merritt, a stroll through the Oakland Musuem of California, or kick back to watch a flick on a couch at The New Parkway.\"
-  :building-details \"This large historic building has 7 floors, each boasting 2,300 square feet. There are 122 total units. The architecture is blah blah more details about the building.\"
+  :building-desc   \"This large historic building has 7 floors, each boasting 2,300 square feet. There are 122 total units. The architecture is blah blah more details about the building.\"
   :neighborhood     \"Downtown Oakland, unlike others, is not just a central business disctrict. It is the cross-section of culture and communities. Lorem ipsum dolor sit amet. Just a stones’ throw away you’ll find your next favorite dive bar, cocktail, or brunch spot. Lorem ipsum dolor sit amet.\"
   :community-desc   \"You’ll be joining a diverse, low-key community who takes pride in representing Oakland and spreading the Town’s unique cultural legacy. We are generous in spirit and welcome people from all walks of life to live with us. You’ll frequently find the common spaces occupied with quiet studiers during the day and people cooking and watching TV at night, with the occasional fun event or craft night.\"
   :amenities        [{:label \"Private, furnished bedroom\"

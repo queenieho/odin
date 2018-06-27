@@ -6,6 +6,60 @@
             [devtools.defaults :as d]))
 
 
+;; specs ========================================================================
+
+
+(s/def ::on-close
+  fn?)
+
+(s/def ::visible
+  boolean?)
+
+(s/def ::images
+  some?)
+
+(s/def ::name
+  string?)
+
+;; haven't fully decided if this should be a string or a number
+(s/def ::price
+  some?)
+
+(s/def ::units-available
+  int?)
+
+(s/def ::intro
+  string?)
+
+(s/def ::building-desc
+  string?)
+
+(s/def ::neighborhood
+  string?)
+
+(s/def ::community-desc
+  string?)
+
+(s/def ::amenities
+  coll?)
+
+(s/def ::on-select
+  fn?)
+
+(s/def ::on-next
+  fn?)
+
+(s/def ::value
+  some?)
+
+;; still chewing on this too
+(s/def ::next
+  map?)
+
+(s/def ::selected
+  boolean?)
+
+
 ;; modal ========================================================================
 
 
@@ -19,6 +73,10 @@
            (r/children (r/current-component)))
      [:div.scrim
       {:on-click #(on-close)}]]))
+
+(s/fdef modal
+  :args (s/cat :props (s/keys :req-un [::visible
+                                       ::on-close])))
 
 
 ;; community modal ==============================================================
@@ -63,7 +121,7 @@
 
 
 (defn community-info [{:keys [images name price units-available intro
-                              building-details neighborhood community-desc
+                              building-desc neighborhood community-desc
                               amenities on-select on-next value next selected]
                        :as   props}]
   [:div
@@ -75,7 +133,7 @@
      [:br]
      (str units-available " units open")]
     [:p.mt4 intro]
-    [section "Building Details" building-details]
+    [section "Building Details" building-desc]
     [section "Amenities" amenities]
     [section "The Neighborhood" neighborhood]
     [section "Your Community" community-desc]]]
@@ -96,9 +154,43 @@
                    #(n))}
       (str "Next: " (:name next))]]]])
 
+(s/fdef community-info
+  :args (s/cat :props (s/keys :req-un [::images
+                                       ::name
+                                       ::price
+                                       ::units-available
+                                       ::intro
+                                       ::building-desc
+                                       ::neighborhood
+                                       ::community-desc
+                                       ::amenities
+                                       ::on-select
+                                       ::on-next
+                                       ::value
+                                       ::next
+                                       ::selected])))
+
 
 (defn community [{:keys [visible on-close] :as props}]
   [modal
    {:visible visible
     :on-close #(on-close)}
    [community-info (dissoc props :visible :on-close)]])
+
+(s/fdef community
+  :args (s/cat :props (s/keys :req-un [::visible
+                                       ::on-close
+                                       ::images
+                                       ::name
+                                       ::price
+                                       ::units-available
+                                       ::intro
+                                       ::building-desc
+                                       ::neighborhood
+                                       ::community-desc
+                                       ::amenities
+                                       ::on-select
+                                       ::on-next
+                                       ::value
+                                       ::next
+                                       ::selected])))
