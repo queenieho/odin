@@ -12,8 +12,7 @@
             [datomic.api :as d]
             [toolbelt.datomic :as td]
             [toolbelt.core :as tb]
-            [taoensso.timbre :as timbre]
-            [re-frame.db :as db]))
+            [taoensso.timbre :as timbre]))
 
 ;; ==============================================================================
 ;; fields -----------------------------------------------------------------------
