@@ -207,7 +207,7 @@
 (defn create-license-transition!
   "Creates a license transition for a member's license"
   [{:keys [conn teller requester] :as ctx}
-   {{:keys [current_license type date asana_task deposit_refund new_license_params notice_date fee]} :params}
+   {{:keys [current_license type date asana_task deposit_refund new_license_params notice_date fee] :as params} :params}
    _]
   (let [type        (keyword (string/replace (name type) "_" "-"))
         license     (d/entity (d/db conn) current_license)

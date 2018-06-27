@@ -75,6 +75,13 @@
   (if (some? str) (-> (js/moment str) (.unix) (* 1000))))
 
 
+;; TODO: cljc in `toolbelt.date`?
+(defn beginning-of-day
+  "Given a moment, produce the beginning of the day."
+  [m]
+  (.startOf m "day"))
+
+
 (defn phone-number
   "Uses Google's libphonenumber to format the provided phone number."
   [number]
