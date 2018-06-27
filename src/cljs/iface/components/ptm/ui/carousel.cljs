@@ -36,10 +36,36 @@
   (if (zero? idx) (dec total) (dec idx)))
 
 
-(defn- carousel [images]
+(defn carousel [images]
   (let [index (r/atom 0)]
     (fn []
       [:div.card-photo.aspect-ratio--6x4
+       {:style {:overflow   "hidden"}}
+       [:ul.dots
+        (doall
+         (map-indexed
+          #(with-meta
+             [carousel-dot
+              {:active (when (= %1 @index) true)}]
+             {:key %1})
+          images))]
+       [carousel-next {:on-click #(swap! index idx-next (count images))}]
+       [carousel-back {:on-click #(swap! index idx-back (count images))}]
+       [:div.chevron-scrim]
+       [:ul
+        (doall
+         (map-indexed
+          (fn [idx image]
+            [carousel-slide {:img      image
+                             :selected (when (= idx @index) true)
+                             :key      idx}])
+          images))]])))
+
+
+(defn modal [images]
+  (let [index (r/atom 0)]
+    (fn []
+      [:div.lightbox-photo.aspect-ratio--16x9
        {:style {:overflow   "hidden"}}
        [:ul.dots
         (doall
