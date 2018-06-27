@@ -12,7 +12,8 @@
             [datomic.api :as d]
             [toolbelt.datomic :as td]
             [toolbelt.core :as tb]
-            [taoensso.timbre :as timbre]))
+            [taoensso.timbre :as timbre]
+            [re-frame.db :as db]))
 
 ;; ==============================================================================
 ;; fields -----------------------------------------------------------------------
@@ -91,6 +92,11 @@
        (d/db conn) (td/id application)))
 
 
+(defn occupancy
+  [_ _ application]
+  (keyword (name (application/occupancy application))))
+
+
 ;; ==============================================================================
 ;; mutations --------------------------------------------------------------------
 ;; ==============================================================================
@@ -129,12 +135,18 @@
     (application/by-account (d/db conn) account)))
 
 
+(defn- parse-update-params [params]
+  (tb/transform-when-key-exists params
+    {:occupancy #(keyword "application.occupancy" (name %))}))
+
+
 ;;TODO - flexibilify!
 (defn update!
   "Update some attribute of a membership application."
   [{:keys [conn requester]} {:keys [application params]} _]
   (let [application (d/entity (d/db conn) application)
-        account     (application/account application)]
+        account     (application/account application)
+        params      (parse-update-params params)]
     (cond
       (not (account/applicant? account))
       (resolve/resolve-as nil {:message "Cannot update applications for non-applicant!"})
@@ -143,7 +155,9 @@
       (do
         @(d/transact conn [(tb/assoc-when
                             {:db/id (td/id application)}
-                            :application/move-in (:move_in params))])
+                            :application/move-in (:move_in params)
+                            :application/occupancy (:occupancy params)
+                            :application/license (:term params))])
         (d/entity (d/db conn) (:db/id application))))))
 
 
@@ -161,6 +175,7 @@
    :application/status           status
    :application/submitted-at     submitted-at
    :application/updated          last-updated
+   :application/occupancy        occupancy
    ;; mutations
    :application/approve!         approve!
    :application/create!          create!

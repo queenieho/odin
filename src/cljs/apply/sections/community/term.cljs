@@ -1,9 +1,10 @@
 (ns apply.sections.community.term
   (:require [apply.content :as content]
             [antizer.reagent :as ant]
-            [re-frame.core :refer [dispatch subscribe]]
+            [re-frame.core :refer [dispatch subscribe reg-event-fx]]
             [apply.events :as events]
-            [apply.db :as db]))
+            [apply.db :as db]
+            [iface.utils.log :as log]))
 
 
 (def step :community/term)
@@ -37,8 +38,27 @@
 
 (defmethod events/save-step-fx step
   [db params]
-  {:db       (assoc db step params)
-   :dispatch [:step/advance]})
+  {:dispatch [::update-application params]})
+
+
+(reg-event-fx
+ ::update-application
+ (fn [{db :db} [_ term]]
+   (let [application-id (:application-id db)]
+     (log/log "updating application..." application-id term)
+     {:graphql {:mutation [[:application_update {:application application-id
+                                                 :params      {:term term}}
+                            [:term]]]
+                :on-success [::update-application-success]
+                :on-failure [:graphql/failure]}})))
+
+
+(reg-event-fx
+ ::update-application-success
+ (fn [{db :db} [_ response]]
+   (let [term (get-in response [:data :application_update :term])]
+     {:db       (assoc db step term)
+      :dispatch [:step/advance]})))
 
 
 ;; views ========================================================================

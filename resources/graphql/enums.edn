@@ -31,6 +31,10 @@
   {:description "Possible kinds of license transitions."
    :values      [:move_out :intra_xfer :inter_xfer :renewal :pending]}
 
+  :occupancies
+  {:description "Possible amounts of humans sharing a single unit."
+   :values      [:single :double]}
+
   :order_status
   {:description "Possible statuses of orders."
    :values      [:pending :placed :fulfilled :processing :failed :charged :canceled]}

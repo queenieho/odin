@@ -29,6 +29,7 @@
   {:description "Inputs to update an application."
    :fields      {:term        {:type Int}
                  :move_in     {:type :Instant}
+                 :occupancy   {:type :occupancies}
                  :status      {:type :application_status}
                  :updated     {:type :Instant}}}
 

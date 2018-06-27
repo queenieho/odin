@@ -28,7 +28,7 @@
    (log/log "fetching account:" id)
    {:graphql {:query [[:account {:id id}
                        [:name :id
-                        [:application [:id :term :move_in]]]]]
+                        [:application [:id :term :move_in :occupancy]]]]]
               :on-success [::init-fetch-application-success]
               :on-failure [:graphql/failure]}}))
 
@@ -39,17 +39,20 @@
 (reg-event-fx
  ::init-fetch-application-success
  (fn [{db :db} [_ response]]
-   (if-let [application-id (get-in response [:data :account :application :id])]
-     {:db (assoc db :application-id application-id)
-      :dispatch [:app.init/somehow-figure-out-where-they-left-off]}
+   (if-let [application (get-in response [:data :account :application])]
+     {:db (assoc db :application-id (:id application))
+      :dispatch [:app.init/somehow-figure-out-where-they-left-off application]}
      {:dispatch [:app.init/create-application (get-in response [:data :account :id])]})))
 
 
 ;;TODO
 (reg-event-fx
  :app.init/somehow-figure-out-where-they-left-off
- (fn [_ _]
-   (log/log "shrug emoji")))
+ (fn [{db :db} [_ application]]
+   (log/log "let's process this application" application)
+   {:db (tb/assoc-when db
+                       :application-id (:id application)
+                       :logistics.move-in-date/choose-date (:move_in application))}))
 
 
 ;;TODO

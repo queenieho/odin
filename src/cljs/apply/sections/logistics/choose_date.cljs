@@ -65,7 +65,7 @@
  ::update-application-success
  (fn [{db :db} [_ response]]
    (let [move-in (get-in response [:data :application_update :move_in])]
-     {:db (assoc db step move-in)
+     {:db       (assoc db step move-in)
       :dispatch [:step/advance]})))
 
 ;; views ========================================================================
