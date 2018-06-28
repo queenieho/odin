@@ -46,27 +46,13 @@
 
 (defmethod events/save-step-fx step
   [db params]
-  {:dispatch [::update-application (.toISOString params)]})
+  {:dispatch [:application/update {:move_in (.toISOString params)}]})
 
 
-(reg-event-fx
- ::update-application
- (fn [{db :db} [_ date]]
-   (let [application-id (:application-id db)]
-     (log/log "updating application..." application-id date)
-     {:graphql {:mutation [[:application_update {:application application-id
-                                                 :params      {:move_in date}}
-                            [:id :move_in]]]
-                :on-success [::update-application-success]
-                :on-failure [:graphql/failure]}})))
 
+(defmethod events/gql->rfdb :move_in [k]
+  step)
 
-(reg-event-fx
- ::update-application-success
- (fn [{db :db} [_ response]]
-   (let [move-in (get-in response [:data :application_update :move_in])]
-     {:db       (assoc db step move-in)
-      :dispatch [:step/advance]})))
 
 ;; views ========================================================================
 

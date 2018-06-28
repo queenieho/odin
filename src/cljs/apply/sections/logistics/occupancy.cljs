@@ -41,27 +41,12 @@
 
 
 (defmethod events/save-step-fx step
-  [db params]
-  {:dispatch [::update-application params]})
+  [db occupancy]
+  {:dispatch [:application/update {:occupancy occupancy}]})
 
 
-(reg-event-fx
- ::update-application
- (fn [{db :db} [_ occupancy]]
-   (let [application-id (:application-id db)]
-     {:graphql {:mutation   [[:application_update {:application application-id
-                                                   :params      {:occupancy occupancy}}
-                              [:id :occupancy]]]
-                :on-success [::update-application-success]
-                :on-failure [:graphql/failure]}})))
-
-
-(reg-event-fx
- ::update-application-success
- (fn [{db :db} [_ response]]
-   (let [occupancy (get-in response [:data :application_update :occupancy])]
-     {:db (assoc db step occupancy)
-      :dispatch [:step/advance]})))
+(defmethod events/gql->rfdb :occupancy [k]
+  step)
 
 
 ;; views ========================================================================
