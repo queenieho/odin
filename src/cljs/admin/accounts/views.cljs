@@ -1053,9 +1053,10 @@
         orders     @(subscribe [:account/orders (:id account)])]
     [:div.columns
      (when is-active
-       [move-out-modal account]
-       [renewal-modal account]
-       [reassign-modal account])
+       [:div
+        [move-out-modal account]
+        [renewal-modal account]
+        [reassign-modal account]])
      [:div.column
       [membership/license-summary license
        (when is-active {:content [membership-actions account]})]]
@@ -1063,7 +1064,6 @@
       (when is-active [status-bar account])
       (when (not (nil? transition)) [transition-status account transition])
       (when is-active [membership-orders-list account orders])]]))
-
 
 
 (defn- menu-item [role key]
