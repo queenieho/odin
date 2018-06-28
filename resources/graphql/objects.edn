@@ -71,9 +71,6 @@
             :income      {:type        (list :application_income_file)
                           :resolve     :application/income
                           :description "Income file paths."}
-            :occupancy   {:type    :occupancies
-                          :resolve :application/occupancy
-                          :description "How many humans will be sharing a unit"}
             :submitted   {:type    :Instant
                           :resolve :application/submitted-at}
             :created     {:type    (non-null :Instant)
