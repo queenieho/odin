@@ -7,6 +7,15 @@
 
 
 ;; ==============================================================================
+;; helpers ======================================================================
+;; ==============================================================================
+
+
+(def application-attrs
+  [:id :term :move_in :occupancy])
+
+
+;; ==============================================================================
 ;; bootstrap ====================================================================
 ;; ==============================================================================
 
@@ -28,7 +37,7 @@
    (log/log "fetching account:" id)
    {:graphql {:query [[:account {:id id}
                        [:name :id
-                        [:application [:id :term :move_in :occupancy]]]]]
+                        [:application application-attrs]]]]
               :on-success [::init-fetch-application-success]
               :on-failure [:graphql/failure]}}))
 
@@ -71,6 +80,43 @@
  (fn [{db :db} [_ response]]
    (let [application-id (get-in response [:data :application_create :id])]
      {:db (assoc db :application-id application-id)})))
+
+
+;; ==============================================================================
+;; update application ===========================================================
+;; ==============================================================================
+
+
+(defmulti gql->rfdb (fn [k] k))
+
+
+(defmethod gql->rfdb :default [k]
+  (log/log "parsing gql response: you should never reach this method! " k))
+
+
+(reg-event-fx
+ :application/update
+ (fn [{db :db} [_ params]]
+   (log/log "updating application with params" params)
+   {:graphql {:mutation [[:application_update {:application (:application-id db)
+                                               :params      params}
+                          (into [] (keys params))]]
+              :on-success [::application-update-success]
+              :on-failure [:graphql/failure]}}))
+
+
+(reg-event-fx
+ ::application-update-success
+ (fn [{db :db} [_ response]]
+   (let [application (get-in response [:data :application_update])]
+     (log/log "saved! here's what i got" application)
+     {:db (reduce-kv
+           (fn [d k v]
+             (assoc d (gql->rfdb k) v))
+           db
+           application)
+      :dispatch [:step/advance]})))
+
 
 ;; ==============================================================================
 ;; top-level ====================================================================
