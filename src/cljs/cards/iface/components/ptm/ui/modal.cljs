@@ -30,7 +30,7 @@
                       "http://placekitten.com/1600/1500"
                       "http://placekitten.com/1600/1700"]
     :name            "SoMa South Park"
-    :price           "From $2000"
+    :price           2000
     :units-available 18
     :intro           "Join our community in sunny Downtown Oakland, an eclectic and diverse neighborhood steps from the business district, nightlife, shops, and transportation. Just a short bike ride or drive and you can enjoy a picnic at Lake Merritt, a stroll through the Oakland Musuem of California, or kick back to watch a flick on a couch at The New Parkway."
     :building-desc   "This large historic building has 7 floors, each boasting 2,300 square feet. There are 122 total units. The architecture is blah blah more details about the building."
@@ -53,7 +53,7 @@
                        "http://placekitten.com/1600/1500"
                        "http://placekitten.com/1600/1700"]
     :name             "Mission"
-    :price            "From $1400"
+    :price            1400
     :units-available  5
     :intro            "Join our community in The Mission District, an eclectic and diverse neighborhood steps from the business district, nightlife, shops, and transportation. Just a short bike ride or drive and you can enjoy a picnic at Lake Merritt, a stroll through the Oakland Musuem of California, or kick back to watch a flick on a couch at The New Parkway."
     :building-desc "This medium building has 2 floors, each boasting 2,300 square feet. There are 122 total units. The architecture is blah blah more details about the building."

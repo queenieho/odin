@@ -21,9 +21,8 @@
 (s/def ::name
   string?)
 
-;; haven't fully decided if this should be a string or a number
 (s/def ::price
-  some?)
+  number?)
 
 (s/def ::units-available
   int?)
@@ -63,7 +62,10 @@
 ;; modal ========================================================================
 
 
-(defn modal [{:keys [visible on-close]}]
+(defn modal
+  "Renders a blank modal. Can take children to be rendered in it.
+  Can be extended to have more features once we understand it's usage better."
+  [{:keys [visible on-close]}]
   (when visible
     [:div
      (into [:div.lightbox
@@ -82,7 +84,7 @@
 ;; community modal ==============================================================
 
 
-(defn amenity-item [{:keys [label img]}]
+(defn- amenity-item [{:keys [label img]}]
   [:div.dt.mb2
    [:div.dtc.v-mid
     [:img {:src img}]]
@@ -90,7 +92,14 @@
     label]])
 
 
-(defn amenities [section items])
+(defn- amenities [section items]
+  (into [:div.w-50-l.w-100.fl
+         {:class (if (= section :left)
+                   "pr3"
+                   "pl3-l")}
+         (map-indexed
+          #(with-meta [amenity-item %2] {:key %1})
+          items)]))
 
 
 (defmulti section (fn [title content] title))
@@ -102,16 +111,8 @@
     [:div
      [:h3.mt4 title]
      [:div.cf
-      (into [:div.w-50-l.w-100.fl.pr3]
-            (map
-             (fn [item]
-               [amenity-item item])
-             left))
-      (into [:div.w-50-l.w-100.fl.pl3-l]
-            (map
-             (fn [item]
-               [amenity-item item])
-             right))]]))
+      [amenities :left left]
+      [amenities :right right]]]))
 
 
 (defmethod section :default [title content]
@@ -120,23 +121,24 @@
    [:p content]])
 
 
-(defn community-info [{:keys [images name price units-available intro
-                              building-desc neighborhood community-desc
-                              amenities on-select on-next value next selected]
-                       :as   props}]
+(defn community-info
+  "Renders detailed information of a community."
+  [{:keys [images name price units-available intro building-desc neighborhood
+           community-desc amenities on-select on-next value next selected]
+    :as   props}]
   [:div
    [:div.lightbox-mask
     [carousel/modal images]
-   [:div.lightbox-content
-    [:h1 name]
-    [:h3 price
-     [:br]
-     (str units-available " units open")]
-    [:p.mt4 intro]
-    [section "Building Details" building-desc]
-    [section "Amenities" amenities]
-    [section "The Neighborhood" neighborhood]
-    [section "Your Community" community-desc]]]
+    [:div.lightbox-content
+     [:h1 name]
+     [:h3 (str "From $" price)
+      [:br]
+      (str units-available " units open")]
+     [:p.mt4 intro]
+     (when-let [b building-desc] [section "Building Details" b])
+     (when-let [a amenities] [section "Amenities" a])
+     (when-let [n neighborhood] [section "The Neighborhood" n])
+     (when-let [c community-desc] [section "Your Community" c])]]
    [:div.lightbox-footer
     [:div.lightbox-footer-left
      (if selected
@@ -148,11 +150,12 @@
         {:on-click (when-let [s on-select]
                      #(s value))}
         "Select this community"])]
-    [:div.lightbox-footer-right
-     [:a.text-link.fr.tr
-      {:on-click (when-let [n on-next]
-                   #(n))}
-      (str "Next: " (:name next))]]]])
+    (when-let [n next]
+      [:div.lightbox-footer-right
+       [:a.text-link.fr.tr
+        {:on-click (when-let [n on-next]
+                     #(n))}
+        (str "Next: " (:name n))]])]])
 
 (s/fdef community-info
   :args (s/cat :props (s/keys :req-un [::images
@@ -160,37 +163,40 @@
                                        ::price
                                        ::units-available
                                        ::intro
-                                       ::building-desc
+                                       ::value]
+                              :opt-un [::building-desc
+                                       ::amenities
                                        ::neighborhood
                                        ::community-desc
-                                       ::amenities
+                                       ::selected
                                        ::on-select
-                                       ::on-next
-                                       ::value
                                        ::next
-                                       ::selected])))
+                                       ::on-next])))
 
 
-(defn community [{:keys [visible on-close] :as props}]
+(defn community
+  "Renders a modal containing a community's detailed information."
+  [{:keys [visible on-close] :as props
+    :or   {visible true}}]
   [modal
-   {:visible visible
-    :on-close #(on-close)}
+   {:visible  visible
+    :on-close (when-let [c on-close] #(c))}
    [community-info (dissoc props :visible :on-close)]])
 
 (s/fdef community
-  :args (s/cat :props (s/keys :req-un [::visible
-                                       ::on-close
-                                       ::images
+  :args (s/cat :props (s/keys :req-un [::images
                                        ::name
                                        ::price
                                        ::units-available
                                        ::intro
+                                       ::value]
+                              :opt-un [::visible
+                                       ::on-close
                                        ::building-desc
+                                       ::amenities
                                        ::neighborhood
                                        ::community-desc
-                                       ::amenities
+                                       ::selected
                                        ::on-select
-                                       ::on-next
-                                       ::value
                                        ::next
-                                       ::selected])))
+                                       ::on-next])))

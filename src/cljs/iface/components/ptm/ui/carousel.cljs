@@ -36,9 +36,11 @@
   (if (zero? idx) (dec total) (dec idx)))
 
 
-(defn carousel [images]
+(defn carousel
+  "Renders the carousel used in the `card` ui component. Has an aspect ratio of 6x4."
+  [images]
   (let [index (r/atom 0)]
-    (fn []
+    (fn [images]
       [:div.card-photo.aspect-ratio--6x4
        {:style {:overflow   "hidden"}}
        [:ul.dots
@@ -62,9 +64,11 @@
           images))]])))
 
 
-(defn modal [images]
+(defn modal
+  "Renders the carousel used in the `community-modal` ui component. Has an aspect ratio of 16x9."
+  [images]
   (let [index (r/atom 0)]
-    (fn []
+    (fn [images]
       [:div.lightbox-photo.aspect-ratio--16x9
        {:style {:overflow   "hidden"}}
        [:ul.dots
