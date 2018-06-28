@@ -360,12 +360,12 @@
   (tb/assoc-when
    {:current_license    (get-in account [:active_license :id])
     :type               (keyword (string/replace (name type) "-" "_"))
-    :date               (.toISOString (date/beginning-of-day move-out-date))
+    :date               (.toISOString (format/beginning-of-day move-out-date))
     :fee                fee
     :new_license_params {:unit unit
                          :rate rate
                          :term (or term (get-in account [:active_license :term]))
-                         :date (.toISOString (date/beginning-of-day move-in-date))}}
+                         :date (.toISOString (format/beginning-of-day move-in-date))}}
    :asana_task asana-task))
 
 
@@ -545,7 +545,7 @@
  :accounts.entry/renew-license!
  [(path db/path)]
  (fn [{db :db} [k {:keys [id ends] :as license} {:keys [unit term rate] :as form-data}]]
-   (let [date (.toISOString (.add (date/beginning-of-day (js/moment ends)) 1 "days"))]
+   (let [date (.toISOString (.add (format/beginning-of-day (js/moment ends)) 1 "days"))]
      {:graphql {:mutation
                 [[:transition_create {:params {:current_license    id
                                                :date               date
@@ -589,7 +589,7 @@
     :graphql    {:mutation
                  [[:transition_update {:params {:id                   transition-id
                                                 :current_license      license-id
-                                                :date                 (.toISOString (date/beginning-of-day date))
+                                                :date                 (.toISOString (format/beginning-of-day date))
                                                 :deposit_refund       deposit-refund
                                                 :room_walkthrough_doc room-walkthrough-doc
                                                 :asana_task           asana-task}}
