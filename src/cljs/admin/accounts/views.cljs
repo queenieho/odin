@@ -1052,9 +1052,10 @@
         transition (:transition (:active_license account))
         orders     @(subscribe [:account/orders (:id account)])]
     [:div.columns
-     [move-out-modal account]
-     [renewal-modal account]
-     [reassign-modal account]
+     (when is-active
+       [move-out-modal account]
+       [renewal-modal account]
+       [reassign-modal account])
      [:div.column
       [membership/license-summary license
        (when is-active {:content [membership-actions account]})]]
