@@ -20,6 +20,7 @@
             [iface.components.ptm.icons :as icons]
             [iface.components.ptm.ui :as ui]
             [iface.components.ptm.ui.form :as form]
+            [iface.components.ptm.ui.button :as button]
             [toolbelt.core :as tb]
             [iface.utils.log :as log]))
 
@@ -48,7 +49,7 @@
     [:br]
     [:br]
 
-    [ui/button
+    [button/button
      {:on-click #(swap! toggle not)
       :type     :secondary
       :class    "mt5"}
