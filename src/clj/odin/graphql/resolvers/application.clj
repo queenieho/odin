@@ -93,7 +93,14 @@
 
 (defn occupancy
   [_ _ application]
-  (keyword (name (application/occupancy application))))
+  (when-let [occupancy (application/occupancy application)]
+    (keyword (name occupancy))))
+
+
+(defn move-in-range
+  [_ _ application]
+  (when-let [range (application/move-in-range application)]
+   (keyword (name range))))
 
 
 ;; ==============================================================================
@@ -136,7 +143,8 @@
 
 (defn- parse-update-params [params]
   (tb/transform-when-key-exists params
-    {:occupancy #(keyword "application.occupancy" (name %))}))
+    {:occupancy     #(keyword "application.occupancy" (name %))
+     :move_in_range #(keyword "application.move-in-range" (name %))}))
 
 
 ;;TODO - flexibilify!
@@ -152,20 +160,13 @@
 
       :otherwise
       (do
-        (clojure.pprint/pprint (tb/assoc-when
+        @(d/transact conn [(-> (tb/assoc-when
                                 {:db/id (td/id application)
-                                 :application/has-pet (:has_pet params)}
+                                 :application/has-pet (when-not (nil? (:has_pet params))
+                                                        (:has_pet params))}
+                                :application/move-in-range (:move_in_range params)
                                 :application/move-in (:move_in params)
-                                :application/occupancy (:occupancy params)
-                                :application/license (:term params)
-                                ))
-        @(d/transact conn [(tb/assoc-when
-                            {:db/id (td/id application)}
-                            :application/move-in (:move_in params)
-                            :application/occupancy (:occupancy params)
-                            :application/license (:term params) ;;TODO - somehow reference the correct license entity
-                            ;; :application/has-pet (:has_pet params)
-                            )])
+                                :application/occupancy (:occupancy params)))])
         (clojure.pprint/pprint (d/entity (d/db conn) (td/id application)))))
     (d/entity (d/db conn) (td/id application))))
 
@@ -185,6 +186,7 @@
    :application/submitted-at     submitted-at
    :application/updated          last-updated
    :application/occupancy        occupancy
+   :application/move-in-range    move-in-range
    ;; mutations
    :application/approve!         approve!
    :application/create!          create!

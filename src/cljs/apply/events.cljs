@@ -22,7 +22,7 @@
 
 
 (def application-attrs
-  [:id :term :move_in :occupancy])
+  [:id :term :move_in_range :move_in :occupancy])
 
 
 (defn parse-gql-response

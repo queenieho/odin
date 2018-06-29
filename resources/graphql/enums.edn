@@ -7,6 +7,11 @@
   {:description "Application statuses."
    :values      [:in_progress :approved :rejected :submitted]}
 
+
+  :application_move_in_ranges
+  {:description "Allowed responses to the question 'When do you want to move in?"
+   :values      [:date :asap :flexible]}
+
   :application_pet_type
   {:description "Allowed types of pets."
    :values      [:cat :dog]}

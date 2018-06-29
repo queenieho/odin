@@ -27,12 +27,13 @@
 
   :application_update_params
   {:description "Inputs to update an application."
-   :fields      {:term        {:type Int}
-                 :move_in     {:type :Instant}
-                 :occupancy   {:type :occupancies}
-                 :has_pet     {:type Boolean}
-                 :status      {:type :application_status}
-                 :updated     {:type :Instant}}}
+   :fields      {:term          {:type Int}
+                 :move_in       {:type :Instant}
+                 :move_in_range {:type :application_move_in_ranges}
+                 :occupancy     {:type :occupancies}
+                 :has_pet       {:type Boolean}
+                 :status        {:type :application_status}
+                 :updated       {:type :Instant}}}
 
 
   ;;; Check
