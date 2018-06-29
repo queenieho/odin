@@ -22,7 +22,8 @@
 
 
 (def application-attrs
-  [:id :term :move_in_range :move_in :occupancy])
+  [:id :term :move_in_range :move_in :occupancy :has_pet
+   [:pet [:name :breed :weight :sterile :vaccines :bitten :demeanor :daytime_care :about :type]]])
 
 
 (defn parse-gql-response
@@ -33,7 +34,7 @@
   (js/console.log "parsing graphql response... " application)
   (reduce-kv
    (fn [d k v]
-     (assoc d (gql->rfdb k) v))
+     (assoc d (gql->rfdb k v) v))
    db
    application))
 
@@ -113,7 +114,7 @@
  (fn [{db :db} [_ params]]
    {:graphql {:mutation [[:application_update {:application (:application-id db)
                                                :params      params}
-                          (into [] (keys params))]]
+                          application-attrs]]
               :on-success [::application-update-success]
               :on-failure [:graphql/failure]}}))
 

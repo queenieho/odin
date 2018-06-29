@@ -100,7 +100,7 @@
 (defn move-in-range
   [_ _ application]
   (when-let [range (application/move-in-range application)]
-   (keyword (name range))))
+    (keyword (name range))))
 
 
 ;; ==============================================================================
@@ -141,10 +141,19 @@
     (application/by-account (d/db conn) account)))
 
 
+;;TODO - when we implement the rest of the pet steps, this should use
+;;tb/assoc-when to correctly record dogs and not dogs
+(defn- parse-pet-params [pet-params]
+  (when-some [ps pet-params]
+    {:db/id    (d/tempid :db.part/starcity)
+     :pet/type (:type ps)}))
+
+
 (defn- parse-update-params [params]
   (tb/transform-when-key-exists params
     {:occupancy     #(keyword "application.occupancy" (name %))
-     :move_in_range #(keyword "application.move-in-range" (name %))}))
+     :move_in_range #(keyword "application.move-in-range" (name %))
+     :pet           #(parse-pet-params %)}))
 
 
 ;;TODO - flexibilify!
@@ -160,13 +169,16 @@
 
       :otherwise
       (do
-        @(d/transact conn [(-> (tb/assoc-when
-                                {:db/id (td/id application)
-                                 :application/has-pet (when-not (nil? (:has_pet params))
-                                                        (:has_pet params))}
-                                :application/move-in-range (:move_in_range params)
-                                :application/move-in (:move_in params)
-                                :application/occupancy (:occupancy params)))])
+        @(d/transact conn (concat
+                           [(tb/assoc-when
+                             {:db/id (td/id application)}
+                             :application/move-in-range (:move_in_range params)
+                             :application/move-in (:move_in params)
+                             :application/occupancy (:occupancy params)
+                             :application/pet (:pet params))]
+                           (when-some [has-pet (:has_pet params)]
+                             [[:db/add (td/id application) :application/has-pet has-pet]])))
+
         (clojure.pprint/pprint (d/entity (d/db conn) (td/id application)))))
     (d/entity (d/db conn) (td/id application))))
 

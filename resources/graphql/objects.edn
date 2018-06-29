@@ -117,7 +117,13 @@
                            :description "Description of the pet's demeanor."}
             :daytime_care {:type        String
                            :resolve     (:get :pet/daytime-care)
-                           :description "Description of how the pet will be taken care of during the day."}}}
+                           :description "Description of how the pet will be taken care of during the day."}
+            :name         {:type        String
+                           :resolve     (:get :pet/name)
+                           :description "The name of the pet"}
+            :about        {:type        String
+                           :resolve     (:get :pet/about)
+                           :description "A description of the pet, provided for any pet which is not a dog."}}}
 
 
   :application_fitness

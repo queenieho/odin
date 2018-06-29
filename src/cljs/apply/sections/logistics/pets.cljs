@@ -3,7 +3,8 @@
             [antizer.reagent :as ant]
             [re-frame.core :refer [dispatch subscribe]]
             [apply.events :as events]
-            [apply.db :as db]))
+            [apply.db :as db]
+            [iface.utils.log :as log]))
 
 
 (def step :logistics/pets)
@@ -12,13 +13,14 @@
 ;; db ===========================================================================
 
 
-
+;;TODO - selecting other does not go to the 'other' step. figure out why
 (defmethod db/next-step step
   [db]
-  (case (step db)
-    :dog :logistics.pets/dog
-    :other :logistics.pets/other
-    :community/select))
+  (if (false? (step db))
+    :community/select
+    (if (some? (:logistics.pet/dog db))
+      :logistics.pets/dog
+      :logistics.pets/other)))
 
 
 (defmethod db/previous-step step
@@ -41,12 +43,24 @@
 
 (defmethod events/save-step-fx step
   [db pet]
-  (if (= :none pet)
-    {:dispatch [:application/update {:has_pet false}]}
-    {:dispatch [:application/update {:has_pet true}]}))
+  #_(if (= :none pet)
+      {:dispatch [:application/update {:has_pet false}]}
+      {:dispatch [:application/update {:has_pet true}]})
+  (case pet
+    ;; TODO - conditionally *retract* :pet when choosing none
+    :none  (dispatch [:application/update {:has_pet false}])
+    :dog   (dispatch [:application/update {:has_pet true
+                                           :pet     {:type :dog}}])
+    :other (dispatch [:application/update {:has_pet true
+                                           :pet     {:type :other}}])))
 
 
 (defmethod events/gql->rfdb :has_pet [k] step)
+
+(defmethod events/gql->rfdb :pet [k v]
+  (if (= :dog (:type v))
+    :logistics.pet/dog
+    :logistics.pet/other))
 
 
 ;; views ========================================================================

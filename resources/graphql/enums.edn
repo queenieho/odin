@@ -14,7 +14,7 @@
 
   :application_pet_type
   {:description "Allowed types of pets."
-   :values      [:cat :dog]}
+   :values      [:cat :dog :other]}
 
   :currencies
   {:description "Currencies to make payments."
