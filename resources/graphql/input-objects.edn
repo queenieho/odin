@@ -30,6 +30,7 @@
    :fields      {:term        {:type Int}
                  :move_in     {:type :Instant}
                  :occupancy   {:type :occupancies}
+                 :has_pet     {:type Boolean}
                  :status      {:type :application_status}
                  :updated     {:type :Instant}}}
 

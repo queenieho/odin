@@ -40,9 +40,13 @@
 
 
 (defmethod events/save-step-fx step
-  [db params]
-  {:db       (assoc db step params)
-   :dispatch [:step/advance]})
+  [db pet]
+  (if (= :none pet)
+    {:dispatch [:application/update {:has_pet false}]}
+    {:dispatch [:application/update {:has_pet true}]}))
+
+
+(defmethod events/gql->rfdb :has_pet [k] step)
 
 
 ;; views ========================================================================

@@ -60,6 +60,8 @@
             :move_in     {:type        :Instant
                           :resolve     (:get :application/move-in)
                           :description "Desired move-in date."}
+            :occupancy   {:type    :occupancies
+                          :resolve :application/occupancy}
             :has_pet     {:type    Boolean
                           :resolve (:get :application/has-pet)}
             :pet         {:type    :application_pet

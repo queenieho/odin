@@ -45,8 +45,7 @@
   {:dispatch [:application/update {:occupancy occupancy}]})
 
 
-(defmethod events/gql->rfdb :occupancy [k]
-  step)
+(defmethod events/gql->rfdb :occupancy [_] step)
 
 
 ;; views ========================================================================

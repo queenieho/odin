@@ -11,8 +11,31 @@
 ;; ==============================================================================
 
 
+(defmulti gql->rfdb (fn [k v] k))
+
+
+(defmethod gql->rfdb :id [_ v] :application-id)
+
+
+(defmethod gql->rfdb :default [k v]
+  (log/log "parsing gql response: you should never reach this method! " k))
+
+
 (def application-attrs
   [:id :term :move_in :occupancy])
+
+
+(defn parse-gql-response
+  "given a re-frame app-db and a graphql application object, dispatch a
+  multimethod that will send each datum from the graphql response to the correct
+  place within the app-db"
+  [db application]
+  (js/console.log "parsing graphql response... " application)
+  (reduce-kv
+   (fn [d k v]
+     (assoc d (gql->rfdb k) v))
+   db
+   application))
 
 
 ;; ==============================================================================
@@ -58,10 +81,8 @@
 (reg-event-fx
  :app.init/somehow-figure-out-where-they-left-off
  (fn [{db :db} [_ application]]
-   (log/log "let's process this application" application)
-   {:db (tb/assoc-when db
-                       :application-id (:id application)
-                       :logistics.move-in-date/choose-date (:move_in application))}))
+   (log/log "processing application..." application)
+   {:db (parse-gql-response db application)}))
 
 
 ;;TODO
@@ -87,17 +108,9 @@
 ;; ==============================================================================
 
 
-(defmulti gql->rfdb (fn [k] k))
-
-
-(defmethod gql->rfdb :default [k]
-  (log/log "parsing gql response: you should never reach this method! " k))
-
-
 (reg-event-fx
  :application/update
  (fn [{db :db} [_ params]]
-   (log/log "updating application with params" params)
    {:graphql {:mutation [[:application_update {:application (:application-id db)
                                                :params      params}
                           (into [] (keys params))]]
@@ -109,12 +122,7 @@
  ::application-update-success
  (fn [{db :db} [_ response]]
    (let [application (get-in response [:data :application_update])]
-     (log/log "saved! here's what i got" application)
-     {:db (reduce-kv
-           (fn [d k v]
-             (assoc d (gql->rfdb k) v))
-           db
-           application)
+     {:db (parse-gql-response db application)
       :dispatch [:step/advance]})))
 
 

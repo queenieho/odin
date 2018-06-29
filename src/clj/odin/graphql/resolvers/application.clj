@@ -152,12 +152,22 @@
 
       :otherwise
       (do
+        (clojure.pprint/pprint (tb/assoc-when
+                                {:db/id (td/id application)
+                                 :application/has-pet (:has_pet params)}
+                                :application/move-in (:move_in params)
+                                :application/occupancy (:occupancy params)
+                                :application/license (:term params)
+                                ))
         @(d/transact conn [(tb/assoc-when
                             {:db/id (td/id application)}
                             :application/move-in (:move_in params)
                             :application/occupancy (:occupancy params)
-                            :application/license (:term params))])
-        (d/entity (d/db conn) (:db/id application))))))
+                            :application/license (:term params) ;;TODO - somehow reference the correct license entity
+                            ;; :application/has-pet (:has_pet params)
+                            )])
+        (clojure.pprint/pprint (d/entity (d/db conn) (td/id application)))))
+    (d/entity (d/db conn) (td/id application))))
 
 
 ;; ==============================================================================
