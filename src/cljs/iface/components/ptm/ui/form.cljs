@@ -127,10 +127,12 @@
   :args (s/cat :props (s/keys :opt-un [::error])))
 
 
-(defn checkbox-group [{:keys [error name on-change] :as props}]
+(defn checkbox-group [{:keys [error name on-change value] :as props}]
   (let [children (map
                   #(update % 1 tb/assoc-when
                            :error error
+                           :checked (when (some (fn [v] (= (:value (second %)) v)) value)
+                                      true)
                            :on-change on-change)
                   (r/children (r/current-component)))]
     (into [:div] children)))
@@ -155,9 +157,11 @@
   :args (s/cat :props (s/keys :opt-un [])))
 
 
-(defn radio-group [{:keys [name] :as props}]
+(defn radio-group [{:keys [name value] :as props}]
   (let [children (map
-                  #(update % 1 tb/assoc-when :name name)
+                  #(update % 1 tb/assoc-when
+                           :name name
+                           )
                   (r/children (r/current-component)))]
     (into [:div] children)))
 

@@ -233,12 +233,12 @@ You will need a `:checked` (`boolean`) and an `:on-change` (`(funtion [val])`) p
       {:value     (:selected @data)
        :on-change #(swap! data update :selected update-selection (.. % -target -value) (.. % -target -checked))}
      [form/checkbox
-      {:value :cat}
+      {:value "cat"}
       "Cat"]
       [form/checkbox
-       {:value :dog}
+       {:value "dog"}
        "Dog"]]])
-  (r/atom {:selected []})
+  (r/atom {:selected ["dog"]})
   {:inspect-data true
    :frame        false
    :header       false})
