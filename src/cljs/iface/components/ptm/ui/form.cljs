@@ -161,6 +161,8 @@
                   #(update % 1 tb/assoc-when
                            :name name
                            :on-change on-change)
+                  ;; need to check if we are getting individual children
+                  ;; or the result of mapping a collection of data over a child function
                   (if (map? (second (first c)))
                     c
                     (first c)))]
