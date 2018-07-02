@@ -313,3 +313,23 @@ Carousel Cards are meant to be used like checkboxes. `carousel-card` cards with 
   {:inspect-data true
    :heading      true
    :frame        false})
+
+
+(defcard-rg groups-card-carousel
+  "
+<br>
+### Summary Cards
+Carousel Cards are meant to be used like checkboxes. `carousel-card` cards with a unique `:value` should be used for this type of groups. An `:images` prop with an array or list of image sources will be required for the carrousel.
+<br>
+<br>
+```clojure
+
+```
+"
+  (fn [data _]
+    [cards/logistics-summary])
+
+  (r/atom {:selected []})
+  {:inspect-data true
+   :heading      true
+   :frame        false})

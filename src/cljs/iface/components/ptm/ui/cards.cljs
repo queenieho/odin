@@ -215,3 +215,46 @@
                   {:value value}]
                  c-group) {:key i}))
        (partition n n nil children)))]))
+
+
+;; summary cards ================================================================
+
+
+(defn- summary-item
+  "Summary information item"
+  [{:keys [label value edit]}]
+  [:div.w-50-l.w-100.fl.ph4
+   [:h4.w-50.mv1.fl label]
+   [:p.w-50.fl.tr.mv0 value
+    (when edit
+      [:img.icon-edit {:src "/assets/images/ptm/icons/ic-edit.svg"}])]])
+
+
+(defn logistics-summary
+  "To be used to display move-in summary. This card shows all the logistics selections."
+  []
+  [:div.w-100.pr4-l.pr0
+   [:div.card.cf
+    ;; header
+    [:div.w-25-l.w-100.fl.pv0.card-top
+     [:h2.ma0 "Logistics"]]
+    ;; body
+    [:div.w-75-l.w-100.fl.pv3
+     ;; column
+     [:div.w-100.cf
+      [summary-item {:label "Move-in Date"
+                     :value "ASAP"
+                     :edit  true}]
+      [summary-item {:label "Adult occupants"
+                     :value "1"
+                     :edit  true}]]
+
+     [:div.w-100.cf
+      [summary-item {:label "Term length"
+                     :value "12 months"
+                     :edit  true}]
+      [summary-item {:label "Dog"
+                     :value "Yes"
+                     :edit  true}]]
+
+     ]]])
