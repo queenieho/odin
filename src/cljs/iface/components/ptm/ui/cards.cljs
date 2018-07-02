@@ -85,15 +85,20 @@
 
 (defn- get-selection-footer [selected count]
   (cond
-    (and selected count) [:div
-                          [:a.text-link.text-green
-                           (str count " Selected")]
-                          [:img.icon-x {:src "/assets/images/ptm/icons/ic-x.svg"}]]
-    selected             [:div
-                          [:a.text-link.text-green
-                           [ant/icon {:type "check"}] " Selected"]
-                          [:img.icon-x {:src "/assets/images/ptm/icons/ic-x.svg"}]]
-    :else                [:a.text-link "Select"]))
+    (and selected count)
+    [:div
+     [:a.text-link.text-green
+      (str count " Selected")]
+     [:img.icon-x {:src "/assets/images/ptm/icons/ic-x.svg"}]]
+
+    selected
+    [:div
+     [:a.text-link.text-green
+      [ant/icon {:type "check"}] " Selected"]
+     [:img.icon-x {:src "/assets/images/ptm/icons/ic-x.svg"}]]
+
+    :else
+    [:a.text-link "Select"]))
 
 
 (defn multiple [{:keys [width selected count]
