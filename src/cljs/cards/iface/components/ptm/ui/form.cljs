@@ -230,15 +230,71 @@ You will need a `:checked` (`boolean`) and an `:on-change` (`(funtion [val])`) p
     [:div
      [:p "Select animals you like."]
      [form/checkbox-group
-      {:value     (:selected @data)
+      {
+       :name      "Pets"
+       :value     (:selected @data)
        :on-change #(swap! data update :selected update-selection (.. % -target -value) (.. % -target -checked))}
-     [form/checkbox
-      {:value "cat"}
-      "Cat"]
+      [form/checkbox
+       {:value "cat"}
+       "Cat"]
       [form/checkbox
        {:value "dog"}
        "Dog"]]])
-  (r/atom {:selected ["dog"]})
+  (r/atom {:selected []})
+  {:inspect-data true
+   :frame        false
+   :header       false})
+
+
+(defcard-rg radio-group
+  "
+<br>
+<hr>
+<br>
+## Radio Group
+A `radio-group` can be created with multiple `radio-option`s as children.
+<br>
+<br>
+`radio-group`
+<br>
+<br>
+```clojure
+[form/checkbox
+ {:checked   (:terms @data)
+  :on-change #(swap! data assoc :terms (.. % -target -checked))}
+ \"I have read and agree to the Terms and Conditions.\"]
+```
+<br>
+"
+  (fn [data _]
+    (let [options [{:value "paris"
+                    :label "Paris"}
+                   {:value "ny"
+                    :label "New York"}
+                   {:value "la"
+                    :label "Los Angeles"}]]
+      [form/radio-group
+       {
+        :name      "Vacation"
+        :value     (:selected @data)
+        :on-change #(swap! data assoc :selected (.. % -target -value))}
+       (map
+        (fn [{:keys [value label]}]
+          [form/radio-option
+           {:value value}
+           label])
+        options)
+       ;; [form/radio-option
+       ;;  {:value "Paris"}
+       ;;  "Paris"]
+       ;; [form/radio-option
+       ;;  {:value "New York"}
+       ;;  "New York"]
+       ;; [form/radio-option
+       ;;  {:value "LA"}
+       ;;  "LA"]
+       ]))
+  (r/atom {:selected "LA"})
   {:inspect-data true
    :frame        false
    :header       false})

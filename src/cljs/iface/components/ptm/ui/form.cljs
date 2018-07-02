@@ -131,8 +131,6 @@
   (let [children (map
                   #(update % 1 tb/assoc-when
                            :error error
-                           :checked (when (some (fn [v] (= (:value (second %)) v)) value)
-                                      true)
                            :on-change on-change)
                   (r/children (r/current-component)))]
     (into [:div] children)))
@@ -157,12 +155,15 @@
   :args (s/cat :props (s/keys :opt-un [])))
 
 
-(defn radio-group [{:keys [name value] :as props}]
-  (let [children (map
+(defn radio-group [{:keys [name value on-change] :as props}]
+  (let [c        (r/children (r/current-component))
+        children (map
                   #(update % 1 tb/assoc-when
                            :name name
-                           )
-                  (r/children (r/current-component)))]
+                           :on-change on-change)
+                  (if (map? (second (first c)))
+                    c
+                    (first c)))]
     (into [:div] children)))
 
 (s/fdef radio-group
