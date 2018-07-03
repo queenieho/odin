@@ -57,49 +57,49 @@
    [:div.page-content.w-60-l.w-100
     [:div.cf.mb3-ns.mb0
      [:div.w-40-l.w-100.fl-pr4-l.pr0
-      [form/form-item
+      [form/item
        {:label "Name"}
        [form/text]]]
      [:div.w-40-l.w-100.fl-pr4-l.pr0
-      [form/form-item
+      [form/item
        {:label "Breed"}
        [form/text]]]
      [:div.w-20-l.w-100.fl-pr4-l.pr0
-      [form/form-item
+      [form/item
        {:label "Weight"}
        [form/number {:placeholder "lbs"}]]]]
     [form/form
 
 
-     [form/form-item
+     [form/item
       {:label "Breed"}
       [form/text]]
 
-     [form/form-item
+     [form/item
       {:label  "How will your dog be taken care of during the day?"}
       [form/textarea]]
 
-     [form/form-item
+     [form/item
       {:label "Please describe your dog's demeanor."}
       [form/textarea]]
 
 
      ;; NOTE - we'll also need an inline-friendly radio-group variant
-     [form/form-item
+     [form/item
       {:label "Spayed/neutered?"}
       [form/radio-group
        {:name "spayed-neutered"}
        [form/radio-option {} "Yes"]
        [form/radio-option {} "No"]]]
 
-     [form/form-item
+     [form/item
       {:label "Up-to-date vaccines?"}
       [form/radio-group
        {:name "vaccines"}
        [form/radio-option {} "Yes"]
        [form/radio-option {} "No"]]
 
-      [form/form-item
+      [form/item
        {:label "Has your dog ever bitten a human?"}
        [form/radio-group
         {:name "bitey"}
