@@ -225,41 +225,82 @@
 ;; summary cards ================================================================
 
 
+;; logistics ================================
+
+
 (defn- summary-item
   "Summary information item"
-  [{:keys [label value edit]}]
+  [{:keys [label value edit on-click]}]
   [:div.w-50-l.w-100.fl.ph4
    [:h4.w-50.mv1.fl label]
    [:p.w-50.fl.tr.mv0 value
     (when edit
-      [:img.icon-edit {:src "/assets/images/ptm/icons/ic-edit.svg"}])]])
+      [:img.icon-edit {:src      "/assets/images/ptm/icons/ic-edit.svg"
+                       :on-click (when-let [c on-click]
+                                   #(c))}])]])
+
+
+(defn- summary-row
+  "Row of 2 summary items"
+  [items]
+  [:div.w-100.cf
+   (map-indexed
+    (fn [i item]
+      ^{:key i}
+      [summary-item item])
+    items)])
 
 
 (defn logistics-summary
   "To be used to display move-in summary. This card shows all the logistics selections."
-  []
+  [title items]
   [:div.w-100.pr4-l.pr0
    [:div.card.cf
     ;; header
     [:div.w-25-l.w-100.fl.pv0.card-top
-     [:h2.ma0 "Logistics"]]
+     [:h2.ma0 title]]
     ;; body
     [:div.w-75-l.w-100.fl.pv3
-     ;; column
-     [:div.w-100.cf
-      [summary-item {:label "Move-in Date"
-                     :value "ASAP"
-                     :edit  true}]
-      [summary-item {:label "Adult occupants"
-                     :value "1"
-                     :edit  true}]]
+     (map-indexed
+      (fn [i row-items]
+        ^{:key i}
+        [summary-row row-items])
+      (partition 2 2 nil items))]]])
 
-     [:div.w-100.cf
-      [summary-item {:label "Term length"
-                     :value "12 months"
-                     :edit  true}]
-      [summary-item {:label "Dog"
-                     :value "Yes"
-                     :edit  true}]]
 
-     ]]])
+;; unit selection =======================
+
+
+(defn- toggle [v]
+  (if v
+    false
+    true))
+
+
+(defn community-selection
+  "To be used to display a summary of a community selection, and it's cost breakdown."
+  [community units]
+  (let [tooltip (r/atom false)]
+    (fn [community units]
+      [:div.w-50-l.w-100.fl.pr4-l.pr0
+       [:div.card
+        ;; header
+        [:div.card-top
+         [:h2.mt0 community]
+         [:div.cf
+          [:h4.w-70.mv1.fl "Preferred Unit Selections"]
+          [:p.w-30.fl.tr.mv0 units]]]
+        ;; footer
+        [:div.card-footer
+         [:h3 "Cost Breakdown"]
+         ;; line item
+         [:div.cf
+          [:h4.w-60.mv1.fl "Suite Fee"
+           [:a {:onMouseOver #(swap! tooltip toggle)
+                :onMouseOut  #(swap! tooltip toggle)}
+            [ant/tooltip {:title     "This is a very long-winded tooltip. We need this to explain the very complicated price breakdown we have here that not even I understand"
+                          :placement "right"
+                          :visible   @tooltip}
+             [:img.icon-small {:src "/assets/images/ptm/icons/ic-help-tooltip.svg"}]]]]
+          ]]
+        ]])))

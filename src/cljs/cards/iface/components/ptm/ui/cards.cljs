@@ -315,21 +315,74 @@ Carousel Cards are meant to be used like checkboxes. `carousel-card` cards with 
    :frame        false})
 
 
-(defcard-rg groups-card-carousel
+(def summary-items [{:label "Move-in Date"
+                     :value "ASAP"
+                     :edit  true
+                     :on-click #(.log js/console "move-in")
+                     }
+                    {:label "Adult occupants"
+                     :value "1"
+                     :edit  true
+                     :on-click #(.log js/console "occupants")}
+                    {:label "Term length"
+                     :value "12 months"
+                     :edit  true
+                     :on-click #(.log js/console "term")}
+                    {:label "Dog"
+                     :value "Yes"
+                     :edit  true
+                     :on-click #(.log js/console "dog")}])
+
+
+(defcard-rg summary-cards
   "
 <br>
-### Summary Cards
-Carousel Cards are meant to be used like checkboxes. `carousel-card` cards with a unique `:value` should be used for this type of groups. An `:images` prop with an array or list of image sources will be required for the carrousel.
+## Summary Cards
 <br>
-<br>
+### Logistics Summary Card
+`logistics-summary` is meant to show a summary of logistics answers of the member application. This component takes `2` arguments: a `title` and a collection of `items`, which will be maps in the following form: <br>
 ```clojure
-
+{:label    String - required
+ :value    String - required
+ :edit     Boolean
+ :on-click (function)}
 ```
+<br>
+Usage:
+```clojure
+[cards/logistics-summary \"Logistics\" summary-items]
+```
+<br>
 "
   (fn [data _]
-    [cards/logistics-summary])
+    [cards/logistics-summary "Logistics" summary-items])
 
   (r/atom {:selected []})
-  {:inspect-data true
-   :heading      true
+  {:heading      true
+   :frame        false})
+
+
+(defcard-rg summary-cards
+  "
+<br>
+### Community Selection Summary Card
+`logistics-summary` is meant to show a summary of logistics answers of the member application. This component takes `2` arguments: a `title` and a collection of `items`, which will be maps in the following form: <br>
+```clojure
+{:label    String - required
+ :value    String - required
+ :edit     Boolean
+ :on-click (function)}
+```
+<br>
+Usage:
+```clojure
+[cards/logistics-summary \"Logistics\" summary-items]
+```
+<br>
+"
+  (fn [data _]
+    [cards/community-selection "Tenderloin" 5])
+
+  (r/atom {:selected []})
+  {:heading      true
    :frame        false})
