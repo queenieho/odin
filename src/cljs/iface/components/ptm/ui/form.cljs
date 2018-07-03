@@ -39,7 +39,7 @@
   (into [:form] (r/children (r/current-component))))
 
 
-(defn form-item [{:keys [label optional help error] :as props}]
+(defn item [{:keys [label optional help error] :as props}]
   [:div
    [:label {:for label} label]
    (when optional
@@ -113,9 +113,12 @@
                                        ::placeholder])))
 
 
-(defn checkbox [{:keys [error] :as props}]
+(defn checkbox [{:keys [error checked]
+                 :or {checked false}
+                 :as props}]
   (let [props' (-> props
-                   (merge {:type "checkbox"})
+                   (merge {:type "checkbox"
+                           :checked checked})
                    (dissoc :error))]
     [:div {:class (if error "checkbox error" "checkbox")}
      (into [:label
@@ -127,12 +130,18 @@
   :args (s/cat :props (s/keys :opt-un [::error])))
 
 
-(defn checkbox-group [{:keys [error name on-change value] :as props}]
-  (let [children (map
+(defn checkbox-group [{:keys [error on-change value] :as props}]
+  (let [c        (r/children (r/current-component))
+        children (map
                   #(update % 1 tb/assoc-when
                            :error error
+                           :checked (some (fn [v] (= v (:value (second %)))) value)
                            :on-change on-change)
-                  (r/children (r/current-component)))]
+                  ;; need to check if we are getting individual children
+                  ;; or the result of mapping a collection of data over a child function
+                  (if (map? (second (first c)))
+                    c
+                    (first c)))]
     (into [:div] children)))
 
 (s/fdef checkbox-group
@@ -141,9 +150,12 @@
                                        ::on-change])))
 
 
-(defn radio-option [{:keys [] :as props}]
+(defn radio-option [{:keys [checked]
+                     :or   {checked false}
+                     :as   props}]
   (let [props' (-> props
-                   (merge {:type "radio"})
+                   (merge {:type    "radio"
+                           :checked checked})
                    (dissoc :label))]
     [:div.radio
      (into [:label
@@ -160,6 +172,7 @@
         children (map
                   #(update % 1 tb/assoc-when
                            :name name
+                           :checked (= value (:value (second %)))
                            :on-change on-change)
                   ;; need to check if we are getting individual children
                   ;; or the result of mapping a collection of data over a child function
