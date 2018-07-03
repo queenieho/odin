@@ -3,10 +3,10 @@
                                                  defcard-doc
                                                  defcard-rg]])
 
-  (:require [devcards.core]
+  (:require [antizer.reagent :as ant]
+            [devcards.core]
             [iface.components.ptm.ui.form :as form]
-            [reagent.core :as r]
-            [antizer.reagent :as ant]))
+            [reagent.core :as r]))
 
 
 (defcard-doc
@@ -14,6 +14,11 @@
 # Rendering form items
 ")
 
+
+(defn- text-input-sample [data]
+  [form/text
+   {:value     (:text @data)
+    :on-change #(swap! data assoc :text (.. % -target -value))}])
 
 (defcard-rg text-input
   "
@@ -23,27 +28,33 @@ The `text` form item is used for short text inputs. This input will take up 100%
 This component takes a `:value` (`string`) and an `:on-change` (`(function [val])`) props.
 <br>
 <br>
-```clojure
-[form/text
- {:value     (:text @data)
-  :on-change (fn [val] (swap! data assoc :text (.. val -target -value)))}]
-```
-<br>
 "
   (fn [data _]
     [:div {:style {:width "25vw"}}
-     [form/text
-      {:value     (:text @data)
-       :on-change #(swap! data assoc :text (.. % -target -value))}]])
+     [text-input-sample data]])
   (r/atom {:text nil})
   {:inspect-data true
    :frame        false
    :header       false})
 
 
+(defcard-doc
+  "
+#### Text Input Sample Code"
+  (dc/mkdn-pprint-source text-input-sample))
+
+
+(defn- number-input-sample [data]
+  [form/number
+   {:value     (:num @data)
+    :step      10
+    :on-change #(swap! data assoc :num (.. % -target -value))
+    :min       5
+    :max       65}])
+
+
 (defcard-rg number-input
   "
-<br>
 <hr>
 <br>
 ## Number input
@@ -55,33 +66,30 @@ This component takes `:value` (`integer`) and an `:on-change` (`(function [val])
 Optionally `:step` (`integer`), `:min` (`integer`), and `:max` (`integer`) can be passed too.
 <br>
 <br>
-```clojure
-[form/number
- {:value     (:num @data)
-  :on-change (fn [val] (swap! data assoc :num (.. val -target -value)))
-  :step      10
-  :min       5
-  :max       65}]
-```
-<br>
 "
   (fn [data _]
     [:div {:style {:width "15vw"}}
-     [form/number
-      {:value     (:num @data)
-       :step      10
-       :on-change #(swap! data assoc :num (.. % -target -value))
-       :min       5
-       :max       65}]])
+     [number-input-sample data]])
   (r/atom {:num nil})
   {:inspect-data true
    :frame        false
    :header       false})
 
 
+(defcard-doc
+  "
+#### Number Input Sample Code"
+  (dc/mkdn-pprint-source number-input-sample))
+
+
+(defn- textarea-input-sample [data]
+  [form/textarea
+   {:value     (:text @data)
+    :rows      5
+    :on-change #(swap! data assoc :text (.. % -target -value))}])
+
 (defcard-rg textarea
   "
-<br>
 <hr>
 <br>
 ## Textarea input
@@ -93,37 +101,45 @@ This component takes `:value` (`string`) and an `:on-change` (`(function [val])`
 Optionally `:rows` (`integer`) can be passed.
 <br>
 <br>
-```clojure
-[form/textarea
- {:value     (:text @data)
-  :rows      5
-  :on-change (fn [val] (swap! data assoc :text (.. val -target -value)))}]
-```
-<br>
 "
   (fn [data _]
     [:div {:style {:width "35vw"}}
-     [form/textarea
-      {:value     (:text @data)
-       :rows      5
-       :on-change #(swap! data assoc :text (.. % -target -value))}]])
+     [textarea-input-sample data]])
   (r/atom {:text nil})
   {:inspect-data true
    :frame        false
    :header       false})
 
 
-(def options [{:value 1
-               :label "ONE"}
-              {:value 2
-               :label "TWO"}
-              {:value 3
-               :label "THREE"}])
+(defcard-doc
+  "
+#### Textarea Input Sample Code"
+  (dc/mkdn-pprint-source textarea-input-sample))
+
+
+;; select input =========================
+
+
+(defn- select-input-sample [data]
+  (let [options [{:value 1
+                  :label "ONE"}
+                 {:value 2
+                  :label "TWO"}
+                 {:value 3
+                  :label "THREE"}]]
+    [form/select
+     {:value       (:option @data)
+      :on-change   #(swap! data assoc :option (.. % -target -value))
+      :placeholder "Select an option"}
+     (map
+      (fn [{:keys [value label]}]
+        ^{:key value}
+        [form/select-option {:value value} label])
+      options)]))
 
 
 (defcard-rg select
   "
-<br>
 <hr>
 <br>
 ## Select / Dropdown
@@ -135,43 +151,35 @@ The `select` component is used with `select-option` components as children to cr
 `select-option` will need a `:value` prop and a `label`.
 <br>
 <br>
-```clojure
-[form/select
- {:value       (:option @data)
-  :on-change   #(swap! data assoc :option (.. % -target -value))
-  :placeholder \"Select an option\"}
- [form/select-option
-  {:value 1}
-  \"ONE\"]
- [form/select-option
-  {:value 2}
-  \"TWO\"]
- [form/select-option
-  {:value 3}
-  \"THREE\"]]
-```
-<br>
 "
   (fn [data _]
     [:div {:style {:width "35vw"}}
-     [form/select
-      {:value       (:option @data)
-       :on-change   #(swap! data assoc :option (.. % -target -value))
-       :placeholder "Select an option"}
-      (map
-       (fn [{:keys [value label]}]
-         ^{:key value}
-         [form/select-option {:value value} label])
-       options)]])
+     [select-input-sample data]])
   (r/atom {:option nil})
   {:inspect-data true
    :frame        false
    :header       false})
 
 
+(defcard-doc
+  "
+#### Select / Dropdown Input Sample Code"
+  (dc/mkdn-pprint-source select-input-sample))
+
+
+;; checkbox =============================
+
+
+(defn- checkbox-input-sample [data]
+  [form/checkbox
+   {:value     "terms-and-conditions"
+    :checked   (:terms @data)
+    :on-change #(swap! data assoc :terms (.. % -target -checked))}
+   "I have read and agree to the Terms and Conditions."])
+
+
 (defcard-rg checkbox
   "
-<br>
 <hr>
 <br>
 ## Checkboxes
@@ -179,27 +187,25 @@ The `checkbox` component can be used individually or as children in `checkbox-gr
 <br>
 <br>
 ### Single Checkboxes
-<br>
 `checkbox` can be used individually (ie `Terms and Conditions`). You will need a `:checked` (`boolean`) and an `:on-change` (`(funtion [val])`) prop for this component.
 <br>
 <br>
-```clojure
-[form/checkbox
- {:checked   (:terms @data)
-  :on-change #(swap! data assoc :terms (.. % -target -checked))}
- \"I have read and agree to the Terms and Conditions.\"]
-```
-<br>
 "
   (fn [data _]
-    [form/checkbox
-     {:checked   (:terms @data)
-      :on-change #(swap! data assoc :terms (.. % -target -checked))}
-     "I have read and agree to the Terms and Conditions."])
+    [checkbox-input-sample data])
   (r/atom {:terms true})
   {:inspect-data true
    :frame        false
    :header       false})
+
+
+(defcard-doc
+  "
+#### Single Checkbox Input Sample Code"
+  (dc/mkdn-pprint-source checkbox-input-sample))
+
+
+;; checkbox group =======================
 
 
 (defn- update-selection [coll value checked]
@@ -209,92 +215,82 @@ The `checkbox` component can be used individually or as children in `checkbox-gr
     :else coll))
 
 
+(defn- checkbox-group-sample [data]
+  [:div
+   [:p "Select all the animals you like."]
+   [form/checkbox-group
+    {:value     (:selected @data)
+     :on-change #(swap! data update :selected update-selection (.. % -target -value) (.. % -target -checked))}
+    [form/checkbox
+     {:value "cat"}
+     "Cat"]
+    [form/checkbox
+     {:value "dog"}
+     "Dog"]]])
+
+
 (defcard-rg checkbox
   "
+<hr>
 <br>
 ### Checkbox group
 <br>
 `checkbox-group` is used with `checkbox` as children.
-You will need a `:checked` (`boolean`) and an `:on-change` (`(funtion [val])`) prop for this component.
+A `checkbox-group` takes a `:value` (`list`) and an `:on-change` (`(funtion [val])`), while `checkbox` only needs a `:value` prop.
 <br>
-<br>
-```clojure
-[form/checkbox
- {:checked   (:terms @data)
-  :on-change #(swap! data assoc :terms (.. % -target -checked))}
- \"I have read and agree to the Terms and Conditions.\"]
-```
 <br>
 "
   (fn [data _]
-    [:div
-     [:p "Select animals you like."]
-     [form/checkbox-group
-      {
-       :name      "Pets"
-       :value     (:selected @data)
-       :on-change #(swap! data update :selected update-selection (.. % -target -value) (.. % -target -checked))}
-      [form/checkbox
-       {:value "cat"}
-       "Cat"]
-      [form/checkbox
-       {:value "dog"}
-       "Dog"]]])
-  (r/atom {:selected []})
+    [checkbox-group-sample data])
+  (r/atom {:selected ["cat"]})
   {:inspect-data true
    :frame        false
    :header       false})
+
+
+(defcard-doc
+  "
+#### Checkbox Group Sample Code"
+  (dc/mkdn-pprint-source checkbox-group-sample))
+
+
+(defn- radio-group-component [data]
+  (let [options [{:value "paris"
+                  :label "Paris"}
+                 {:value "ny"
+                  :label "New York"}
+                 {:value "la"
+                  :label "Los Angeles"}]]
+    [form/radio-group
+     {:value     (:selected @data)
+      :on-change #(swap! data assoc :selected (.. % -target -value))}
+     (map
+      (fn [{:keys [value label]}]
+        [form/radio-option
+         {:value value}
+         label])
+      options)]))
 
 
 (defcard-rg radio-group
   "
-<br>
 <hr>
 <br>
 ## Radio Group
 A `radio-group` can be created with multiple `radio-option`s as children.
+A `radio-group` takes a `:value` (`list`) and an `:on-change` (`(funtion [val])`), while `radio-option` only needs a `:value` prop.
 <br>
-<br>
-`radio-group`
-<br>
-<br>
-```clojure
-[form/checkbox
- {:checked   (:terms @data)
-  :on-change #(swap! data assoc :terms (.. % -target -checked))}
- \"I have read and agree to the Terms and Conditions.\"]
-```
 <br>
 "
   (fn [data _]
-    (let [options [{:value "paris"
-                    :label "Paris"}
-                   {:value "ny"
-                    :label "New York"}
-                   {:value "la"
-                    :label "Los Angeles"}]]
-      [form/radio-group
-       {
-        :name      "Vacation"
-        :value     (:selected @data)
-        :on-change #(swap! data assoc :selected (.. % -target -value))}
-       (map
-        (fn [{:keys [value label]}]
-          [form/radio-option
-           {:value value}
-           label])
-        options)
-       ;; [form/radio-option
-       ;;  {:value "Paris"}
-       ;;  "Paris"]
-       ;; [form/radio-option
-       ;;  {:value "New York"}
-       ;;  "New York"]
-       ;; [form/radio-option
-       ;;  {:value "LA"}
-       ;;  "LA"]
-       ]))
-  (r/atom {:selected "LA"})
+    [radio-group-component data])
+  (r/atom {:selected "la"})
   {:inspect-data true
    :frame        false
    :header       false})
+
+
+(defcard-doc
+  "
+#### Radio Group Sample Code"
+  (dc/mkdn-pprint-source radio-group-component))
