@@ -60,6 +60,7 @@
    :args        {:params {:type :member_license_transition_create_params}}
    :resolve     :license-transition/create!}
 
+
   :transition_update
   {:type        :license
    :description "Updates transfer information for a member"

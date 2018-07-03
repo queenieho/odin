@@ -576,6 +576,7 @@
            :value     (:move-in-date @form)
            :disabled  (:editing @form)
            :on-change #(dispatch [:accounts.entry.reassign/update :move-in-date %])}]]
+
         [ant/form-item
          {:label (r/as-element
                   [:span [:span.bold "Asana Transfer Task"]
@@ -586,6 +587,7 @@
                                   [:a {:href (:intra-xfer asana-transition-templates) :target "_blank"} "Member Transfer Template"]
                                   " Asana task. Paste the link to your copy of that task in this input."])}
                     [ant/icon {:type "question-circle-o"}]]])}
+
          [ant/input
           {:placeholder "paste the asana link here..."
            :value       (:asana-task @form)
@@ -870,12 +872,27 @@
 (defmulti transition-status (fn [_ transition] (:type transition)))
 
 
+(defn- confirm-delete-transition [transition]
+  (ant/modal-confirm
+   {:title   "Delete Transition?"
+    :content "Are you sure you want to continue? This action can't easily be undone!"
+    :on-ok   #(dispatch [:accounts.entry.transition/delete! transition])
+    :ok-type :danger
+    :ok-text "Yes - Confirm Delete"}))
+
+
 (defmethod transition-status :renewal
   [account transition]
-  (let [pname (format/first-name-possessive (:name account))
+  (let [pname       (format/first-name-possessive (:name account))
         new-license (:new_license transition)]
     [ant/card
-     {:title (str pname "License Renewal")}
+     {:title (str pname "License Renewal")
+      :extra (r/as-element
+              [:div
+               [ant/button
+                {:icon     "delete"
+                 :on-click #(confirm-delete-transition transition)}
+                "Cancel"]])}
      [:div.columns
       [:div.column
        [transition-status-item "Term" (str (:term new-license) " months")]
