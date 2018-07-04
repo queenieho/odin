@@ -47,18 +47,18 @@
   ;; licenses =====================================================================
 
 
-  :reassign_member_unit
-  {:type        :license
-   :description "Reassign a member to a new unit."
-   :args        {:params {:type :reassign_member_unit_params}}
-   :resolve     :member-license/reassign!}
-
-
   :transition_create
   {:type        :license
    :description "Begins the move-out process for a member."
    :args        {:params {:type :member_license_transition_create_params}}
    :resolve     :license-transition/create!}
+
+
+  :transition_delete
+  {:type        :license
+   :description "Delete a license transition."
+   :args        {:id {:type (non-null :Long)}}
+   :resolve     :license-transition/delete!}
 
 
   :transition_update

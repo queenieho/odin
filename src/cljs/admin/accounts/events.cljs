@@ -627,7 +627,7 @@
  (fn [_ [k transition]]
    {:dispatch [:ui/loading k true]
     :graphql  {:mutation
-               [[:transition_delete {:params {:id (:id transition)}}
+               [[:transition_delete {:id (:id transition)}
                  [:id [:account [:id]]]]]
                :on-success [::delete-transition-success k]
                :on-failure [:graphql/failure k]}}))

@@ -875,7 +875,7 @@
 (defn- confirm-delete-transition [transition]
   (ant/modal-confirm
    {:title   "Delete Transition?"
-    :content "Are you sure you want to continue? This action can't easily be undone!"
+    :content "Are you sure you want to continue?"
     :on-ok   #(dispatch [:accounts.entry.transition/delete! transition])
     :ok-type :danger
     :ok-text "Yes - Confirm Delete"}))
