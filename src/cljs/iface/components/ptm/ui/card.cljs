@@ -7,6 +7,27 @@
             [iface.utils.formatters :as format]))
 
 
+;; specs ========================================================================
+
+(s/def ::community
+  string?)
+
+(s/def ::units
+  integer?)
+
+(s/def ::line-items
+  coll?)
+
+(s/def ::total
+  map?)
+
+(s/def ::on-click
+  fn?)
+
+
+;; components ===================================================================
+
+
 ;; helpers ==============================
 
 
@@ -262,7 +283,7 @@
      [:h2.ma0 title]]
     ;; body
     [:div.w-75-l.w-100.fl.pv3
-     #_(map-indexed
+     (map-indexed
         (fn [i row-items]
           ^{:key i}
           [summary-row row-items])
@@ -326,6 +347,13 @@
     (let [{:keys [label tooltip price max]} total]
       [line-item :total label tooltip price max])]])
 
+(s/fdef community-breakdown
+  :args (s/cat :props (s/keys :req-un [::community
+                                       ::units
+                                       ::line-items
+                                       ::total]
+                              :opt-un [::on-click])))
+
 
 (defn community-selection
   "To be used to display a summary of a community selection, and it's cost breakdown."
@@ -334,6 +362,13 @@
   [:div.w-50-l.w-100.fl.pr4-l.pr0
    [:div.card
     [community-breakdown props]]])
+
+(s/fdef community-selection
+  :args (s/cat :props (s/keys :req-un [::community
+                                       ::units
+                                       ::line-items
+                                       ::total]
+                              :opt-un [::on-click])))
 
 
 (defn coapplicant-community-selection
@@ -345,3 +380,9 @@
     [community-breakdown props]]
    [:div.w-40-l.w-100.fl.pv0
     [:img {:src "/assets/images/52gilbert.jpg"}]]])
+
+(s/fdef coapplicant-community-selection
+  :args (s/cat :props (s/keys :req-un [::community
+                                       ::units
+                                       ::line-items
+                                       ::total])))
