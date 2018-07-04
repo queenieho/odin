@@ -1,9 +1,10 @@
 (ns apply.sections.community.term
   (:require [apply.content :as content]
             [antizer.reagent :as ant]
-            [re-frame.core :refer [dispatch subscribe]]
+            [re-frame.core :refer [dispatch subscribe reg-event-fx]]
             [apply.events :as events]
-            [apply.db :as db]))
+            [apply.db :as db]
+            [iface.utils.log :as log]))
 
 
 (def step :community/term)
@@ -36,9 +37,11 @@
 
 
 (defmethod events/save-step-fx step
-  [db params]
-  {:db       (assoc db step params)
-   :dispatch [:step/advance]})
+  [db term]
+  {:dispatch [:application/update {:term term}]})
+
+
+(defmethod events/gql->rfdb :term [_] step)
 
 
 ;; views ========================================================================

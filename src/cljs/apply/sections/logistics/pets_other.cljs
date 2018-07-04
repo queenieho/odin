@@ -1,10 +1,11 @@
 (ns apply.sections.logistics.pets-other
   (:require [apply.content :as content]
             [antizer.reagent :as ant]
-            [re-frame.core :refer [dispatch subscribe]]
+            [re-frame.core :refer [dispatch subscribe reg-event-fx]]
             [apply.events :as events]
             [apply.db :as db]
-            [iface.components.ptm.ui.form :as form]))
+            [iface.components.ptm.ui.form :as form]
+            [iface.utils.log :as log]))
 
 
 (def step :logistics.pets/other)
@@ -35,11 +36,16 @@
 
 ;; events =======================================================================
 
+(reg-event-fx
+ ::update-pet-other
+ (fn [{db :db} [_ about]]
+   {:db (assoc-in db [step :about] about)}))
 
 (defmethod events/save-step-fx step
   [db params]
-  {:db       (assoc db step params)
-   :dispatch [:step/advance]})
+  (let [data (step db)]
+    {:dispatch [:application/update {:pet {:id    (:id data)
+                                           :about (:about data)}}]}))
 
 
 ;; views ========================================================================
@@ -54,4 +60,5 @@
     registered Emotional Support Animals. If your pet meets these requirements,
     tell us about them below."]]
    [:div.page-content.w-60-l.w-100
-    [form/textarea]]])
+    [form/textarea
+     {:on-change #(dispatch [::update-pet-other (.. % -target -value)])}]]])

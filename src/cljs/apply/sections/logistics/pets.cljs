@@ -3,7 +3,8 @@
             [antizer.reagent :as ant]
             [re-frame.core :refer [dispatch subscribe]]
             [apply.events :as events]
-            [apply.db :as db]))
+            [apply.db :as db]
+            [iface.utils.log :as log]))
 
 
 (def step :logistics/pets)
@@ -14,10 +15,11 @@
 
 (defmethod db/next-step step
   [db]
-  (case (step db)
-    :dog :logistics.pets/dog
-    :other :logistics.pets/other
-    :community/select))
+  (if (false? (step db))
+    :community/select
+    (if (= :dog (get-in db [:logistics.pets/dog :type]))
+      :logistics.pets/dog
+      :logistics.pets/other)))
 
 
 (defmethod db/previous-step step
@@ -39,9 +41,27 @@
 
 
 (defmethod events/save-step-fx step
-  [db params]
-  {:db       (assoc db step params)
-   :dispatch [:step/advance]})
+  [db pet]
+  #_(if (= :none pet)
+      {:dispatch [:application/update {:has_pet false}]}
+      {:dispatch [:application/update {:has_pet true}]})
+  (case pet
+    ;; TODO - conditionally *retract* :pet when choosing none
+    :none  (dispatch [:application/update {:has_pet false}])
+    :dog   (dispatch [:application/update {:has_pet true
+                                           :pet     {:type :dog}}])
+    :other (dispatch [:application/update {:has_pet true
+                                           :pet     {:type :other}}])))
+
+
+(defmethod events/gql->rfdb :has_pet [k] step)
+
+(defmethod events/gql->rfdb :pet [k v]
+  (log/log "is this a dog?" (:type v))
+  (log/log "does that equal :dog?" (= :dog (:type v)))
+  (if (= :dog (:type v))
+    :logistics.pets/dog
+    :logistics.pets/other))
 
 
 ;; views ========================================================================
