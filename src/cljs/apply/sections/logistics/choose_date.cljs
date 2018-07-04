@@ -46,12 +46,11 @@
 
 (defmethod events/save-step-fx step
   [db params]
-  {:dispatch [:application/update {:move_in (.toISOString params)}]})
+  (let [date (or params (step db))]
+   {:dispatch [:application/update {:move_in (.toISOString date)}]}))
 
 
-
-(defmethod events/gql->rfdb :move_in [k]
-  step)
+(defmethod events/gql->rfdb :move_in [k] step)
 
 
 ;; views ========================================================================
