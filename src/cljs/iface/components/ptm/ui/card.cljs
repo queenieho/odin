@@ -323,6 +323,7 @@
 (defn group [{:keys [on-change value card-width show-count]
               :or   {card-width :third}}]
   (let [n        (card-width card-count)
+        c        (r/children (r/current-component))
         children (map
                   #(update % 1 tb/assoc-when
                            :width card-width
@@ -331,7 +332,9 @@
                                           (some (fn [v] (= (:value (second %)) v)) value))
                            :count (when show-count
                                     (count value)))
-                  (r/children (r/current-component)))]
+                  (if (map? (second (first c)))
+                    c
+                    (first c)))]
     [:div.cf.mt5
      (doall
       (map-indexed
