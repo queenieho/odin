@@ -39,7 +39,8 @@
 
   :application_pet_params
   {:description "Inputs to create or update an applicant's pet"
-   :fields      {:type         {:type :application_pet_type}
+   :fields      {:id           {:type :Long}
+                 :type         {:type :application_pet_type}
                  :name         {:type String}
                  :about        {:type String}
                  :sterile      {:type Boolean}

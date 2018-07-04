@@ -145,8 +145,11 @@
 ;;tb/assoc-when to correctly record dogs and not dogs
 (defn- parse-pet-params [pet-params]
   (when-some [ps pet-params]
-    {:db/id    (d/tempid :db.part/starcity)
-     :pet/type (:type ps)}))
+    (timbre/info "\n\n\n-------- pet params: " (:about ps))
+    (tb/assoc-when
+     {:db/id     (or (:id ps) (d/tempid :db.part/starcity))}
+     :pet/type  (:type ps)
+     :pet/about (:about ps))))
 
 
 (defn- parse-update-params [params]
@@ -163,10 +166,10 @@
   (let [application (d/entity (d/db conn) application)
         account     (application/account application)
         params      (parse-update-params params)]
+    (timbre/info "\n\n\n application params are: " params)
     (cond
       (not (account/applicant? account))
       (resolve/resolve-as nil {:message "Cannot update applications for non-applicant!"})
-
       :otherwise
       (do
         @(d/transact conn (concat

@@ -94,7 +94,10 @@
 
 
   :application_pet
-  {:fields {:type         {:type        :application_pet_type
+  {:fields {:id           {:type        :Long
+                           :resolve     (:get :db/id)
+                           :description "The entity ID for the pet"}
+            :type         {:type        :application_pet_type
                            :resolve     (:get :pet/type)
                            :description "The type of pet."}
             :breed        {:type        String
