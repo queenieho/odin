@@ -618,6 +618,31 @@
                   [:accounts.entry.transition/update :rate]]]}))
 
 
+;; delete renewal ===============================================================
+
+
+(reg-event-fx
+ :accounts.entry.transition/delete!
+ [(path db/path)]
+ (fn [_ [k transition]]
+   {:dispatch [:ui/loading k true]
+    :graphql  {:mutation
+               [[:transition_delete {:id (:id transition)}
+                 [:id [:account [:id]]]]]
+               :on-success [::delete-transition-success k]
+               :on-failure [:graphql/failure k]}}))
+
+
+(reg-event-fx
+ ::delete-transition-success
+ [(path db/path)]
+ (fn [_ [_ k response]]
+   (let [account-id (get-in response [:data :transition_delete :account :id])]
+     {:dispatch-n [[:ui/loading k false]
+                   [:notify/success "Transition deleted!"]
+                   [:account/fetch account-id]]})))
+
+
 ;; payment ======================================================================
 
 
