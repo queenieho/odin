@@ -33,9 +33,12 @@
 
 
 (defmethod events/save-step-fx step
-  [db params]
-  {:db       (assoc db step params)
-   :dispatch [:step/advance]})
+  [db range]
+  {:db       (assoc db step range)
+   :dispatch [:application/update {:move_in_range range}]})
+
+
+(defmethod events/gql->rfdb :move_in_range [_] step)
 
 
 ;; views ========================================================================

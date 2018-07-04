@@ -12,6 +12,7 @@
             [apply.subs]
             [day8.re-frame.http-fx]
             [goog.dom :as gdom]
+            [cljsjs.moment]
             [iface.components.ptm.layout :as layout]
             [iface.modules.graphql :as graphql]
             [iface.utils.routes :as iroutes]
@@ -148,12 +149,13 @@
 (defn welcome-layout []
   (let [screen-two (r/atom false)]
     (fn []
-      [layout/layout
-       {:pre (list [:div.bg-top {:key 1}]
-                   (icons/icon {:type "logomark"}))}
-       (if-not @screen-two
-         [welcome-1 {:name "Bob Loblaw"} screen-two]
-         [welcome-2])])))
+      (let [applicant (subscribe [:user])]
+       [layout/layout
+        {:pre (list [:div.bg-top {:key 1}]
+                    (icons/icon {:type "logomark"}))}
+        (if-not @screen-two
+          [welcome-1 @applicant screen-two]
+          [welcome-2])]))))
 
 
 (defn layout []

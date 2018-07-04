@@ -7,9 +7,14 @@
   {:description "Application statuses."
    :values      [:in_progress :approved :rejected :submitted]}
 
+
+  :application_move_in_ranges
+  {:description "Allowed responses to the question 'When do you want to move in?"
+   :values      [:date :asap :flexible]}
+
   :application_pet_type
   {:description "Allowed types of pets."
-   :values      [:cat :dog]}
+   :values      [:cat :dog :other]}
 
   :currencies
   {:description "Currencies to make payments."
@@ -30,6 +35,10 @@
   :license_transition_type
   {:description "Possible kinds of license transitions."
    :values      [:move_out :intra_xfer :inter_xfer :renewal :pending]}
+
+  :occupancies
+  {:description "Possible amounts of humans sharing a single unit."
+   :values      [:single :double]}
 
   :order_status
   {:description "Possible statuses of orders."

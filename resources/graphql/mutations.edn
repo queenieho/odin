@@ -34,6 +34,24 @@
    :resolve     :application/approve!}
 
 
+  :application_create
+  {:type        :application
+   :description "Create a new membership application for an applicant's account."
+   :args        {:account {:type        (non-null :Long)
+                           :description "The account to which this application will belong."}}
+   :resolve     :application/create!}
+
+
+  :application_update
+  {:type        :application
+   :description "Update an attribute of a membership application."
+   :args        {:application {:type        (non-null :Long)
+                               :description "The application to update."}
+                 :params      {:type        (non-null :application_update_params)
+                               :description "Required parameters to update the application."}}
+   :resolve     :application/update!}
+
+
   ;; checks =======================================================================
 
 

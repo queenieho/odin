@@ -81,19 +81,20 @@
     (def ctx {:conn      conn
               :teller    odin.teller/teller
               :stripe    (odin.config/stripe-secret-key odin.config/config)
-              :requester (d/entity (d/db conn) [:account/email "member@test.com"])})
+              :requester (d/entity (d/db conn) [:account/email "apply@test.com"])})
 
     )
 
 
-  (let [account (d/entity (d/db conn) [:account/email "member@test.com"])]
-    (execute schema
-             (venia/graphql-query
-              {:venia/queries
-               [[:payments {:params {:account (:db/id account)}}
-                 [:id :type :subtypes [:order [:id]] [:property [:name]]]]]})
-             nil
-             ctx))
+  (let [account (d/entity (d/db conn) [:account/email "apply@test.com"])]
+    (pretty
+     (execute schema
+              (venia/graphql-query
+               {:venia/queries
+                [[:account {:id (:db/id account)}
+                  [:id [:application [:id :move_in :occupancy]]]]]})
+              nil
+              ctx)))
 
 
   (let [account (d/entity (d/db conn) [:account/email "member@test.com"])]

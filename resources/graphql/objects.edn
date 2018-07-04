@@ -44,39 +44,44 @@
 
 
   :application
-  {:fields {:id          {:type    (non-null :Long)
-                          :resolve (:get :db/id)}
-            :account     {:type    (non-null :account)
-                          :resolve :application/account}
-            :approved_at {:type    :Instant
-                          :resolve :application/approved-at}
-            :approved_by {:type    :account
-                          :resolve :application/approved-by}
-            :term        {:type        :Long
-                          :resolve     :application/term
-                          :description "Desired term."}
-            :communities {:type    (list :property)
-                          :resolve (:get :application/communities)}
-            :move_in     {:type        :Instant
-                          :resolve     (:get :application/move-in)
-                          :description "Desired move-in date."}
-            :has_pet     {:type    Boolean
-                          :resolve (:get :application/has-pet)}
-            :pet         {:type    :application_pet
-                          :resolve (:get :application/pet)}
-            :fitness     {:type    :application_fitness
-                          :resolve (:get :application/fitness)}
-            :status      {:type    :application_status
-                          :resolve :application/status}
-            :income      {:type        (list :application_income_file)
-                          :resolve     :application/income
-                          :description "Income file paths."}
-            :submitted   {:type    :Instant
-                          :resolve :application/submitted-at}
-            :created     {:type    (non-null :Instant)
-                          :resolve :entity/created}
-            :updated     {:type    (non-null :Instant)
-                          :resolve :application/updated}}}
+  {:fields {:id            {:type    (non-null :Long)
+                            :resolve (:get :db/id)}
+            :account       {:type    (non-null :account)
+                            :resolve :application/account}
+            :approved_at   {:type    :Instant
+                            :resolve :application/approved-at}
+            :approved_by   {:type    :account
+                            :resolve :application/approved-by}
+            :term          {:type        :Long
+                            :resolve     :application/term
+                            :description "Desired term."}
+            :communities   {:type    (list :property)
+                            :resolve (:get :application/communities)}
+            :move_in       {:type        :Instant
+                            :resolve     (:get :application/move-in)
+                            :description "Desired move-in date."}
+            :move_in_range {:type        :application_move_in_ranges
+                            :resolve     :application/move-in-range
+                            :description "Desired move-in range."}
+            :occupancy     {:type    :occupancies
+                            :resolve :application/occupancy}
+            :has_pet       {:type    Boolean
+                            :resolve (:get :application/has-pet)}
+            :pet           {:type    :application_pet
+                            :resolve (:get :application/pet)}
+            :fitness       {:type    :application_fitness
+                            :resolve (:get :application/fitness)}
+            :status        {:type    :application_status
+                            :resolve :application/status}
+            :income        {:type        (list :application_income_file)
+                            :resolve     :application/income
+                            :description "Income file paths."}
+            :submitted     {:type    :Instant
+                            :resolve :application/submitted-at}
+            :created       {:type    (non-null :Instant)
+                            :resolve :entity/created}
+            :updated       {:type    (non-null :Instant)
+                            :resolve :application/updated}}}
 
 
   :application_income_file
@@ -89,7 +94,10 @@
 
 
   :application_pet
-  {:fields {:type         {:type        :application_pet_type
+  {:fields {:id           {:type        :Long
+                           :resolve     (:get :db/id)
+                           :description "The entity ID for the pet"}
+            :type         {:type        :application_pet_type
                            :resolve     (:get :pet/type)
                            :description "The type of pet."}
             :breed        {:type        String
@@ -112,7 +120,13 @@
                            :description "Description of the pet's demeanor."}
             :daytime_care {:type        String
                            :resolve     (:get :pet/daytime-care)
-                           :description "Description of how the pet will be taken care of during the day."}}}
+                           :description "Description of how the pet will be taken care of during the day."}
+            :name         {:type        String
+                           :resolve     (:get :pet/name)
+                           :description "The name of the pet"}
+            :about        {:type        String
+                           :resolve     (:get :pet/about)
+                           :description "A description of the pet, provided for any pet which is not a dog."}}}
 
 
   :application_fitness

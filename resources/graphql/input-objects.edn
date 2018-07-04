@@ -25,6 +25,31 @@
                  :unit     {:type (non-null :Long)}}}
 
 
+  :application_update_params
+  {:description "Inputs to update an application."
+   :fields      {:term          {:type Int}
+                 :move_in       {:type :Instant}
+                 :move_in_range {:type :application_move_in_ranges}
+                 :occupancy     {:type :occupancies}
+                 :has_pet       {:type Boolean}
+                 :pet           {:type :application_pet_params}
+                 :status        {:type :application_status}
+                 :updated       {:type :Instant}}}
+
+
+  :application_pet_params
+  {:description "Inputs to create or update an applicant's pet"
+   :fields      {:id           {:type :Long}
+                 :type         {:type :application_pet_type}
+                 :name         {:type String}
+                 :about        {:type String}
+                 :sterile      {:type Boolean}
+                 :vaccines     {:type Boolean}
+                 :bitten       {:type Boolean}
+                 :demeanor     {:type String}
+                 :daytime_care {:type String}}}
+
+
   ;;; Check
   :create_check_params
   {:description "Inputs to create a check."
