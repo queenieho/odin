@@ -1,9 +1,10 @@
-(ns iface.components.ptm.ui.cards
+(ns iface.components.ptm.ui.card
   (:require [cljs.spec.alpha :as s]
             [reagent.core :as r]
             [devtools.defaults :as d]
             [toolbelt.core :as tb]
-            [antizer.reagent :as ant]))
+            [antizer.reagent :as ant]
+            [iface.utils.formatters :as format]))
 
 
 ;; helpers ==============================
@@ -261,7 +262,7 @@
      [:h2.ma0 title]]
     ;; body
     [:div.w-75-l.w-100.fl.pv3
-     (map-indexed
+     #_(map-indexed
       (fn [i row-items]
         ^{:key i}
         [summary-row row-items])
@@ -277,30 +278,82 @@
     true))
 
 
+(defn- line-label [label tooltip]
+  (let [show (r/atom false)]
+    (fn [label]
+      [:h4.w-60.mv1.fl label
+       (when tooltip
+         [:a {:onMouseOver #(swap! show toggle)
+              :onMouseOut  #(swap! show toggle)}
+          [ant/tooltip {:title     tooltip
+                        :placement "right"
+                        :visible   @show}
+           [:img.icon-small {:src "/assets/images/ptm/icons/ic-help-tooltip.svg"}]]])])))
+
+
+(defn- line-item [type label tooltip cost & rest]
+  (let [cstr  (format/currency cost)
+        price (if (not-empty (remove nil? rest))
+                (str cstr " - " (format/currency (first rest)))
+                cstr)]
+    [:div.cf
+     [line-label label tooltip]
+     (if (= type :line)
+       [:p.w-40.fl.tr.mv0 price]
+       [:h3.w-40.fl.tr.mt1.mb3 price])]))
+
+
 (defn community-selection
   "To be used to display a summary of a community selection, and it's cost breakdown."
-  [community units]
-  (let [tooltip (r/atom false)]
-    (fn [community units]
-      [:div.w-50-l.w-100.fl.pr4-l.pr0
-       [:div.card
-        ;; header
-        [:div.card-top
-         [:h2.mt0 community]
-         [:div.cf
-          [:h4.w-70.mv1.fl "Preferred Unit Selections"]
-          [:p.w-30.fl.tr.mv0 units]]]
-        ;; footer
-        [:div.card-footer
-         [:h3 "Cost Breakdown"]
-         ;; line item
-         [:div.cf
-          [:h4.w-60.mv1.fl "Suite Fee"
-           [:a {:onMouseOver #(swap! tooltip toggle)
-                :onMouseOut  #(swap! tooltip toggle)}
-            [ant/tooltip {:title     "This is a very long-winded tooltip. We need this to explain the very complicated price breakdown we have here that not even I understand"
-                          :placement "right"
-                          :visible   @tooltip}
-             [:img.icon-small {:src "/assets/images/ptm/icons/ic-help-tooltip.svg"}]]]]
-          ]]
-        ]])))
+  [{:keys [community units on-click line-items total]}]
+  [:div.w-50-l.w-100.fl.pr4-l.pr0
+   [:div.card
+    ;; header
+    [:div.card-top
+     [:h2.mt0 community]
+     [:div.cf
+      [:h4.w-70.mv1.fl "Preferred Unit Selections"]
+      [:p.w-30.fl.tr.mv0 units
+       [:img.icon-edit {:src      "/assets/images/ptm/icons/ic-edit.svg"
+                        :on-click (when-let [c on-click]
+                                    #(c))}]]]]
+    ;; footer
+    [:div.card-footer
+     [:h3 "Cost Breakdown"]
+     ;; line items
+     (map-indexed
+      (fn [i {:keys [label tooltip price max]}]
+        ^{:key i}
+        [line-item :line label tooltip price max])
+      line-items)
+     [:hr]
+     (let [{:keys [label tooltip price max]} total]
+       [line-item :total label tooltip price max])]]])
+
+
+(defn coapplicant-community-selection
+  "Displays a summary of a selected community in the coapplicant's view."
+  [{:keys [community units on-click line-items total]}]
+  [:div.card
+   [:div.w-60-l.w-100.fl.pv0
+    [:div.card-top
+     [:h2.mt0 community]
+     [:div.cf
+      [:h4.w-70.mv1.fl "Preferred Unit Selections"]
+      [:p.w-30.fl.tr.mv0 units
+       [:img.icon-edit {:src      "/assets/images/ptm/icons/ic-edit.svg"
+                        :on-click (when-let [c on-click]
+                                    #(c))}]]]]
+    [:div.card-footer
+     [:h3 "Cost Breakdown"]
+     ;; line items
+     (map-indexed
+      (fn [i {:keys [label tooltip price max]}]
+        ^{:key i}
+        [line-item :line label tooltip price max])
+      line-items)
+     [:hr]
+     (let [{:keys [label tooltip price max]} total]
+       [line-item :total label tooltip price max])]]
+   [:div.w-40-l.w-100.fl.pv0
+    [:img {:src "/assets/images/52gilbert.jpg"}]]])

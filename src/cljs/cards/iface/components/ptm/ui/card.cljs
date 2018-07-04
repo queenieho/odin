@@ -1,9 +1,9 @@
-(ns cards.iface.components.ptm.ui.cards
+(ns cards.iface.components.ptm.ui.card
   (:require-macros [devcards.core :as dc :refer [defcard
                                                  defcard-doc
                                                  defcard-rg]])
   (:require [devcards.core]
-            [iface.components.ptm.ui.cards :as cards]
+            [iface.components.ptm.ui.card :as card]
             [reagent.core :as r]))
 
 
@@ -16,13 +16,13 @@
 
 (defcard-rg single-cards
   "
-## Single Cards
-`single` cards can be used as radio buttons or as individual buttons if you wish to set a custom `:on-click` prop to it. If no `:on-click` is set, it will only display data.
+## Single Card
+`single` card can be used as radio buttons or as individual buttons if you wish to set a custom `:on-click` prop to it. If no `:on-click` is set, it will only display data.
 <br>
 <br>
-### Simple Text Cards
+### Simple Text Card
 ```clojure
-[cards/single
+[card/single
  {:title    \"This is a title\"
   :on-click #(.log js/console \"I'm being poked!\")}]
 ```
@@ -30,7 +30,7 @@
 "
   (fn [data _]
     [:div.cf
-     [cards/single
+     [card/single
       {:title    "This is a title"
        :on-click #(.log js/console "I'm being poked!")
        }]])
@@ -38,14 +38,14 @@
   {:frame false})
 
 
-(defcard-rg illo-cards
+(defcard-rg illo-card
   "
-### Content and Styling Cards
+### Content and Styling Card
 The following content props can be added to a card: `:title`, `:subtitle`, `:description`, `:img`, `:tag`, `:footer`.
 <br>
-Cards by default are center aligned, but an `:align` prop can be passed to set it to `:center`, or `:left`.
+Card by default are center aligned, but an `:align` prop can be passed to set it to `:center`, or `:left`.
 <br>
-Cards will automatically be a third of the width of the container they're in, this can be overwritten passing a `:width` prop with a value of `:half`.
+Card will automatically be a third of the width of the container they're in, this can be overwritten passing a `:width` prop with a value of `:half`.
 <br>
 <br>
 ```clojure
@@ -64,7 +64,7 @@ Cards will automatically be a third of the width of the container they're in, th
 "
   (fn [_ _]
     [:div.cf
-     [cards/single
+     [card/single
       {:title       "Kitten!"
        :subtitle    "Such floof!"
        :description "This is a description being used"
@@ -81,12 +81,12 @@ Cards will automatically be a third of the width of the container they're in, th
    :frame   false})
 
 
-(defcard-rg h1-cards
+(defcard-rg h1-card
   "
-### H1 Cards
-`single-h1` can be used when there's a need to highlight feature text. A footer can be added to help clarify the selection. H1 Cards can be used like single cards.
+### H1 Card
+`single-h1` can be used when there's a need to highlight feature text. A footer can be added to help clarify the selection. H1 Card can be used like single card.
 <br>
-H1 cards can have the following props: `:value`, `:on-click`, `:title`, `:subtitle`, `:footer`, and `:width`.
+H1 card can have the following props: `:value`, `:on-click`, `:title`, `:subtitle`, `:footer`, and `:width`.
 <br>
 <br>
 ```clojure
@@ -99,7 +99,7 @@ H1 cards can have the following props: `:value`, `:on-click`, `:title`, `:subtit
 "
   (fn [_ _]
     [:div.cf
-     [cards/single-h1
+     [card/single-h1
       {:value    6
        :title    "6"
        :subtitle "months"
@@ -127,37 +127,37 @@ Card groups can also receive a `:card-width` (`:third` | `:half`) prop that will
 <br>
 <br>
 ### Single Selection Card Groups
-Single Selection Groups are meant to be used like radio buttons. `single` cards with a unique `:value` should be used for this type of groups.
+Single Selection Groups are meant to be used like radio buttons. `single` card with a unique `:value` should be used for this type of groups.
 <br>
 <br>
 ```clojure
-[cards/group
+[card/group
  {:on-change  #(swap! data assoc :selected %)
   :value      (:selected @data)
   :card-width :half}
- [cards/single
+ [card/single
   {:title \"Card 1\"
    :value 1}]
- [cards/single
+ [card/single
   {:title \"Card 2\"
    :value 2}]
- [cards/single
+ [card/single
   {:title \"Card 3\"
    :value 3}]]
 ```
 "
   (fn [data _]
-    [cards/group
+    [card/group
      {:on-change  #(swap! data assoc :selected %)
       :value      (:selected @data)
       :card-width :half}
-     [cards/single
+     [card/single
       {:title "Card 1"
        :value 1}]
-     [cards/single
+     [card/single
       {:title "Card 2"
        :value 2}]
-     [cards/single
+     [card/single
       {:title "Card 3"
        :value 3}]])
 
@@ -171,28 +171,28 @@ Single Selection Groups are meant to be used like radio buttons. `single` cards 
   "
 <br>
 ### Multiple Selection Card Groups
-Multiple Selection Cards are meant to be used like checkboxes. `multiple` cards with a unique `:value` should be used for this type of groups.
+Multiple Selection Card are meant to be used like checkboxes. `multiple` card with a unique `:value` should be used for this type of groups.
 <br>
 <br>
 ```clojure
-[cards/group
+[card/group
  {:on-change  #(swap! data update :selected update-group-value %)
   :value      (:selected @data)
   :card-width :third
   :show-count true}
- [cards/multiple
+ [card/multiple
   {:title       \"Card 1\"
    :img         \"http://placekitten.com/200/200\"
    :subtitle    \"best option\"
    :description \"buy all the bundles!\"
    :value       1}]
- [cards/multiple
+ [card/multiple
   {:title       \"Card 2\"
    :img         \"http://placekitten.com/200/200\"
    :subtitle    \"best option\"
    :description \"buy all the bundles!\"
    :value       2}]
- [cards/multiple
+ [card/multiple
   {:title       \"Card 3\"
    :img         \"http://placekitten.com/200/200\"
    :subtitle    \"best option\"
@@ -201,24 +201,24 @@ Multiple Selection Cards are meant to be used like checkboxes. `multiple` cards 
 ```
 "
   (fn [data _]
-    [cards/group
+    [card/group
      {:on-change  #(swap! data update :selected update-group-value %)
       :value      (:selected @data)
       :card-width :third
       :show-count true}
-     [cards/multiple
+     [card/multiple
       {:title       "Card 1"
        :img         "http://placekitten.com/200/200"
        :subtitle    "best option"
        :description "buy all the bundles!"
        :value       1}]
-     [cards/multiple
+     [card/multiple
       {:title       "Card 2"
        :img         "http://placekitten.com/200/200"
        :subtitle    "best option"
        :description "buy all the bundles!"
        :value       2}]
-     [cards/multiple
+     [card/multiple
       {:title       "Card 3"
        :img         "http://placekitten.com/200/200"
        :subtitle    "best option"
@@ -235,16 +235,16 @@ Multiple Selection Cards are meant to be used like checkboxes. `multiple` cards 
   "
 <br>
 ### Carousel Card Groups
-Carousel Cards are meant to be used like checkboxes. `carousel-card` cards with a unique `:value` should be used for this type of groups. An `:images` prop with an array or list of image sources will be required for the carrousel.
+Carousel Card are meant to be used like checkboxes. `carousel-card` card with a unique `:value` should be used for this type of groups. An `:images` prop with an array or list of image sources will be required for the carrousel.
 <br>
 <br>
 ```clojure
-[cards/group
+[card/group
  {:on-change  #(swap! data update :selected update-group-value %)
   :value      (:selected @data)
   :card-width :third
   :show-count true}
- [cards/carousel-card
+ [card/carousel-card
   {:title       \"Card 1\"
    :tag         \"Most popular\"
    :subtitle    \"best option\"
@@ -254,7 +254,7 @@ Carousel Cards are meant to be used like checkboxes. `carousel-card` cards with 
                  \"http://placekitten.com/600/500\"
                  \"http://placekitten.com/600/700\"]
    :value       1}]
- [cards/carousel-card
+ [card/carousel-card
   {:title       \"Card 2\"
    :subtitle    \"best option\"
    :description \"buy all the bundles!\"
@@ -263,7 +263,7 @@ Carousel Cards are meant to be used like checkboxes. `carousel-card` cards with 
                  \"http://placekitten.com/600/500\"
                  \"http://placekitten.com/600/700\"]
    :value       2}]
- [cards/carousel-card
+ [card/carousel-card
   {:title       \"Card 3\"
    :subtitle    \"best option\"
    :description \"buy all the bundles!\"
@@ -275,12 +275,12 @@ Carousel Cards are meant to be used like checkboxes. `carousel-card` cards with 
 ```
 "
   (fn [data _]
-    [cards/group
+    [card/group
      {:on-change  #(swap! data update :selected update-group-value %)
       :value      (:selected @data)
       :card-width :third
       :show-count true}
-     [cards/carousel-card
+     [card/carousel-card
       {:title       "Card 1"
        :tag         "Most popular"
        :subtitle    "best option"
@@ -290,7 +290,7 @@ Carousel Cards are meant to be used like checkboxes. `carousel-card` cards with 
                      "http://placekitten.com/600/500"
                      "http://placekitten.com/600/700"]
        :value       1}]
-     [cards/carousel-card
+     [card/carousel-card
       {:title       "Card 2"
        :subtitle    "best option"
        :description "buy all the bundles!"
@@ -299,7 +299,7 @@ Carousel Cards are meant to be used like checkboxes. `carousel-card` cards with 
                      "http://placekitten.com/600/500"
                      "http://placekitten.com/600/700"]
        :value       2}]
-     [cards/carousel-card
+     [card/carousel-card
       {:title       "Card 3"
        :subtitle    "best option"
        :description "buy all the bundles!"
@@ -334,10 +334,10 @@ Carousel Cards are meant to be used like checkboxes. `carousel-card` cards with 
                      :on-click #(.log js/console "dog")}])
 
 
-(defcard-rg summary-cards
+(defcard-rg summary-card
   "
 <br>
-## Summary Cards
+## Summary Card
 <br>
 ### Logistics Summary Card
 `logistics-summary` is meant to show a summary of logistics answers of the member application. This component takes `2` arguments: a `title` and a collection of `items`, which will be maps in the following form: <br>
@@ -350,39 +350,125 @@ Carousel Cards are meant to be used like checkboxes. `carousel-card` cards with 
 <br>
 Usage:
 ```clojure
-[cards/logistics-summary \"Logistics\" summary-items]
+[card/logistics-summary \"Logistics\" summary-items]
 ```
 <br>
 "
   (fn [data _]
-    [cards/logistics-summary "Logistics" summary-items])
+    [card/logistics-summary "Logistics" summary-items])
 
   (r/atom {:selected []})
   {:heading      true
    :frame        false})
 
 
-(defcard-rg summary-cards
+(defn- community-selection-sample []
+  (let [items [{:label   "Suite Fee"
+                :tooltip "This is a tooltip about Suite Fees. We need this to explain the very complicated price breakdown we have."
+                :price   1600}
+               {:label "Membership Fee"
+                :price 300}
+               {:label "Pet Fee"
+                :price 75}
+               {:label   "Suite Features"
+                :tooltip "This is a tooltip about Suite Features. Because some people won't get why a range."
+                :price   0
+                :max     100}]
+        total {:label   "Total"
+               :tooltip "This is the sum of all items."
+               :price   1975
+               :max     2090}]
+    [card/community-selection {:community  "Tenderloin"
+                               :units      5
+                               :on-click   #(.log js/console "click")
+                               :line-items items
+                               :total      total}]))
+
+
+(defcard-rg summary-card
   "
 <br>
 ### Community Selection Summary Card
-`logistics-summary` is meant to show a summary of logistics answers of the member application. This component takes `2` arguments: a `title` and a collection of `items`, which will be maps in the following form: <br>
+Each `community-selection` card displays the number of preferred units in a chosen community and it's respective cost breakdown. It takes 5 props `:community` (`String`), `:units` (`Int`), `:line-items` (`list of cost breakdown`), and `total` (`map of total cost`).
+<br>
+<br>
+Each `line-item` and the `total` should follow the following shape:
+<br>
 ```clojure
-{:label    String - required
- :value    String - required
- :edit     Boolean
- :on-click (function)}
+{:label   String for breakdown - Required
+ :price   Integer - Required
+ :tooltip String for tooltip text - Required
+ :max     Integer - Optional. Will be the max price if using a price range}
 ```
 <br>
-Usage:
-```clojure
-[cards/logistics-summary \"Logistics\" summary-items]
-```
+There should be a row container for every 2 `community-selection` cards.
+<br>
 <br>
 "
   (fn [data _]
-    [cards/community-selection "Tenderloin" 5])
+    [:div.w-100.cf
+     [community-selection-sample]])
 
   (r/atom {:selected []})
   {:heading      true
    :frame        false})
+
+
+(defcard-doc
+  " #### Community selection summary card code sample"
+  (dc/mkdn-pprint-source community-selection-sample))
+
+
+(defn- coapplicant-community-selection-sample []
+  (let [items [{:label   "Suite Fee"
+                :tooltip "This is a tooltip about Suite Fees. We need this to explain the very complicated price breakdown we have."
+                :price   1600}
+               {:label "Membership Fee"
+                :price 300}
+               {:label "Pet Fee"
+                :price 75}
+               {:label   "Suite Features"
+                :tooltip "This is a tooltip about Suite Features. Because some people won't get why a range."
+                :price   0
+                :max     100}]
+        total {:label   "Total"
+               :tooltip "This is the sum of all items."
+               :price   1975
+               :max     2090}]
+    [card/coapplicant-community-selection {:community  "Tenderloin"
+                                           :units      5
+                                           :on-click   #(.log js/console "click")
+                                           :line-items items
+                                           :total      total}]))
+
+
+(defcard-rg coapplicant-summary-card
+  "
+<br>
+## This docstring is not the right one, update when this component actually works
+### Community Selection Summary Card
+Each `community-selection` card displays the number of preferred units in a chosen community and it's respective cost breakdown. It takes 5 props `:community` (`String`), `:units` (`Int`), `:line-items` (`list of cost breakdown`), and `total` (`map of total cost`).
+<br>
+<br>
+Each `line-item` and the `total` should follow the following shape:
+<br>
+```clojure
+{:label   String for breakdown - Required
+ :price   Integer - Required
+ :tooltip String for tooltip text - Required
+ :max     Integer - Optional. Will be the max price if using a price range}
+```
+<br>
+"
+  (fn [data _]
+    [:div.w-100.cf
+     [coapplicant-community-selection-sample]])
+
+  (r/atom {:selected []})
+  {:heading      true
+   :frame        false})
+
+
+(defcard-doc
+  " #### Community selection summary card code sample"
+  (dc/mkdn-pprint-source coapplicant-community-selection-sample))
