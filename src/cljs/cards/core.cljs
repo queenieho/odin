@@ -11,6 +11,7 @@
             [cards.iface.components.menu]
             [cards.iface.components.ptm.ui.button]
             [cards.iface.components.ptm.ui.cards]
+            [cards.iface.components.ptm.ui.modal]
             [cards.iface.components.ptm.ui.tag]
             [cards.iface.components.ptm.ui.label]
             [cards.member.services.cart]))
