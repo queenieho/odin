@@ -437,7 +437,6 @@ There should be a row container for every 2 `community-selection` cards.
                :max     2090}]
     [card/coapplicant-community-selection {:community  "Tenderloin"
                                            :units      5
-                                           :on-click   #(.log js/console "click")
                                            :line-items items
                                            :total      total}]))
 

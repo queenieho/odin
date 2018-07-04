@@ -263,10 +263,10 @@
     ;; body
     [:div.w-75-l.w-100.fl.pv3
      #_(map-indexed
-      (fn [i row-items]
-        ^{:key i}
-        [summary-row row-items])
-      (partition 2 2 nil items))]]])
+        (fn [i row-items]
+          ^{:key i}
+          [summary-row row-items])
+        (partition 2 2 nil items))]]])
 
 
 ;; unit selection =======================
@@ -303,57 +303,45 @@
        [:h3.w-40.fl.tr.mt1.mb3 price])]))
 
 
+(defn- community-breakdown
+  [{:keys [community units on-click line-items total]}]
+  [:div
+   [:div.card-top
+    [:h2.mt0 community]
+    [:div.cf
+     [:h4.w-70.mv1.fl "Preferred Unit Selections"]
+     [:p.w-30.fl.tr.mv0 units
+      (when-let [c on-click]
+        [:img.icon-edit {:src      "/assets/images/ptm/icons/ic-edit.svg"
+                         :on-click #(c)}])]]]
+   [:div.card-footer
+    [:h3 "Cost Breakdown"]
+    ;; line items
+    (map-indexed
+     (fn [i {:keys [label tooltip price max]}]
+       ^{:key i}
+       [line-item :line label tooltip price max])
+     line-items)
+    [:hr]
+    (let [{:keys [label tooltip price max]} total]
+      [line-item :total label tooltip price max])]])
+
+
 (defn community-selection
   "To be used to display a summary of a community selection, and it's cost breakdown."
-  [{:keys [community units on-click line-items total]}]
+  [{:keys [community units on-click line-items total]
+    :as   props}]
   [:div.w-50-l.w-100.fl.pr4-l.pr0
    [:div.card
-    ;; header
-    [:div.card-top
-     [:h2.mt0 community]
-     [:div.cf
-      [:h4.w-70.mv1.fl "Preferred Unit Selections"]
-      [:p.w-30.fl.tr.mv0 units
-       [:img.icon-edit {:src      "/assets/images/ptm/icons/ic-edit.svg"
-                        :on-click (when-let [c on-click]
-                                    #(c))}]]]]
-    ;; footer
-    [:div.card-footer
-     [:h3 "Cost Breakdown"]
-     ;; line items
-     (map-indexed
-      (fn [i {:keys [label tooltip price max]}]
-        ^{:key i}
-        [line-item :line label tooltip price max])
-      line-items)
-     [:hr]
-     (let [{:keys [label tooltip price max]} total]
-       [line-item :total label tooltip price max])]]])
+    [community-breakdown props]]])
 
 
 (defn coapplicant-community-selection
   "Displays a summary of a selected community in the coapplicant's view."
-  [{:keys [community units on-click line-items total]}]
+  [{:keys [community units line-items total]
+    :as   props}]
   [:div.card
    [:div.w-60-l.w-100.fl.pv0
-    [:div.card-top
-     [:h2.mt0 community]
-     [:div.cf
-      [:h4.w-70.mv1.fl "Preferred Unit Selections"]
-      [:p.w-30.fl.tr.mv0 units
-       [:img.icon-edit {:src      "/assets/images/ptm/icons/ic-edit.svg"
-                        :on-click (when-let [c on-click]
-                                    #(c))}]]]]
-    [:div.card-footer
-     [:h3 "Cost Breakdown"]
-     ;; line items
-     (map-indexed
-      (fn [i {:keys [label tooltip price max]}]
-        ^{:key i}
-        [line-item :line label tooltip price max])
-      line-items)
-     [:hr]
-     (let [{:keys [label tooltip price max]} total]
-       [line-item :total label tooltip price max])]]
+    [community-breakdown props]]
    [:div.w-40-l.w-100.fl.pv0
     [:img {:src "/assets/images/52gilbert.jpg"}]]])
