@@ -14,6 +14,12 @@
   )
 
 
+(defn single-sample []
+  [card/single
+   {:title    "This is a title"
+    :on-click #(.log js/console "I'm being poked!")}])
+
+
 (defcard-rg single-cards
   "
 ## Single Card
@@ -21,24 +27,40 @@
 <br>
 <br>
 ### Simple Text Card
-```clojure
-[card/single
- {:title    \"This is a title\"
-  :on-click #(.log js/console \"I'm being poked!\")}]
-```
 <br>
 "
   (fn [data _]
     [:div.cf
-     [card/single
-      {:title    "This is a title"
-       :on-click #(.log js/console "I'm being poked!")}]])
+     [single-sample]])
   (r/atom [])
   {:frame false})
 
 
+(defcard-doc
+  "#### Single Card Sample Code"
+  (dc/mkdn-pprint-source single-sample))
+
+
+;; Illustration Card Sample =====================================================
+
+
+(defn illo-card-sample []
+  [card/single
+   {:title       "Kitten!"
+    :subtitle    "Such floof!"
+    :description "This is a description being used"
+    :img         "http://placekitten.com/300/300"
+    :tag         "Cats"
+    :footer      "Paws"
+    :width       :half
+    :disabled    true
+    :align       :left}])
+
+
 (defcard-rg illo-card
   "
+<hr>
+<br>
 ### Content and Styling Card
 The following content props can be added to a card: `:title`, `:subtitle`, `:description`, `:img`, `:tag`, `:footer`.
 <br>
@@ -47,71 +69,78 @@ Card by default are center aligned, but an `:align` prop can be passed to set it
 Card will automatically be a third of the width of the container they're in, this can be overwritten passing a `:width` prop with a value of `:half`.
 <br>
 <br>
-```clojure
-[card/single
- {:title       \"Kitten!\"
-  :subtitle    \"Such floof!\"
-  :description \"This is a description being used\"
-  :img         \"http://placekitten.com/90/90\"
-  :tag         \"Cats\"
-  :footer      \"Paws\"
-  :width       :half
-  :disabled    true
-  :align       :left}]
-```
-<br>
 "
   (fn [_ _]
     [:div.cf
-     [card/single
-      {:title       "Kitten!"
-       :subtitle    "Such floof!"
-       :description "This is a description being used"
-       :img         "http://placekitten.com/300/300"
-       :tag         "Cats"
-       :footer      "Paws"
-       :width       :half
-       :disabled    true
-       :align       :left}]
-
-     ])
+     [illo-card-sample]])
   nil
   {:heading false
    :frame   false})
 
 
+(defcard-doc
+  "#### Illo Card Sample"
+  (dc/mkdn-pprint-source illo-card-sample))
+
+
+;; h1 card sample ===============================================================
+
+
+(defn h1-sample []
+  [card/single-h1
+   {:value    6
+    :title    "6"
+    :subtitle "months"
+    :footer   "+ $50/month"}])
+
+
 (defcard-rg h1-card
   "
+<hr>
+<br>
 ### H1 Card
 `single-h1` can be used when there's a need to highlight feature text. A footer can be added to help clarify the selection. H1 Card can be used like single card.
 <br>
 H1 card can have the following props: `:value`, `:on-click`, `:title`, `:subtitle`, `:footer`, and `:width`.
 <br>
 <br>
-```clojure
-[card/single-h1
- {:title    \"6\"
-  :subtitle \"months\"
-  :footer   \"+ $50/month\"}]
-```
-<br>
 "
   (fn [_ _]
     [:div.cf
-     [card/single-h1
-      {:value    6
-       :title    "6"
-       :subtitle "months"
-       :footer   "+ $50/month"}]])
+     [h1-sample]])
   nil
   {:heading false
    :frame   false})
+
+
+(defcard-doc
+  "#### Single H1 Card Sample"
+  (dc/mkdn-pprint-source h1-sample))
+
+
+;; Single Selection Card Groups =================================================
 
 
 (defn- update-group-value [coll v]
   (if (some #(= v %) coll)
     (remove #(= v %) coll)
     (conj coll v)))
+
+
+(defn- single-card-sample [data]
+  [card/group
+   {:on-change  #(swap! data assoc :selected %)
+    :value      (:selected @data)
+    :card-width :half}
+   [card/single
+    {:title "Card 1"
+     :value 1}]
+   [card/single
+    {:title "Card 2"
+     :value 2}]
+   [card/single
+    {:title "Card 3"
+     :value 3}]])
 
 
 (defcard-rg groups-card-single
@@ -127,38 +156,9 @@ Card groups can also receive a `:card-width` (`:third` | `:half`) prop that will
 <br>
 ### Single Selection Card Groups
 Single Selection Groups are meant to be used like radio buttons. `single` card with a unique `:value` should be used for this type of groups.
-<br>
-<br>
-```clojure
-[card/group
- {:on-change  #(swap! data assoc :selected %)
-  :value      (:selected @data)
-  :card-width :half}
- [card/single
-  {:title \"Card 1\"
-   :value 1}]
- [card/single
-  {:title \"Card 2\"
-   :value 2}]
- [card/single
-  {:title \"Card 3\"
-   :value 3}]]
-```
 "
   (fn [data _]
-    [card/group
-     {:on-change  #(swap! data assoc :selected %)
-      :value      (:selected @data)
-      :card-width :half}
-     [card/single
-      {:title "Card 1"
-       :value 1}]
-     [card/single
-      {:title "Card 2"
-       :value 2}]
-     [card/single
-      {:title "Card 3"
-       :value 3}]])
+    [single-card-sample data])
 
   (r/atom {:selected nil})
   {:inspect-data true
@@ -166,152 +166,124 @@ Single Selection Groups are meant to be used like radio buttons. `single` card w
    :frame        false})
 
 
+(defcard-doc
+  "#### Single Selection Card Sample Code"
+  (dc/mkdn-pprint-source single-card-sample))
+
+
+;; multiple selection card sample ===============================================
+
+
+(defn multiple-card-sample [data]
+  [card/group
+   {:on-change  #(swap! data update :selected update-group-value %)
+    :value      (:selected @data)
+    :card-width :third
+    :show-count true}
+   [card/multiple
+    {:title       "Card 1"
+     :img         "http://placekitten.com/200/200"
+     :subtitle    "best option"
+     :description "buy all the bundles!"
+     :value       1}]
+   [card/multiple
+    {:title       "Card 2"
+     :img         "http://placekitten.com/200/200"
+     :subtitle    "best option"
+     :description "buy all the bundles!"
+     :value       2}]
+   [card/multiple
+    {:title       "Card 3"
+     :img         "http://placekitten.com/200/200"
+     :subtitle    "best option"
+     :description "buy all the bundles!"
+     :value       3}]])
+
+
 (defcard-rg groups-card-multiple
   "
+<hr>
 <br>
 ### Multiple Selection Card Groups
 Multiple Selection Card are meant to be used like checkboxes. `multiple` card with a unique `:value` should be used for this type of groups.
-<br>
-<br>
-```clojure
-[card/group
- {:on-change  #(swap! data update :selected update-group-value %)
-  :value      (:selected @data)
-  :card-width :third
-  :show-count true}
- [card/multiple
-  {:title       \"Card 1\"
-   :img         \"http://placekitten.com/200/200\"
-   :subtitle    \"best option\"
-   :description \"buy all the bundles!\"
-   :value       1}]
- [card/multiple
-  {:title       \"Card 2\"
-   :img         \"http://placekitten.com/200/200\"
-   :subtitle    \"best option\"
-   :description \"buy all the bundles!\"
-   :value       2}]
- [card/multiple
-  {:title       \"Card 3\"
-   :img         \"http://placekitten.com/200/200\"
-   :subtitle    \"best option\"
-   :description \"buy all the bundles!\"
-   :value       3}]]
-```
 "
   (fn [data _]
-    [card/group
-     {:on-change  #(swap! data update :selected update-group-value %)
-      :value      (:selected @data)
-      :card-width :third
-      :show-count true}
-     [card/multiple
-      {:title       "Card 1"
-       :img         "http://placekitten.com/200/200"
-       :subtitle    "best option"
-       :description "buy all the bundles!"
-       :value       1}]
-     [card/multiple
-      {:title       "Card 2"
-       :img         "http://placekitten.com/200/200"
-       :subtitle    "best option"
-       :description "buy all the bundles!"
-       :value       2}]
-     [card/multiple
-      {:title       "Card 3"
-       :img         "http://placekitten.com/200/200"
-       :subtitle    "best option"
-       :description "buy all the bundles!"
-       :value       3}]])
+    [multiple-card-sample data])
 
   (r/atom {:selected []})
   {:inspect-data true
    :heading      true
    :frame        false})
+
+
+(defcard-doc
+  "#### Multiple Selection Card Sample Code"
+  (dc/mkdn-pprint-source multiple-card-sample))
+
+
+;; carousel card sample =========================================================
+
+
+(defn carousel-card-sample [data]
+  (let [items [{:title       "Card A"
+                :tag         "Most popular"
+                :subtitle    "best option"
+                :description "buy all the bundles!"
+                :images      ["http://placekitten.com/600/600"
+                              "http://placekitten.com/600/400"
+                              "http://placekitten.com/600/500"
+                              "http://placekitten.com/600/700"]
+                :value       1}
+               {:title       "Card 2"
+                :subtitle    "best option"
+                :description "buy all the bundles!"
+                :images      ["http://placekitten.com/600/600"
+                              "http://placekitten.com/600/400"
+                              "http://placekitten.com/600/500"
+                              "http://placekitten.com/600/700"]
+                :value       2}
+               {:title       "Card 3"
+                :subtitle    "best option"
+                :description "buy all the bundles!"
+                :images      ["http://placekitten.com/600/600"
+                              "http://placekitten.com/600/400"
+                              "http://placekitten.com/600/500"
+                              "http://placekitten.com/600/700"]
+                :value       3}]]
+    [card/group
+     {:on-change  #(swap! data update :selected update-group-value %)
+      :value      (:selected @data)
+      :card-width :third
+      :show-count true}
+     (map
+      (fn [item]
+        ^{:key (:value item)}
+        [card/carousel-card item])
+      items)]))
 
 
 (defcard-rg groups-card-carousel
   "
+<hr>
 <br>
 ### Carousel Card Groups
 Carousel Card are meant to be used like checkboxes. `carousel-card` card with a unique `:value` should be used for this type of groups. An `:images` prop with an array or list of image sources will be required for the carrousel.
-<br>
-<br>
-```clojure
-[card/group
- {:on-change  #(swap! data update :selected update-group-value %)
-  :value      (:selected @data)
-  :card-width :third
-  :show-count true}
- [card/carousel-card
-  {:title       \"Card 1\"
-   :tag         \"Most popular\"
-   :subtitle    \"best option\"
-   :description \"buy all the bundles!\"
-   :images      [\"http://placekitten.com/600/600\"
-                 \"http://placekitten.com/600/400\"
-                 \"http://placekitten.com/600/500\"
-                 \"http://placekitten.com/600/700\"]
-   :value       1}]
- [card/carousel-card
-  {:title       \"Card 2\"
-   :subtitle    \"best option\"
-   :description \"buy all the bundles!\"
-   :images      [\"http://placekitten.com/600/600\"
-                 \"http://placekitten.com/600/400\"
-                 \"http://placekitten.com/600/500\"
-                 \"http://placekitten.com/600/700\"]
-   :value       2}]
- [card/carousel-card
-  {:title       \"Card 3\"
-   :subtitle    \"best option\"
-   :description \"buy all the bundles!\"
-   :images      [\"http://placekitten.com/600/600\"
-                 \"http://placekitten.com/600/400\"
-                 \"http://placekitten.com/600/500\"
-                 \"http://placekitten.com/600/700\"]
-   :value       3}]]
-```
 "
   (fn [data _]
-    [card/group
-     {:on-change  #(swap! data update :selected update-group-value %)
-      :value      (:selected @data)
-      :card-width :third
-      :show-count true}
-     [card/carousel-card
-      {:title       "Card 1"
-       :tag         "Most popular"
-       :subtitle    "best option"
-       :description "buy all the bundles!"
-       :images      ["http://placekitten.com/600/600"
-                     "http://placekitten.com/600/400"
-                     "http://placekitten.com/600/500"
-                     "http://placekitten.com/600/700"]
-       :value       1}]
-     [card/carousel-card
-      {:title       "Card 2"
-       :subtitle    "best option"
-       :description "buy all the bundles!"
-       :images      ["http://placekitten.com/600/600"
-                     "http://placekitten.com/600/400"
-                     "http://placekitten.com/600/500"
-                     "http://placekitten.com/600/700"]
-       :value       2}]
-     [card/carousel-card
-      {:title       "Card 3"
-       :subtitle    "best option"
-       :description "buy all the bundles!"
-       :images      ["http://placekitten.com/600/600"
-                     "http://placekitten.com/600/400"
-                     "http://placekitten.com/600/500"
-                     "http://placekitten.com/600/700"]
-       :value       3}]])
+    [carousel-card-sample data])
 
   (r/atom {:selected []})
   {:inspect-data true
    :heading      true
    :frame        false})
+
+
+(defcard-doc
+  " #### Carousel Group Card Sample Code"
+  (dc/mkdn-pprint-source carousel-card-sample))
+
+
+;; logistics summary card =======================================================
 
 
 (defn summary-items []
@@ -338,6 +310,8 @@ Carousel Card are meant to be used like checkboxes. `carousel-card` card with a 
 (defcard-rg summary-card
   "
 <br>
+<hr>
+<br>
 ## Summary Card
 <br>
 ### Logistics Summary Card
@@ -361,6 +335,9 @@ Carousel Card are meant to be used like checkboxes. `carousel-card` card with a 
 (defcard-doc
   " #### Logistics Summary Card Sample Code"
   (dc/mkdn-pprint-source summary-items))
+
+
+;; community summary card =======================================================
 
 
 (defn- community-selection-sample []
@@ -388,6 +365,7 @@ Carousel Card are meant to be used like checkboxes. `carousel-card` card with a 
 
 (defcard-rg summary-card
   "
+<hr>
 <br>
 ### Community Selection Summary Card
 Each `community-selection` card displays the number of preferred units in a chosen community and it's respective cost breakdown. It takes 5 props `:community` (`String`), `:units` (`Int`), `:line-items` (`list of cost breakdown`), and `total` (`map of total cost`).
@@ -418,6 +396,9 @@ There should be a row container for every 2 `community-selection` cards.
 (defcard-doc
   " #### Community selection summary card code sample"
   (dc/mkdn-pprint-source community-selection-sample))
+
+
+;; coapplicant community card ===================================================
 
 
 (defn- coapplicant-community-selection-sample []
