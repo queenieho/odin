@@ -123,7 +123,7 @@
  ::application-update-success
  (fn [{db :db} [_ response]]
    (let [application (get-in response [:data :application_update])]
-     {:db (parse-gql-response db application)
+     {:db       (parse-gql-response db application)
       :dispatch [:step/advance]})))
 
 
