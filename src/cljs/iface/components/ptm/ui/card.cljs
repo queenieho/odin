@@ -9,20 +9,72 @@
 
 ;; specs ========================================================================
 
+
+(s/def ::align
+  #{:center :left})
+
+(s/def ::card-width
+  #{:third :half})
+
 (s/def ::community
   string?)
 
-(s/def ::units
+(s/def ::count
   integer?)
+
+(s/def ::description
+  string?)
+
+(s/def ::disabled
+  boolean?)
+
+(s/def ::footer
+  (s/or :string string? :element vector?))
+
+(s/def ::images
+  coll?)
+
+(s/def ::img
+  string?)
+
+(s/def ::items
+  coll?)
 
 (s/def ::line-items
   coll?)
 
-(s/def ::total
-  map?)
+(s/def ::on-change
+  fn?)
 
 (s/def ::on-click
   fn?)
+
+(s/def ::selected
+  boolean?)
+
+(s/def ::show-count
+  boolean?)
+
+(s/def ::subtitle
+  string?)
+
+(s/def ::tag
+  string?)
+
+(s/def ::title
+  string?)
+
+(s/def ::total
+  map?)
+
+(s/def ::units
+  integer?)
+
+(s/def ::value
+  some?)
+
+(s/def ::width
+  #{:third :half})
 
 
 ;; components ===================================================================
@@ -83,6 +135,19 @@
        [:img.v-mid {:src img}]])
     [card-data tag title subtitle description footer]]])
 
+(s/fdef single
+  :args (s/cat :props (s/keys :req-un [::value
+                                       ::title]
+                              :opt-un [::on-click
+                                       ::tag
+                                       ::img
+                                       ::subtitle
+                                       ::description
+                                       ::align
+                                       ::footer
+                                       ::width
+                                       ::disabled])))
+
 
 (defn single-h1 [{:keys [value on-click title subtitle footer width disabled]
                   :or   {width :third}}]
@@ -100,6 +165,15 @@
     (when footer
       [:div.card-footer
        footer])]])
+
+(s/fdef single-h1
+  :args (s/cat :props (s/keys :req-un [::value
+                                       ::title
+                                       ::subtitle]
+                              :opt-un [::on-click
+                                       ::footer
+                                       ::width
+                                       ::disabled])))
 
 
 ;; multiple selection cards =====================================================
@@ -131,6 +205,19 @@
     props
     {:align  :left
      :footer (get-selection-footer selected count)})])
+
+(s/fdef single
+  :args (s/cat :props (s/keys :req-un [::value
+                                       ::title
+                                       ::on-click]
+                              :opt-un [::tag
+                                       ::img
+                                       ::subtitle
+                                       ::description
+                                       ::align
+                                       ::width
+                                       ::selected
+                                       ::count])))
 
 
 ;; carousel =====================================================================
@@ -195,7 +282,7 @@
 
 
 (defn carousel-card [{:keys [value tag title subtitle description align on-click
-                             footer width images selected count]
+                             width images selected count]
                       :or   {align :left
                              width :third}}]
   [:div
@@ -209,6 +296,19 @@
                   #(c value))}
      [card-data tag title subtitle description (get-selection-footer selected count)]]]])
 
+(s/fdef carousel-card
+  :args (s/cat :props (s/keys :req-un [::value
+                                       ::title
+                                       ::on-click
+                                       ::images]
+                              :opt-un [::tag
+                                       ::subtitle
+                                       ::description
+                                       ::align
+                                       ::width
+                                       ::selected
+                                       ::count])))
+
 
 ;; group ========================================================================
 
@@ -220,16 +320,15 @@
 
 ;; I built in the selection state into the group, not sure we want to do it this way
 ;; or leave it for the user to implement?
-(defn group [{:keys [on-change value multiple card-width show-count]
+(defn group [{:keys [on-change value card-width show-count]
               :or   {card-width :third}}]
   (let [n        (card-width card-count)
         children (map
                   #(update % 1 tb/assoc-when
                            :width card-width
                            :on-click (fn [val] (on-change val))
-                           :selected (when (and (coll? value)
-                                                (some (fn [v] (= (:value (second %)) v)) value))
-                                       true)
+                           :selected (and (coll? value)
+                                          (some (fn [v] (= (:value (second %)) v)) value))
                            :count (when show-count
                                     (count value)))
                   (r/children (r/current-component)))]
@@ -242,6 +341,12 @@
                   {:value value}]
                  c-group) {:key i}))
        (partition n n nil children)))]))
+
+(s/fdef group
+  :args (s/cat :props (s/keys :req-un [::on-change
+                                       ::value]
+                              :opt-un [::card-width
+                                       ::show-count])))
 
 
 ;; summary cards ================================================================
@@ -275,7 +380,7 @@
 
 (defn logistics-summary
   "To be used to display move-in summary. This card shows all the logistics selections."
-  [title items]
+  [{:keys [title items]}]
   [:div.w-100.pr4-l.pr0
    [:div.card.cf
     ;; header
@@ -288,6 +393,11 @@
           ^{:key i}
           [summary-row row-items])
         (partition 2 2 nil items))]]])
+
+
+(s/fdef logistics-summary
+  :args (s/cat :props (s/keys :req-un [::title
+                                       ::items])))
 
 
 ;; unit selection =======================

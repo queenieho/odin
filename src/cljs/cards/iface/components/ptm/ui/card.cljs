@@ -32,8 +32,7 @@
     [:div.cf
      [card/single
       {:title    "This is a title"
-       :on-click #(.log js/console "I'm being poked!")
-       }]])
+       :on-click #(.log js/console "I'm being poked!")}]])
   (r/atom [])
   {:frame false})
 
@@ -315,23 +314,25 @@ Carousel Card are meant to be used like checkboxes. `carousel-card` card with a 
    :frame        false})
 
 
-(def summary-items [{:label "Move-in Date"
-                     :value "ASAP"
-                     :edit  true
-                     :on-click #(.log js/console "move-in")
-                     }
-                    {:label "Adult occupants"
-                     :value "1"
-                     :edit  true
-                     :on-click #(.log js/console "occupants")}
-                    {:label "Term length"
-                     :value "12 months"
-                     :edit  true
-                     :on-click #(.log js/console "term")}
-                    {:label "Dog"
-                     :value "Yes"
-                     :edit  true
-                     :on-click #(.log js/console "dog")}])
+(defn summary-items []
+  (let [items [{:label    "Move-in Date"
+                :value    "ASAP"
+                :edit     true
+                :on-click #(.log js/console "move-in")}
+               {:label    "Adult occupants"
+                :value    "1"
+                :edit     true
+                :on-click #(.log js/console "occupants")}
+               {:label    "Term length"
+                :value    "12 months"
+                :edit     true
+                :on-click #(.log js/console "term")}
+               {:label    "Dog"
+                :value    "Yes"
+                :edit     true
+                :on-click #(.log js/console "dog")}]]
+    [card/logistics-summary {:title "Logistics"
+                             :items items}]))
 
 
 (defcard-rg summary-card
@@ -340,7 +341,7 @@ Carousel Card are meant to be used like checkboxes. `carousel-card` card with a 
 ## Summary Card
 <br>
 ### Logistics Summary Card
-`logistics-summary` is meant to show a summary of logistics answers of the member application. This component takes `2` arguments: a `title` and a collection of `items`, which will be maps in the following form: <br>
+`logistics-summary` is meant to show a summary of logistics answers of the member application. This component takes `2` props: a `:title` and a collection of `:items`, which will be maps in the following form: <br>
 ```clojure
 {:label    String - required
  :value    String - required
@@ -348,18 +349,18 @@ Carousel Card are meant to be used like checkboxes. `carousel-card` card with a 
  :on-click (function)}
 ```
 <br>
-Usage:
-```clojure
-[card/logistics-summary \"Logistics\" summary-items]
-```
-<br>
 "
   (fn [data _]
-    [card/logistics-summary "Logistics" summary-items])
+    [summary-items])
 
   (r/atom {:selected []})
-  {:heading      true
-   :frame        false})
+  {:heading true
+   :frame   false})
+
+
+(defcard-doc
+  " #### Logistics Summary Card Sample Code"
+  (dc/mkdn-pprint-source summary-items))
 
 
 (defn- community-selection-sample []
