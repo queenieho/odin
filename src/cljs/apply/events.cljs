@@ -23,7 +23,7 @@
 
 (def application-attrs
   [:id :term :move_in_range :move_in :occupancy :has_pet
-   [:pet [:name :breed :weight :sterile :vaccines :bitten :demeanor :daytime_care :about :type]]])
+   [:pet [:id :name :breed :weight :sterile :vaccines :bitten :demeanor :daytime_care :about :type]]])
 
 
 (defn parse-gql-response
@@ -186,6 +186,8 @@
    {:route (next-route db params)}))
 
 
+;; NOTE - this ui/loading event is never dispatched if `save-step-fx` produces a
+;; map with a `:dispatch` in it. make fixies, prttyplz
 (reg-event-fx
  :step.current/save
  (fn [{db :db} [k params]]

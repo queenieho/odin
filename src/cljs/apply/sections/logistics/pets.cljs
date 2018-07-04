@@ -13,12 +13,11 @@
 ;; db ===========================================================================
 
 
-;;TODO - selecting other does not go to the 'other' step. figure out why
 (defmethod db/next-step step
   [db]
   (if (false? (step db))
     :community/select
-    (if (some? (:logistics.pet/dog db))
+    (if (= :dog (get-in db [:logistics.pets/dog :type]))
       :logistics.pets/dog
       :logistics.pets/other)))
 
@@ -58,9 +57,11 @@
 (defmethod events/gql->rfdb :has_pet [k] step)
 
 (defmethod events/gql->rfdb :pet [k v]
+  (log/log "is this a dog?" (:type v))
+  (log/log "does that equal :dog?" (= :dog (:type v)))
   (if (= :dog (:type v))
-    :logistics.pet/dog
-    :logistics.pet/other))
+    :logistics.pets/dog
+    :logistics.pets/other))
 
 
 ;; views ========================================================================
