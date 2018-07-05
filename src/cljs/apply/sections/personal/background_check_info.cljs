@@ -61,7 +61,7 @@
       [form/text {:placeholder "Middle"}]
       [form/text {:placeholder "Last"}]]
      [form/item
-      [form-item
+      [form/item
        {:label "Location of residence"}
        [form/select
         {}
