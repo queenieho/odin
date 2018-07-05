@@ -420,7 +420,8 @@ There should be a row container for every 2 `community-selection` cards.
     [card/coapplicant-community-selection {:community  "Tenderloin"
                                            :units      5
                                            :line-items items
-                                           :total      total}]))
+                                           :total      total
+                                           :image "/assets/images/2072mission.jpg"}]))
 
 
 (defcard-rg coapplicant-summary-card

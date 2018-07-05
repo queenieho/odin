@@ -486,13 +486,13 @@
 
 (defn coapplicant-community-selection
   "Displays a summary of a selected community in the coapplicant's view."
-  [{:keys [community units line-items total]
+  [{:keys [community units line-items total image]
     :as   props}]
   [:div.card
    [:div.w-60-l.w-100.fl.pv0
     [community-breakdown props]]
-   [:div.w-40-l.w-100.fl.pv0
-    [:img {:src "/assets/images/52gilbert.jpg"}]]])
+   [:div.w-40-l.w-100.fl.pv0.card-img-background
+    {:style {:background-image (str "url('" image "')")}}]])
 
 (s/fdef coapplicant-community-selection
   :args (s/cat :props (s/keys :req-un [::community
