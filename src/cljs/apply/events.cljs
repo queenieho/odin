@@ -47,7 +47,7 @@
 (reg-event-fx
  :app/init
  (fn [_ [_ account]]
-   {:db (db/bootstrap account)
+   {:db       (db/bootstrap account)
     :dispatch [:app.init/fetch-application account]}))
 
 
@@ -59,9 +59,9 @@
  :app.init/fetch-application
  (fn [_ [_ {:keys [id] :as account}]]
    (log/log "fetching account:" id)
-   {:graphql {:query [[:account {:id id}
-                       [:name :id
-                        [:application application-attrs]]]]
+   {:graphql {:query      [[:account {:id id}
+                            [:name :id
+                             [:application application-attrs]]]]
               :on-success [::init-fetch-application-success]
               :on-failure [:graphql/failure]}}))
 
@@ -73,7 +73,7 @@
  ::init-fetch-application-success
  (fn [{db :db} [_ response]]
    (if-let [application (get-in response [:data :account :application])]
-     {:db (assoc db :application-id (:id application))
+     {:db       (assoc db :application-id (:id application))
       :dispatch [:app.init/somehow-figure-out-where-they-left-off application]}
      {:dispatch [:app.init/create-application (get-in response [:data :account :id])]})))
 
@@ -83,7 +83,8 @@
  :app.init/somehow-figure-out-where-they-left-off
  (fn [{db :db} [_ application]]
    (log/log "processing application..." application)
-   {:db (parse-gql-response db application)}))
+   {:db    (parse-gql-response db application)
+    :route (routes/path-for :section/step :section-id :logistics :step-id :move-in-date)}))
 
 
 ;;TODO
@@ -94,7 +95,8 @@
    {:graphql {:mutation   [[:application_create {:account account-id}
                             [:id]]]
               :on-success [::init-create-application-success]
-              :on-failure [:graphql/failure]}}))
+              :on-failure [:graphql/failure]}
+    :route   (routes/path-for :welcome)}))
 
 
 (reg-event-fx

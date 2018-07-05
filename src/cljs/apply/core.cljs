@@ -27,11 +27,6 @@
             [iface.utils.log :as log]))
 
 
-(defn logout []
-  [:div.tr
-   [:a {:href "/logout"} "Log Out"]])
-
-
 (defn- welcome-1 [{name :name} toggle]
   [:div
    [:div.w-60-l.w-100.center
@@ -97,6 +92,10 @@
        [:div.bg-top]])))
 
 
+(defmethod content/view :logout []
+  [:div "Logging out"])
+
+
 (defn- nav-item
   [{:keys [label icon section] :as nav-item}]
   (let [is-enabled  (subscribe [:nav.item/enabled? nav-item])
@@ -121,6 +120,7 @@
                      [layout/nav-item {:label "Help"
                                        :icon  "help"}]
                      [layout/nav-item {:label "Log Out"
+                                       :link  (routes/path-for :logout)
                                        :icon  "logout"}]]}
      (doall
       (map-indexed #(with-meta [nav-item %2] {:key %1}) @nav-items))]))
