@@ -85,53 +85,73 @@
          [form/item
           {:label "Name"}
           [form/text
-           {:on-change #(dispatch [::update-dog :name (.. % -target -value)])}]]]
+           {:value     (:name @pupper)
+            :on-change #(dispatch [::update-dog :name (.. % -target -value)])}]]]
         [:div.w-40-l.w-100.fl.pr4-l.pr0
          [form/item
           {:label "Breed"}
           [form/text
-           {:on-change #(dispatch [::update-dog :breed (.. % -target -value)])}]]]
+           {:value     (:breed @pupper)
+            :on-change #(dispatch [::update-dog :breed (.. % -target -value)])}]]]
         [:div.w-20-l.w-100.fl.pr0
          [form/item
           {:label "Weight"}
           [form/number
            {:placeholder "lbs"
+            :value       (:weight @pupper)
             :on-change   #(dispatch [::update-dog :weight (.. % -target -value)])}]]]]
        [:div.cf.mb3-ns.mb0
         [form/item
          {:label "How will your dog be taken care of during the day?"}
          [form/textarea
           {:on-change #(dispatch [::update-dog :daytime_care (.. % -target -value)])
+           :value     (:daytime_care @pupper)
            :rows      3}]]]
        [:div.cf.mb3-ns.mb0
         [form/item
          {:label "Please describe your dog's demeanor."}
          [form/textarea
           {:on-change #(dispatch [::update-dog :demeanor (.. % -target -value)])
+           :value     (:demeanor @pupper)
            :rows      3}]]]
 
        ;; NOTE - we'll also need an inline-friendly radio-group variant
        [:div.cf
         [:div.w-third-l.w-100.fl.pr4-l.pr0.mb3
          [form/item
-          {:label "Spayed/neutered?"}
+          {:label "Spayed / neutered?"}
           [form/radio-group
-           {:name "spayed-neutered"}
-           [form/radio-option {} "Yes"]
-           [form/radio-option {} "No"]]]]
+           {:value     (or (:sterile @pupper) true)
+            :on-change #(dispatch [::update-dog :sterile (.. % -target -value)])}
+           [form/radio-option
+            {:value true}
+            "Yes"]
+           [form/radio-option
+            {:value false}
+            "No"]]]]
 
         [:div.w-third-l.w-100.fl.pr4-l.pr0.mb3
          [form/item
           {:label "Up-to-date vaccines?"}
           [form/radio-group
-           {:name "vaccines"}
-           [form/radio-option {} "Yes"]
-           [form/radio-option {} "No"]]]]
+           {:value     (or (:vaccines @pupper) true)
+            :on-change #(dispatch [::update-dog :vaccines (.. % -target -value)])}
+           [form/radio-option
+            {:value true}
+            "Yes"]
+           [form/radio-option
+            {:value false}
+            "No"]]]]
 
         [:div.w-third-l.w-100.fl.pr4-l.pr0.mb3
          [form/item
           {:label "Ever bitten a human?"}
           [form/radio-group
-           {:name "bitey"}
-           [form/radio-option {} "Yes"]
-           [form/radio-option {} "No"]]]]]]]]))
+           {:value (or (:bitten @pupper) false)
+            :on-change #(dispatch [::update-dog :bitten (.. % -target -value)])}
+           [form/radio-option
+            {:value true}
+            "Yes"]
+           [form/radio-option
+            {:value false}
+            "No"]]]]]]]]))
