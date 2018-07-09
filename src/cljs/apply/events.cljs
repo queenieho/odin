@@ -83,8 +83,15 @@
  :app.init/somehow-figure-out-where-they-left-off
  (fn [{db :db} [_ application]]
    (log/log "processing application..." application)
-   {:db    (parse-gql-response db application)
-    :route (routes/path-for :section/step :section-id :logistics :step-id :move-in-date)}))
+   {:db       (parse-gql-response db application)
+    :dispatch [:app.init/route-to-last-saved]}))
+
+
+(reg-event-fx
+ :app.init/route-to-last-saved
+ (fn [{db :db} _]
+   (log/log "last saved step" (-> db db/last-saved db/step->route))
+   {:route (-> db db/last-saved db/step->route) #_(routes/path-for :section/step :section-id :logistics :step-id :move-in-date)}))
 
 
 ;;TODO

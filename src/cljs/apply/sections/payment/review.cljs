@@ -13,6 +13,11 @@
 ;; db ===========================================================================
 
 
+(defmethod db/get-last-saved step
+  [db s]
+  :payment/complete)
+
+
 (defmethod db/next-step step
   [db]
   :payment/complete)

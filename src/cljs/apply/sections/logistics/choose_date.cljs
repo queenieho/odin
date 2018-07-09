@@ -15,6 +15,13 @@
 ;; db ===========================================================================
 
 
+(defmethod db/get-last-saved step
+  [db s]
+  (if (>= (time/days-between (s db)) 45)
+    :logistics.move-in-date/outside-application-window
+    :logistics/occupancy))
+
+
 (defmethod db/next-step step
   [db]
   (if (>= (time/days-between (step db)) 45)

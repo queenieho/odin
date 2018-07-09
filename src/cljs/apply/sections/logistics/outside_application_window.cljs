@@ -12,6 +12,13 @@
 ;; db ===========================================================================
 
 
+(defmethod db/get-last-saved step
+  [db s]
+  (if (= :choose-new-date (s db))
+    :logistics.move-in-date/choose-date
+    :logistics.move-in-date/get-notified))
+
+
 (defmethod db/next-step step
   [db]
   (if (= :choose-new-date (step db))

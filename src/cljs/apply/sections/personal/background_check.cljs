@@ -12,6 +12,13 @@
 ;; db ===========================================================================
 
 
+(defmethod db/get-last-saved step
+  [db s]
+  (if (= :no (s db))
+    :personal.background-check/declined
+    :personal.background-check/info))
+
+
 (defmethod db/next-step step
   [db]
   (if (= :no (step db))

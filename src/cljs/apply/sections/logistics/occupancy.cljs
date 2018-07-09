@@ -13,6 +13,13 @@
 ;; db ===========================================================================
 
 
+(defmethod db/get-last-saved step
+  [db s]
+  (if (= :double (s db))
+    :logistics.occupancy/co-occupant
+    :logistics/pets))
+
+
 (defmethod db/next-step step
   [db]
   (if (= :double (step db))

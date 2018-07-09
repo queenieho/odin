@@ -12,6 +12,11 @@
 ;; db ===========================================================================
 
 
+(defmethod db/get-last-saved step
+  [db s]
+  :community/term)
+
+
 (defmethod db/next-step step
   [db]
   :community/term)
