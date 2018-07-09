@@ -20,19 +20,9 @@
   false)
 
 
-;; subs =========================================================================
-
-
-(reg-sub
- :db
- (fn [db _]
-   db))
-
 ;; views ========================================================================
 
 
-;; NOTE I'm assuming that the date used here is for the user's
-;; selected date. If not, we have to revise this header
 (defmethod content/view step
   [_]
   (let [date (subscribe [:step/data])]
@@ -42,7 +32,6 @@
       [:p "Thanks for your interest in Starcity! Hope to see you soon."]]
      [:div.w-80-l.w-100
       [:div.page-content
-       [:a {:href "/logout"}
-        [button/primary
-         {:on-click #()}
-         "Close"]]]]]))
+       [button/primary
+        {:on-click #(dispatch [:nav.item/logout])}
+        "Close"]]]]))
