@@ -12,6 +12,7 @@ $card-icon-opacity-hover: 1;
   border: $border-width solid $line-gray;
   position: relative;
   margin-bottom: $card-bottom-margin;
+  overflow: hidden;
   // box-shadow: $card-shadow;
   &.centered {
     text-align: center;
@@ -94,6 +95,12 @@ $card-icon-opacity-hover: 1;
       opacity: $card-icon-opacity-hover;
     }
   }
+}
+
+.card-img-background {
+  background-position: center center;
+  background-size: cover;
+  min-height: 306px;
 }
 
 .card-illo {

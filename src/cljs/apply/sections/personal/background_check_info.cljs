@@ -52,16 +52,16 @@
     [:h1 "Please fill out your personal information."]]
    [:div.page-content.w-90-l.w-100
     [form/form
-     [form/form-item
+     [form/item
       {:label "Date of Birth"}
       [ant/date-picker]]
-     [form/form-item
+     [form/item
       {:label "Full Legal Name"}
       [form/text {:placeholder "First"}]
       [form/text {:placeholder "Middle"}]
       [form/text {:placeholder "Last"}]]
-     [form/form-item
-      [form/form-item
+     [form/item
+      [form/item
        {:label "Location of residence"}
        [form/select
         {}
