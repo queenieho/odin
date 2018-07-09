@@ -10,7 +10,7 @@
             [cards.iface.components.form]
             [cards.iface.components.menu]
             [cards.iface.components.ptm.ui.button]
-            [cards.iface.components.ptm.ui.cards]
+            [cards.iface.components.ptm.ui.card]
             [cards.iface.components.ptm.ui.form]
             [cards.iface.components.ptm.ui.modal]
             [cards.iface.components.ptm.ui.tag]

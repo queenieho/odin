@@ -4,7 +4,8 @@
             [re-frame.core :refer [dispatch subscribe reg-event-fx]]
             [apply.events :as events]
             [apply.db :as db]
-            [iface.utils.log :as log]))
+            [iface.utils.log :as log]
+            [iface.components.ptm.ui.card :as card]))
 
 
 (def step :logistics/occupancy)
@@ -64,10 +65,13 @@
    [:div.w-60-l.w-100
     [:h1 "How many adults will be living in the unit?"]
     [:p "Most of our units have one bed and are best suited for one adult, but some are available for two adults."]]
-   [:div.page-content.w-90-l.w-100
-    [ant/button
-     {:on-click #(dispatch [:step.current/next :single])}
-     "one"]
-    [ant/button
-     {:on-click #(dispatch [:step.current/next :double])}
-     "two"]]])
+   [:div.w-80-l.w-100
+    [:div.page-content
+    [card/single
+     {:title    "One"
+      :img      "/assets/images/ptm/icons/sketch-one-adult.svg"
+      :on-click #(dispatch [:step.current/next :single])}]
+    [card/single
+     {:title    "Two"
+      :img      "/assets/images/ptm/icons/sketch-two-adults.svg"
+      :on-click #(dispatch [:step.current/next :double])}]]]])
