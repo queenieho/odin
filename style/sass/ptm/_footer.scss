@@ -15,6 +15,7 @@ $button-left-margin: 1rem;
   border-left: $border-width solid $line-gray;
   width: calc(100vw -  #{$nav-primary-width});
   padding: 1rem 3rem;
+  min-height: $footer-wizard-height;
   z-index: 998;
 
   // footer for large displays
