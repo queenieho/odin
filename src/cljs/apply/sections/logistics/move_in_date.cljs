@@ -52,7 +52,8 @@
     [:h1 "Let's get started." [:br] "When do you want to move-in?"]
     [:p "We'll do our best to accommodate your move-in date, but we cannot
     guarantee that the date you choose will be the date that you move in."]]
-   [:div.page-content.w-70-l.w-100
+   [:div.w-80-l.w-100
+    [:div.page-content
     [card/single
      {:title    "Select a date"
       :img      "/assets/images/ptm/icons/sketch-calendar.svg"
@@ -64,4 +65,4 @@
     [card/single
      {:title    "I'm flexible"
       :img      "/assets/images/ptm/icons/sketch-whenever.svg"
-      :on-click #(dispatch [:step.current/next :flexible])}]]])
+      :on-click #(dispatch [:step.current/next :flexible])}]]]])
