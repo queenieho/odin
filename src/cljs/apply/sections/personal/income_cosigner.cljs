@@ -13,6 +13,11 @@
 ;; db ===========================================================================
 
 
+(defmethod db/get-last-saved step
+  [db s]
+  :personal/about)
+
+
 (defmethod db/next-step step
   [db]
   :personal/about)
@@ -53,12 +58,12 @@
     [:p "Please give us some information so we can contact them to complete the
     income verification steps."]]
    [:div.page-content.w-90-l.w-100
-    [form/form-item
+    [form/item
      {:label "Full Name"}
      [form/text]]
-    [form/form-item
+    [form/item
      {:label "Email Address"}
      [form/text]]
-    [form/form-item
+    [form/item
      {:label "Relationship to you"}
      [form/text]]]])

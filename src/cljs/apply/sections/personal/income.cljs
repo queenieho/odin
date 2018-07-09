@@ -14,6 +14,13 @@
 
 
 (defmethod db/next-step step
+  [db s]
+  (if (= :cosigner (db s))
+    :personal.income/cosigner
+    :personal/about))
+
+
+(defmethod db/next-step step
   [db]
   (if (= :cosigner (db step))
     :personal.income/cosigner

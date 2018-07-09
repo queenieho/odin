@@ -13,6 +13,11 @@
 ;; db ===========================================================================
 
 
+(defmethod db/get-last-saved step
+  [db s]
+  :logistics/pets)
+
+
 (defmethod db/next-step step
   [db]
   :logistics/pets)
@@ -53,12 +58,12 @@
     [:p "Please give us some information so we can contact them to complete the
     background check and income verification steps."]]
    [:div.page-content.w-60-l.w-100
-    [form/form-item
+    [form/item
      {:label "Full Name"}
      [form/text]]
-    [form/form-item
+    [form/item
      {:label "Email Address"}
      [form/text]]
-    [form/form-item
+    [form/item
      {:label "Relationship to you"}
      [form/text]]]])
