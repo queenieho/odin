@@ -54,7 +54,7 @@
     [:p "We promise we'll keep your phone number private and only contact you by
     phone with prior permission."]]
    [:div.page-content.w-60-l.w-100
-    [form/form-item
+    [form/item
      {:label "Phone Number"}
      [form/text
       {:on-change #(log/log "new phone number" (.. % -target -value))}]]]])
