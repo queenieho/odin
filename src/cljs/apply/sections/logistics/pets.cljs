@@ -4,7 +4,8 @@
             [re-frame.core :refer [dispatch subscribe]]
             [apply.events :as events]
             [apply.db :as db]
-            [iface.utils.log :as log]))
+            [iface.utils.log :as log]
+            [iface.components.ptm.ui.card :as card]))
 
 
 (def step :logistics/pets)
@@ -83,13 +84,17 @@
     [:h1 "Tell us about your fur family."]
     [:p "Most of our communities are dog-friendly, but we unfortunately do not
     allow cats. If you have a dog, please let us know what breed and weight."]]
-   [:div.page-content.w-90-l.w-100
-    [ant/button
-     {:on-click #(dispatch [:step.current/next :dog])}
-     "I have a dog"]
-    [ant/button
-     {:on-click #(dispatch [:step.current/next :none])}
-     "No pets"]
-    [ant/button
-     {:on-click #(dispatch [:step.current/next :other])}
-     "Other"]]])
+   [:div.w-80-l.w-100
+    [:div.page-content
+    [card/single
+     {:title    "I have a dog"
+      :img      "/assets/images/ptm/icons/sketch-dog.svg"
+      :on-click #(dispatch [:step.current/next :dog])}]
+    [card/single
+     {:title    "No pets"
+      :img      "/assets/images/ptm/icons/sketch-no-pet.svg"
+      :on-click #(dispatch [:step.current/next :none])}]
+    [card/single
+     {:title    "Other"
+      :img      "/assets/images/ptm/icons/sketch-hedgehog.svg"
+      :on-click #(dispatch [:step.current/next :other])}]]]])
