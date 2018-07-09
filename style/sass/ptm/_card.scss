@@ -190,7 +190,7 @@ $card-icon-opacity-hover: 1;
     margin-bottom: $spacing-small;
     min-height: 0;
     &.centered {
-      text-align: left;
+      text-align: center;
     }
   }
   .card-illo {
@@ -199,9 +199,9 @@ $card-icon-opacity-hover: 1;
     padding: $spacing-medium;
   }
   .card-description {
-    display: table-cell;
+    /* display: table-cell; */
     vertical-align: middle;
-    width: 75%;
+    width: 100%;
     padding: $spacing-medium;
   }
   .card-number {
