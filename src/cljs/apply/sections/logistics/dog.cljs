@@ -71,10 +71,7 @@
 
 (defmethod events/save-step-fx step
   [db params]
-  #_{:db       (assoc db step params)
-     :dispatch [:step/advance]}
   (let [data (step db)]
-    (.log js/console "more data" (parse-dog-data data))
     {:dispatch [:application/update {:pet (parse-dog-data data)}]}))
 
 
@@ -89,9 +86,6 @@
       [:h1 "Tell us about your fur family."]
       [:p "Most of our communities are dog-friendly, but we unfortunately do not
     allow cats. If you have a dog, please let us know what breed and weight."]]
-
-
-     ;;NOTE - we need to style the form input components in such a way that we can have them inline.
      [:div.w-60-l.w-100
       [:div.page-content
        [:div.cf.mb3-ns.mb0
@@ -128,8 +122,6 @@
           {:on-change #(dispatch [::update-dog :demeanor (.. % -target -value)])
            :value     (:demeanor @pupper)
            :rows      3}]]]
-
-       ;; NOTE - we'll also need an inline-friendly radio-group variant
        [:div.cf
         [:div.w-third-l.w-100.fl.pr4-l.pr0.mb3
          [form/item
@@ -143,7 +135,6 @@
            [form/radio-option
             {:value "false"}
             "No"]]]]
-
         [:div.w-third-l.w-100.fl.pr4-l.pr0.mb3
          [form/item
           {:label "Up-to-date vaccines?"}
@@ -156,7 +147,6 @@
            [form/radio-option
             {:value "false"}
             "No"]]]]
-
         [:div.w-third-l.w-100.fl.pr4-l.pr0.mb3
          [form/item
           {:label "Ever bitten a human?"}

@@ -103,7 +103,7 @@
             :breed        {:type        String
                            :resolve     (:get :pet/breed)
                            :description "The pet's breed."}
-            :weight       {:type        Long
+            :weight       {:type        :Long
                            :resolve     (:get :pet/weight)
                            :description "The pet's weight."}
             :sterile      {:type        Boolean

@@ -141,12 +141,9 @@
     (application/by-account (d/db conn) account)))
 
 
-;;TODO - when we implement the rest of the pet steps, this should use
-;;tb/assoc-when to correctly record dogs and not dogs
 (defn- parse-pet-params [pet-params]
   (when-some [ps pet-params]
-    (timbre/info "\n\n\n-------- pet params: " ps)
-    (tb/assoc-when
+    (tb/assoc-some
      {:db/id     (or (:id ps) (d/tempid :db.part/starcity))}
      :pet/type  (:type ps)
      :pet/about (:about ps)

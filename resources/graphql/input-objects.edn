@@ -43,7 +43,7 @@
                  :type         {:type :application_pet_type}
                  :name         {:type String}
                  :breed        {:type String}
-                 :weight       {:type Int}
+                 :weight       {:type :Long}
                  :about        {:type String}
                  :sterile      {:type Boolean}
                  :vaccines     {:type Boolean}
