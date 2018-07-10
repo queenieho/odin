@@ -41,10 +41,12 @@
 
 ;; events =======================================================================
 
+
 (reg-event-fx
  ::update-pet-other
  (fn [{db :db} [_ about]]
    {:db (assoc-in db [step :about] about)}))
+
 
 (defmethod events/save-step-fx step
   [db params]
