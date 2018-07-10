@@ -21,9 +21,19 @@
   (log/log "parsing gql response: you should never reach this method! " k))
 
 
+(defmulti gql->value
+  "To be used to parse graphql responses into the right format for our app db"
+  (fn [k v] k))
+
+
+(defmethod gql->value :default [k v] v)
+
+
 (def application-attrs
   [:id :term :move_in_range :move_in :occupancy :has_pet
-   [:pet [:id :name :breed :weight :sterile :vaccines :bitten :demeanor :daytime_care :about :type]]])
+   [:pet [:id :name :breed :weight :sterile :vaccines :bitten
+          :demeanor :daytime_care :about :type]]
+   [:communities [:code]]])
 
 
 (defn parse-gql-response
@@ -34,7 +44,7 @@
   (js/console.log "parsing graphql response... " application)
   (reduce-kv
    (fn [d k v]
-     (assoc d (gql->rfdb k v) v))
+     (assoc d (gql->rfdb k v) (gql->value k v)))
    db
    application))
 
@@ -133,6 +143,7 @@
  ::application-update-success
  (fn [{db :db} [_ response]]
    (let [application (get-in response [:data :application_update])]
+     (log/log "response " application)
      {:db       (parse-gql-response db application)
       :dispatch [:step/advance]})))
 

@@ -34,7 +34,8 @@
                  :has_pet       {:type Boolean}
                  :pet           {:type :application_pet_params}
                  :status        {:type :application_status}
-                 :updated       {:type :Instant}}}
+                 :updated       {:type :Instant}
+                 :communities   {:type (list String)}}}
 
 
   :application_pet_params

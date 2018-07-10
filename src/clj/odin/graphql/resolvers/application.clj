@@ -157,11 +157,20 @@
      :pet/name (:name ps))))
 
 
+(defn- parse-communities-params [params]
+  (when-some [p params]
+    (map
+     (fn [community]
+       (td/id [:property/code community]))
+     p)))
+
+
 (defn- parse-update-params [params]
   (tb/transform-when-key-exists params
     {:occupancy     #(keyword "application.occupancy" (name %))
      :move_in_range #(keyword "application.move-in-range" (name %))
-     :pet           #(parse-pet-params %)}))
+     :pet           #(parse-pet-params %)
+     :communities   #(parse-communities-params %)}))
 
 
 ;;TODO - flexibilify!
@@ -183,7 +192,8 @@
                              :application/move-in-range (:move_in_range params)
                              :application/move-in (:move_in params)
                              :application/occupancy (:occupancy params)
-                             :application/pet (:pet params))]
+                             :application/pet (:pet params)
+                             :application/communities (:communities params))]
                            (when-some [has-pet (:has_pet params)]
                              [[:db/add (td/id application) :application/has-pet has-pet]])))
 
