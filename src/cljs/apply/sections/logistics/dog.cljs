@@ -5,7 +5,9 @@
             [apply.events :as events]
             [apply.db :as db]
             [iface.components.ptm.ui.form :as form]
-            [iface.utils.log :as log]))
+            [iface.utils.log :as log]
+            [toolbelt.core :as tb]
+            [iface.utils.formatters :as format]))
 
 
 (def step :logistics.pets/dog)
@@ -49,19 +51,31 @@
    {:db (assoc-in db [step k] v)}))
 
 
+(defn- get-boolean
+  [val]
+  (case val
+    "true"  true
+    "false" false
+    nil))
+
+
+(defn- parse-dog-data
+  [{:keys [sterile vaccines bitten weight]
+    :as   data}]
+  (-> data
+      (assoc :vaccines (or (get-boolean vaccines) (nil? vaccines))
+             :sterile (or (get-boolean sterile) (nil? sterile))
+             :bitten (or (get-boolean bitten) (not (nil? bitten)))
+             :weight (tb/str->int weight))))
+
+
 (defmethod events/save-step-fx step
   [db params]
-  {:db       (assoc db step params)
-   :dispatch [:step/advance]})
-
-
-;; subs =========================================================================
-
-
-(reg-sub
- ::dog-form
- (fn [db _]
-   (step db)))
+  #_{:db       (assoc db step params)
+     :dispatch [:step/advance]}
+  (let [data (step db)]
+    (.log js/console "more data" (parse-dog-data data))
+    {:dispatch [:application/update {:pet (parse-dog-data data)}]}))
 
 
 ;; views ========================================================================
@@ -69,7 +83,7 @@
 
 (defmethod content/view step
   [_]
-  (let [pupper (subscribe [::dog-form])]
+  (let [pupper (subscribe [:db/step step])]
     [:div
      [:div.w-60-l.w-100
       [:h1 "Tell us about your fur family."]
@@ -121,37 +135,37 @@
          [form/item
           {:label "Spayed / neutered?"}
           [form/radio-group
-           {:value     (or (:sterile @pupper) true)
+           {:value     (or (:sterile @pupper) "true")
             :on-change #(dispatch [::update-dog :sterile (.. % -target -value)])}
            [form/radio-option
-            {:value true}
+            {:value "true"}
             "Yes"]
            [form/radio-option
-            {:value false}
+            {:value "false"}
             "No"]]]]
 
         [:div.w-third-l.w-100.fl.pr4-l.pr0.mb3
          [form/item
           {:label "Up-to-date vaccines?"}
           [form/radio-group
-           {:value     (or (:vaccines @pupper) true)
+           {:value     (or (:vaccines @pupper) "true")
             :on-change #(dispatch [::update-dog :vaccines (.. % -target -value)])}
            [form/radio-option
-            {:value true}
+            {:value "true"}
             "Yes"]
            [form/radio-option
-            {:value false}
+            {:value "false"}
             "No"]]]]
 
         [:div.w-third-l.w-100.fl.pr4-l.pr0.mb3
          [form/item
           {:label "Ever bitten a human?"}
           [form/radio-group
-           {:value (or (:bitten @pupper) false)
+           {:value (or (:bitten @pupper) "false")
             :on-change #(dispatch [::update-dog :bitten (.. % -target -value)])}
            [form/radio-option
-            {:value true}
+            {:value "true"}
             "Yes"]
            [form/radio-option
-            {:value false}
+            {:value "false"}
             "No"]]]]]]]]))
