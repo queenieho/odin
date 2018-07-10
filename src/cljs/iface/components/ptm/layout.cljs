@@ -3,7 +3,8 @@
             [reagent.core :as r]
             [iface.components.ptm.icons :as icons]
             [cljs.spec.alpha :as s]
-            [toolbelt.core :as tb]))
+            [toolbelt.core :as tb]
+            [iface.components.ptm.ui.button :as button]))
 
 
 (defn- nav-icon
@@ -117,23 +118,29 @@
 (defn- footer-large
   [{:keys [destructive primary secondary] :as items}]
   [:div.footer-large
-   (when-let [{:keys [label link action]} destructive]
+   (when-let [{:keys [label link action disabled loading]} destructive]
      [:div.footer-left
       ;; TODO: come up with a way to do `:a.button` by providing button styling
       [:a {:href (or link "")}
-       [:button.button.button-text
-        {:on-click action}
+       [button/text
+        {:on-click action
+         :disabled disabled
+         :loading  loading}
         label]]])
    [:div.footer-right
-    (when-let [{:keys [label link action]} primary]
+    (when-let [{:keys [label link action disabled loading]} primary]
       [:a {:href (or link "")}
-       [:button.button
-        {:on-click action}
+       [button/primary
+        {:on-click action
+         :disabled disabled
+         :loading  loading}
         label]])
-    (when-let [{:keys [label link action]} secondary]
+    (when-let [{:keys [label link action disabled loading]} secondary]
       [:a {:href (or link "")}
-       [:button.button.button-secondary
-        {:on-click action}
+       [button/secondary
+        {:on-click action
+         :disabled disabled
+         :loading  loading}
         label]])]])
 
 
