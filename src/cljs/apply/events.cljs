@@ -154,6 +154,12 @@
 
 
 (reg-event-fx
+ :nav.item/logout
+ (fn [_ _]
+   {:route (routes/path-for :logout)}))
+
+
+(reg-event-fx
  :nav.item/select
  (fn [{db :db} [_ nav-item]]
    (tb/assoc-when
