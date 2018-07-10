@@ -58,12 +58,16 @@
 
 (defmethod content/view step
   [_]
-  [:div
-   [:div.w-60-l.w-100
-    [:h1 "Tell us about your fur family."]
-    [:p "We do not allow cats. Smaller pets may be allowed only if they are
+  (let [pet (subscribe [:db/step step])]
+    [:div
+     [:div.w-60-l.w-100
+      [:h1 "Tell us about your fur family."]
+      [:p "We do not allow cats. Smaller pets may be allowed only if they are
     registered Emotional Support Animals. If your pet meets these requirements,
     tell us about them below."]]
-   [:div.page-content.w-60-l.w-100
-    [form/textarea
-     {:on-change #(dispatch [::update-pet-other (.. % -target -value)])}]]])
+     [:div.w-60-l.w-100
+      [:div.page-content
+       [form/textarea
+        {:on-change #(dispatch [::update-pet-other (.. % -target -value)])
+         :value     (:about @pet)
+         :rows      10}]]]]))
