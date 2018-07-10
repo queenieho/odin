@@ -121,11 +121,12 @@
 (reg-event-fx
  :application/update
  (fn [{db :db} [_ params]]
-   {:graphql {:mutation [[:application_update {:application (:application-id db)
-                                               :params      params}
-                          application-attrs]]
-              :on-success [::application-update-success]
-              :on-failure [:graphql/failure]}}))
+   {:dispatch [:ui/loading :step.current/save true]
+    :graphql  {:mutation   [[:application_update {:application (:application-id db)
+                                                  :params      params}
+                             application-attrs]]
+               :on-success [::application-update-success]
+               :on-failure [:graphql/failure]}}))
 
 
 (reg-event-fx
@@ -192,11 +193,10 @@
 (reg-event-fx
  :step/advance
  (fn [{db :db} [k params]]
-   {:route (next-route db params)}))
+   {:route    (next-route db params)
+    :dispatch [:ui/loading :step.current/save false]}))
 
 
-;; NOTE - this ui/loading event is never dispatched if `save-step-fx` produces a
-;; map with a `:dispatch` in it. make fixies, prttyplz
 (reg-event-fx
  :step.current/save
  (fn [{db :db} [k params]]
