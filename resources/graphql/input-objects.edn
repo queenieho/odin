@@ -42,6 +42,8 @@
    :fields      {:id           {:type :Long}
                  :type         {:type :application_pet_type}
                  :name         {:type String}
+                 :breed        {:type String}
+                 :weight       {:type Int}
                  :about        {:type String}
                  :sterile      {:type Boolean}
                  :vaccines     {:type Boolean}
