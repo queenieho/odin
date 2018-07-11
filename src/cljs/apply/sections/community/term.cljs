@@ -1,10 +1,12 @@
 (ns apply.sections.community.term
   (:require [apply.content :as content]
             [antizer.reagent :as ant]
-            [re-frame.core :refer [dispatch subscribe reg-event-fx]]
+            [re-frame.core :refer [dispatch subscribe reg-event-fx reg-sub]]
             [apply.events :as events]
             [apply.db :as db]
-            [iface.utils.log :as log]))
+            [iface.utils.log :as log]
+            [iface.components.ptm.ui.card :as card]
+            [iface.utils.formatters :as format]))
 
 
 (def step :community/term)
@@ -49,24 +51,41 @@
 (defmethod events/gql->rfdb :term [_] step)
 
 
+;; subs =========================================================================
+
+
+(reg-sub
+ ::term-options
+ (fn [db _]
+   (->> (:license-options db)
+        (sort-by :term >))))
+
+
 ;; views ========================================================================
 
 
 (defmethod content/view step
   [_]
-  [:div
-   [:div.w-60-l.w-100
-    [:h1 "How long will you be staying with us?"]
-    [:p "We understand that each individual ahs unique housing needs, which is
+  (let [options (subscribe [::term-options])]
+    [:div
+     (log/log @options)
+     [:div.w-60-l.w-100
+      [:h1 "How long will you be staying with us?"]
+      [:p "We understand that each individual ahs unique housing needs, which is
     why we offer three membership plans ranging from most affordable to most
     flexible."]]
-   [:div.page-content.w-90-l.w-100
-    [ant/button
-     {:on-click #(dispatch [:step.current/next 12])}
-     "12 months"]
-    [ant/button
-     {:on-click #(dispatch [:step.current/next 6])}
-     "6 months"]
-    [ant/button
-     {:on-click #(dispatch [:step.current/next 3])}
-     "3 months"]]])
+     [:div.w-80-l.w-100
+      [:div.page-content
+       (map-indexed
+        (fn [idx {:keys [id term]}]
+          ^{:key id}
+          [card/single-h1
+           {:title    (str term)
+            :subtitle "months"
+            ;; NOTE not completely sure if we want to do this in this fashion
+            ;; but it was the in my head what makes sense at the moment
+            :footer   (if (zero? idx)
+                        "No extra cost"
+                        (str "+ " (format/currency (* idx 50)) " per month"))
+            :on-click #(dispatch [:step.current/next id])}])
+        @options)]]]))

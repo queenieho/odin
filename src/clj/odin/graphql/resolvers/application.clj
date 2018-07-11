@@ -171,7 +171,8 @@
     {:occupancy     #(keyword "application.occupancy" (name %))
      :move_in_range #(keyword "application.move-in-range" (name %))
      :pet           #(parse-pet-params %)
-     :communities   #(parse-communities-params %)}))
+     :communities   #(parse-communities-params %)
+     :term          #(td/id %)}))
 
 
 (defn- update-communities-tx
