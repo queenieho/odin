@@ -71,7 +71,10 @@
    (log/log "fetching account:" id)
    {:graphql {:query      [[:account {:id id}
                             [:name :id
-                             [:application application-attrs]]]]
+                             [:application application-attrs]]]
+                           [:properties [:id :name :code :cover_image_url
+                                         [:rates [:rate]]
+                                         [:units [[:occupant [:id]]]]]]]
               :on-success [::init-fetch-application-success]
               :on-failure [:graphql/failure]}}))
 
@@ -83,9 +86,11 @@
  ::init-fetch-application-success
  (fn [{db :db} [_ response]]
    (if-let [application (get-in response [:data :account :application])]
-     {:db       (assoc db :application-id (:id application))
+     {:db       (assoc db :application-id (:id application)
+                       :communities-options (get-in response [:data :properties]))
       :dispatch [:app.init/somehow-figure-out-where-they-left-off application]}
-     {:dispatch [:app.init/create-application (get-in response [:data :account :id])]})))
+     {:db       (assoc db :communities-options (get-in response [:data :properties]))
+      :dispatch [:app.init/create-application (get-in response [:data :account :id])]})))
 
 
 ;;TODO
@@ -131,6 +136,7 @@
 (reg-event-fx
  :application/update
  (fn [{db :db} [_ params]]
+   (log/log "updating application " params)
    {:dispatch [:ui/loading :step.current/save true]
     :graphql  {:mutation   [[:application_update {:application (:application-id db)
                                                   :params      params}
@@ -207,24 +213,11 @@
   (default-save-fx db params))
 
 
-(defmulti init-step
-  "Given a `step`, this is to be used to initialize a `step`.
-  Produces a map to be merged with the original init event."
-  (fn [step] step))
-
-
-(defmethod init-step :default [_]
-  (log/log "default init step, doesn't do anything")
-  {})
-
-
 (reg-event-fx
  :step/advance
  (fn [{db :db} [k params]]
-   (merge
-    {:route      (next-route db params)
-     :dispatch-n [[:ui/loading :step.current/save false]]}
-    (init-step (db/next-step db)))))
+   {:route      (next-route db params)
+    :dispatch-n [[:ui/loading :step.current/save false]]}))
 
 
 (reg-event-fx

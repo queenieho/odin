@@ -63,31 +63,6 @@
     {:dispatch [:application/update {:communities data}]}))
 
 
-(defmethod events/init-step step
-  [s]
-  {:dispatch-n [[:ui/loading :step.current/save false]
-                [::query-communities]]})
-
-
-(reg-event-fx
- ::query-communities
- (fn [_ [k]]
-   (log/log "getting communities")
-   {:graphql {:query [[:properties [:id :name :code :cover_image_url
-                                    [:rates [:rate]]
-                                    [:units [[:occupant [:id]]]]]]]
-              :on-success [::query-communities-success]
-              :on-failure [:graphql/failure k]}}))
-
-
-(reg-event-fx
- ::query-communities-success
- (fn [{db :db} [_ response]]
-   (let [communities (get-in response [:data :properties])]
-     (log/log "queried" communities)
-     {:db (assoc db :communities-options communities)})))
-
-
 (defmethod events/gql->rfdb :communities [_] step)
 
 
@@ -141,10 +116,10 @@
             {:title       name
              :value       code
              :description [community-content rate ucount]
-             :ucount       ucount
+             :ucount      ucount
              :images      [cover_image_url]})))
        (sort-by :ucount)
-       (map #(dissoc :ucount %))))
+       #_(map #(dissoc :ucount %))))
 
 
 (defn- update-group-value [coll v]
@@ -156,8 +131,9 @@
 (defmethod content/view step
   [_]
   (let [data        (subscribe [:db/step step])
-        communities (parse-communities @(subscribe [::communities]))]
+        communities (subscribe [::communities])]
     [:div
+     (log/log "communities" @communities)
      [:div.w-60-l.w-100
       [:h1 "Which Starcity communities do you want to join?"]
       [:p "Browse our communities and learn about what makes each special."]]
@@ -172,4 +148,4 @@
          (fn [item]
            ^{:key (:value item)}
            [card/carousel-card item])
-         communities)]]]]))
+         (parse-communities @communities))]]]]))
