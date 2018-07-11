@@ -122,6 +122,7 @@
     :to         {:type        :Instant
                  :description "Orders until."}}}
 
+
   :mutate_line_item_params
   {:description "Parameters to create a line item."
    :fields      {:id    {:type :Long}
@@ -263,6 +264,7 @@
                  :rental        {:type Boolean}
                  :fees          {:type (list :Long)}}}
 
+
   :service_update_params
   {:description "Parameters to update a service"
    :fields      {:name          {:type String}
@@ -297,6 +299,7 @@
   {:fields {:account_number {:type (non-null String)}
             :routing_number {:type (non-null String)}}}
 
+
   :community_add_financial_info_params
   {:description "Parameters to add financial information to a community."
    :fields      {:deposit       {:type (non-null :bank_account_create_params)}
@@ -307,6 +310,7 @@
                  :ssn           {:type (non-null String)}
                  :business_name {:type (non-null String)}
                  :tax_id        {:type (non-null String)}}}
+
 
   :community_create_params
   {:description "Parameters to create a new community"
@@ -324,6 +328,7 @@
                                    :description "List of items needed to create a license price"}
                  :address         {:type (non-null :address_create_params)}}}
 
+
   :license_price_create_params
   {:description "Parameters needed to create a license price"
    :fields      {:term  {:type        (non-null :Long)
@@ -338,6 +343,16 @@
    :fields      {:property {:type        :Long
                             :description "Property to query units within."}}}
 
+
   :unit_rate_response
   {:description "Response to the `:unit_rate` query."
-   :fields      {:rate {:type (non-null Float)}}}}}
+   :fields      {:rate {:type (non-null Float)}}}
+
+
+  ;; Term Licenses
+  :term_license_query_params
+  {:description "Parameters to query a term license"
+   :fields      {:term      {:type        :Long
+                             :description "Length of license in months"}
+                 :available {:type        Boolean
+                             :description "Is this license available for new applicants"}}}}}

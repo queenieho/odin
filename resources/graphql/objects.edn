@@ -559,6 +559,15 @@
                     :resolve (:get :svc-variant/price)}}}
 
 
+  :term_license
+  {:fields {:id        {:type    (non-null :Long)
+                        :resolve (:get :db/id)}
+            :term      {:type    (non-null :Long)
+                        :resolve (:get :license/term)}
+            :available {:type    Boolean
+                        :resolve (:get :license/available)}}}
+
+
   :unit
   {:fields {:id       {:type    (non-null :Long)
                        :resolve (:get :db/id)}

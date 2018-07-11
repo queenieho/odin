@@ -61,7 +61,9 @@
    (log/log "fetching account:" id)
    {:graphql {:query      [[:account {:id id}
                             [:name :id
-                             [:application application-attrs]]]]
+                             [:application application-attrs]]]
+                           [:term_licenses
+                            [:id :term]]]
               :on-success [::init-fetch-application-success]
               :on-failure [:graphql/failure]}}))
 
@@ -73,9 +75,11 @@
  ::init-fetch-application-success
  (fn [{db :db} [_ response]]
    (if-let [application (get-in response [:data :account :application])]
-     {:db       (assoc db :application-id (:id application))
+     {:db       (assoc db :application-id (:id application)
+                       :license-options (get-in response [:data :term_licenses]))
       :dispatch [:app.init/somehow-figure-out-where-they-left-off application]}
-     {:dispatch [:app.init/create-application (get-in response [:data :account :id])]})))
+     {:db       (assoc db :license-options (get-in response [:data :term_licenses]))
+      :dispatch [:app.init/create-application (get-in response [:data :account :id])]})))
 
 
 ;;TODO

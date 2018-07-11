@@ -183,7 +183,8 @@
                              :application/move-in-range (:move_in_range params)
                              :application/move-in (:move_in params)
                              :application/occupancy (:occupancy params)
-                             :application/pet (:pet params))]
+                             :application/pet (:pet params)
+                             :application/license (:term params))]
                            (when-some [has-pet (:has_pet params)]
                              [[:db/add (td/id application) :application/has-pet has-pet]])))
 
