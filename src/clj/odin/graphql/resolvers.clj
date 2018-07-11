@@ -5,6 +5,7 @@
             [odin.graphql.resolvers.application :as application]
             [odin.graphql.resolvers.check :as check]
             [odin.graphql.resolvers.deposit :as deposit]
+            [odin.graphql.resolvers.license :as license]
             [odin.graphql.resolvers.member-license :as member-license]
             [odin.graphql.resolvers.note :as note]
             [odin.graphql.resolvers.order :as order]
@@ -31,6 +32,7 @@
         check/resolvers
         deposit/resolvers
         source/resolvers
+        license/resolvers
         member-license/resolvers
         note/resolvers
         order/resolvers

@@ -218,7 +218,8 @@
                              :application/move-in (:move_in params)
                              :application/occupancy (:occupancy params)
                              :application/has-pet (:has_pet params)
-                             :application/pet (:pet params))]
+                             :application/pet (:pet params)
+                             :application/license (:term params))]
                            (when-some [communities (:communities params)]
                              (create-community-select-tx application communities))))
 

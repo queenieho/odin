@@ -36,6 +36,9 @@
   :services        {:type    (list :service)
                     :args    {:params {:type :services_query_params}}
                     :resolve :service/query}
+  :term_licenses   {:type    (list :term_license)
+                    :args    {}
+                    :resolve :license/query-available}
   :unit            {:type    :unit
                     :args    {:id {:type (non-null :Long)}}
                     :resolve (:entity/fetch :id)}
