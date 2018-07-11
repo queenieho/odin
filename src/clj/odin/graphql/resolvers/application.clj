@@ -161,7 +161,8 @@
   (tb/transform-when-key-exists params
     {:occupancy     #(keyword "application.occupancy" (name %))
      :move_in_range #(keyword "application.move-in-range" (name %))
-     :pet           #(parse-pet-params %)}))
+     :pet           #(parse-pet-params %)
+     :term          #(td/id %)}))
 
 
 ;;TODO - flexibilify!
