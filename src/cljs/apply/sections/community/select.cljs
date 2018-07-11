@@ -133,13 +133,18 @@
 
 (defn- parse-communities
   [communities]
-  (map
-   (fn [{:keys [code name rates units cover_image_url]}]
-     {:title       name
-      :value       code
-      :description [community-content (get-lowest-rate rates) (count-available-units units)]
-      :images      [cover_image_url]})
-   communities))
+  (->> communities
+       (map
+        (fn [{:keys [code name rates units cover_image_url]}]
+          (let [rate   (get-lowest-rate rates)
+                ucount (count-available-units units)]
+            {:title       name
+             :value       code
+             :description [community-content rate ucount]
+             :ucount       ucount
+             :images      [cover_image_url]})))
+       (sort-by :ucount)
+       (map #(dissoc :ucount %))))
 
 
 (defn- update-group-value [coll v]
