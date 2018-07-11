@@ -69,7 +69,7 @@
 (defmethod events/gql->value :communities [_ v]
   (map
    (fn [community]
-     (:code community))
+     (:id community))
    v))
 
 
@@ -110,11 +110,11 @@
   [communities]
   (->> communities
        (map
-        (fn [{:keys [code name rates units cover_image_url]}]
+        (fn [{:keys [id code name rates units cover_image_url]}]
           (let [rate   (get-lowest-rate rates)
                 ucount (count-available-units units)]
             {:title       name
-             :value       code
+             :value       id
              :description [community-content rate ucount]
              :ucount      ucount
              :images      [cover_image_url]})))

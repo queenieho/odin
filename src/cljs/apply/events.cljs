@@ -33,7 +33,7 @@
   [:id :term :move_in_range :move_in :occupancy :has_pet
    [:pet [:id :name :breed :weight :sterile :vaccines :bitten
           :demeanor :daytime_care :about :type]]
-   [:communities [:code]]])
+   [:communities [:id :code]]])
 
 
 (defn parse-gql-response
@@ -136,13 +136,17 @@
 (reg-event-fx
  :application/update
  (fn [{db :db} [_ params]]
-   (log/log "updating application " params)
-   {:dispatch [:ui/loading :step.current/save true]
-    :graphql  {:mutation   [[:application_update {:application (:application-id db)
-                                                  :params      params}
-                             application-attrs]]
-               :on-success [::application-update-success]
-               :on-failure [:graphql/failure]}}))
+   ;; NOTE somehow graphql doesn't like communities being in a list
+   ;; so I have to move it into a vector before the mutation
+   (let [params' (tb/transform-when-key-exists params
+                   {:communities #(into [] %)})]
+     (log/log "updating application " params')
+     {:dispatch [:ui/loading :step.current/save true]
+      :graphql  {:mutation   [[:application_update {:application (:application-id db)
+                                                    :params      params'}
+                               application-attrs]]
+                 :on-success [::application-update-success]
+                 :on-failure [:graphql/failure]}})))
 
 
 (reg-event-fx

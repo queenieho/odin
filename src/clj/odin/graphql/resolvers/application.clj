@@ -157,20 +157,20 @@
      :pet/name (:name ps))))
 
 
-(defn- parse-communities-params [params]
+(defn- parse-communities-params [existing params]
   (when-some [p params]
     (map
      (fn [community]
-       (td/id [:property/code community]))
+       (td/id community))
      p)))
 
 
-(defn- parse-update-params [params]
+(defn- parse-update-params [existing params]
   (tb/transform-when-key-exists params
     {:occupancy     #(keyword "application.occupancy" (name %))
      :move_in_range #(keyword "application.move-in-range" (name %))
      :pet           #(parse-pet-params %)
-     :communities   #(parse-communities-params %)}))
+     :communities   #(parse-communities-params existing %)}))
 
 
 ;;TODO - flexibilify!
@@ -179,7 +179,8 @@
   [{:keys [conn requester]} {:keys [application params]} _]
   (let [application (d/entity (d/db conn) application)
         account     (application/account application)
-        params      (parse-update-params params)]
+        params      (parse-update-params application params)]
+    (timbre/info "\n\n\n application is: " application)
     (timbre/info "\n\n\n application params are: " params)
     (cond
       (not (account/applicant? account))
