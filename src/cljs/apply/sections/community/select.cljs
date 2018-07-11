@@ -1,7 +1,10 @@
 (ns apply.sections.community.select
   (:require [apply.content :as content]
             [antizer.reagent :as ant]
-            [re-frame.core :refer [dispatch subscribe reg-event-fx]]
+            [re-frame.core :refer [dispatch
+                                   subscribe
+                                   reg-event-fx
+                                   reg-sub]]
             [apply.events :as events]
             [apply.db :as db]
             [iface.utils.formatters :as format]
@@ -60,6 +63,31 @@
     {:dispatch [:application/update {:communities data}]}))
 
 
+(defmethod events/init-step step
+  [s]
+  {:dispatch-n [[:ui/loading :step.current/save false]
+                [::query-communities]]})
+
+
+(reg-event-fx
+ ::query-communities
+ (fn [_ [k]]
+   (log/log "getting communities")
+   {:graphql {:query [[:properties [:id :name :code :cover_image_url
+                                    [:rates [:rate]]
+                                    [:units [[:occupant [:id]]]]]]]
+              :on-success [::query-communities-success]
+              :on-failure [:graphql/failure k]}}))
+
+
+(reg-event-fx
+ ::query-communities-success
+ (fn [{db :db} [_ response]]
+   (let [communities (get-in response [:data :properties])]
+     (log/log "queried" communities)
+     {:db (assoc db :communities-options communities)})))
+
+
 (defmethod events/gql->rfdb :communities [_] step)
 
 
@@ -68,6 +96,15 @@
    (fn [community]
      (:code community))
    v))
+
+
+;; subscriptions ================================================================
+
+
+(reg-sub
+ ::communities
+ (fn [db _]
+   (:communities-options db)))
 
 
 ;; views ========================================================================
@@ -82,27 +119,27 @@
    availability " units open"])
 
 
-(def communities [{:title       "Soma"
-                   :description [community-content 1500 2]
-                   :images      ["http://placekitten.com/600/600"
-                                 "http://placekitten.com/600/400"
-                                 "http://placekitten.com/600/500"
-                                 "http://placekitten.com/600/700"]
-                   :value       "52gilbert"}
-                  {:title       "Mission"
-                   :description [community-content 1200 5]
-                   :images      ["http://placekitten.com/600/600"
-                                 "http://placekitten.com/600/400"
-                                 "http://placekitten.com/600/500"
-                                 "http://placekitten.com/600/700"]
-                   :value       "2072mission"}
-                  {:title       "South Park"
-                   :description [community-content 2000 2]
-                   :images      ["http://placekitten.com/600/600"
-                                 "http://placekitten.com/600/400"
-                                 "http://placekitten.com/600/500"
-                                 "http://placekitten.com/600/700"]
-                   :value       "414bryant"}])
+(defn- get-lowest-rate
+  [rates]
+  (->> (sort-by :rate rates)
+       first
+       :rate))
+
+
+(defn- count-available-units [units]
+  (->> (filter #(nil? (:occupant %)) units)
+       count))
+
+
+(defn- parse-communities
+  [communities]
+  (map
+   (fn [{:keys [code name rates units cover_image_url]}]
+     {:title       name
+      :value       code
+      :description [community-content (get-lowest-rate rates) (count-available-units units)]
+      :images      [cover_image_url]})
+   communities))
 
 
 (defn- update-group-value [coll v]
@@ -113,7 +150,8 @@
 
 (defmethod content/view step
   [_]
-  (let [data (subscribe [:db/step step])]
+  (let [data        (subscribe [:db/step step])
+        communities (parse-communities @(subscribe [::communities]))]
     [:div
      [:div.w-60-l.w-100
       [:h1 "Which Starcity communities do you want to join?"]

@@ -207,11 +207,24 @@
   (default-save-fx db params))
 
 
+(defmulti init-step
+  "Given a `step`, this is to be used to initialize a `step`.
+  Produces a map to be merged with the original init event."
+  (fn [step] step))
+
+
+(defmethod init-step :default [_]
+  (log/log "default init step, doesn't do anything")
+  {})
+
+
 (reg-event-fx
  :step/advance
  (fn [{db :db} [k params]]
-   {:route    (next-route db params)
-    :dispatch [:ui/loading :step.current/save false]}))
+   (merge
+    {:route      (next-route db params)
+     :dispatch-n [[:ui/loading :step.current/save false]]}
+    (init-step (db/next-step db)))))
 
 
 (reg-event-fx
