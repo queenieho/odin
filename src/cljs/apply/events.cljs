@@ -220,8 +220,8 @@
 (reg-event-fx
  :step/advance
  (fn [{db :db} [k params]]
-   {:route      (next-route db params)
-    :dispatch-n [[:ui/loading :step.current/save false]]}))
+   {:route    (next-route db params)
+    :dispatch [:ui/loading :step.current/save false]}))
 
 
 (reg-event-fx

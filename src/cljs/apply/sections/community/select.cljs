@@ -119,7 +119,7 @@
              :ucount      ucount
              :images      [cover_image_url]})))
        (sort-by :ucount)
-       #_(map #(dissoc :ucount %))))
+       (map #(dissoc % :ucount))))
 
 
 (defn- update-group-value [coll v]
@@ -133,7 +133,6 @@
   (let [data        (subscribe [:db/step step])
         communities (subscribe [::communities])]
     [:div
-     (log/log "communities" @communities)
      [:div.w-60-l.w-100
       [:h1 "Which Starcity communities do you want to join?"]
       [:p "Browse our communities and learn about what makes each special."]]
