@@ -12,7 +12,8 @@
             [datomic.api :as d]
             [toolbelt.datomic :as td]
             [toolbelt.core :as tb]
-            [taoensso.timbre :as timbre]))
+            [taoensso.timbre :as timbre]
+            [clojure.set :as set]))
 
 ;; ==============================================================================
 ;; fields -----------------------------------------------------------------------
@@ -157,11 +158,43 @@
      :pet/name (:name ps))))
 
 
+(defn- parse-communities-params [params]
+  (when-some [p params]
+    (map
+     (fn [community]
+       (td/id community))
+     p)))
+
+
 (defn- parse-update-params [params]
   (tb/transform-when-key-exists params
     {:occupancy     #(keyword "application.occupancy" (name %))
      :move_in_range #(keyword "application.move-in-range" (name %))
-     :pet           #(parse-pet-params %)}))
+     :pet           #(parse-pet-params %)
+     :communities   #(parse-communities-params %)}))
+
+
+(defn- update-communities-tx
+  [application communities-params]
+  (let [existing     (set (map td/id (application/communities application)))
+        [keep added] (map set ((juxt filter remove) (partial contains? existing) communities-params))
+        removed      (set/difference existing (set/union keep added))]
+    (cond-> []
+      (not (empty? added))
+      (concat (map #(vector :db/add (td/id application) :application/communities %) added))
+
+      (not (empty? removed))
+      (concat (map #(vector :db/retract (td/id application) :application/communities %) removed)))))
+
+
+(defn- create-community-select-tx
+  [existing communities]
+  (let [id (:db/id existing)]
+    (cond-> []
+      (and (not=
+            (set (map td/id (:application/communities existing)))
+            (set (map td/id communities))))
+      (concat (update-communities-tx existing communities)))))
 
 
 ;;TODO - flexibilify!
@@ -171,6 +204,7 @@
   (let [application (d/entity (d/db conn) application)
         account     (application/account application)
         params      (parse-update-params params)]
+    (timbre/info "\n\n\n application is: " application)
     (timbre/info "\n\n\n application params are: " params)
     (cond
       (not (account/applicant? account))
@@ -178,14 +212,15 @@
       :otherwise
       (do
         @(d/transact conn (concat
-                           [(tb/assoc-when
+                           [(tb/assoc-some
                              {:db/id (td/id application)}
                              :application/move-in-range (:move_in_range params)
                              :application/move-in (:move_in params)
                              :application/occupancy (:occupancy params)
+                             :application/has-pet (:has_pet params)
                              :application/pet (:pet params))]
-                           (when-some [has-pet (:has_pet params)]
-                             [[:db/add (td/id application) :application/has-pet has-pet]])))
+                           (when-some [communities (:communities params)]
+                             (create-community-select-tx application communities))))
 
         (clojure.pprint/pprint (d/entity (d/db conn) (td/id application)))))
     (d/entity (d/db conn) (td/id application))))

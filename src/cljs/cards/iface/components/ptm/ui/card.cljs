@@ -64,6 +64,8 @@
 ### Content and Styling Card
 The following content props can be added to a card: `:title`, `:subtitle`, `:description`, `:img`, `:tag`, `:footer`.
 <br>
+`:description` can be a `string` or an `element` passed to be rendered as the card's main content.
+<br>
 Card by default are center aligned, but an `:align` prop can be passed to set it to `:center`, or `:left`.
 <br>
 Card will automatically be a third of the width of the container they're in, this can be overwritten passing a `:width` prop with a value of `:half`.

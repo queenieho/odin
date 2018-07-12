@@ -21,9 +21,19 @@
   (log/log "parsing gql response: you should never reach this method! " k))
 
 
+(defmulti gql->value
+  "To be used to parse graphql responses into the right format for our app db"
+  (fn [k v] k))
+
+
+(defmethod gql->value :default [k v] v)
+
+
 (def application-attrs
   [:id :term :move_in_range :move_in :occupancy :has_pet
-   [:pet [:id :name :breed :weight :sterile :vaccines :bitten :demeanor :daytime_care :about :type]]])
+   [:pet [:id :name :breed :weight :sterile :vaccines :bitten
+          :demeanor :daytime_care :about :type]]
+   [:communities [:id :code]]])
 
 
 (defn parse-gql-response
@@ -34,7 +44,7 @@
   (js/console.log "parsing graphql response... " application)
   (reduce-kv
    (fn [d k v]
-     (assoc d (gql->rfdb k v) v))
+     (assoc d (gql->rfdb k v) (gql->value k v)))
    db
    application))
 
@@ -61,7 +71,10 @@
    (log/log "fetching account:" id)
    {:graphql {:query      [[:account {:id id}
                             [:name :id
-                             [:application application-attrs]]]]
+                             [:application application-attrs]]]
+                           [:properties [:id :name :code :cover_image_url
+                                         [:rates [:rate]]
+                                         [:units [[:occupant [:id]]]]]]]
               :on-success [::init-fetch-application-success]
               :on-failure [:graphql/failure]}}))
 
@@ -73,9 +86,11 @@
  ::init-fetch-application-success
  (fn [{db :db} [_ response]]
    (if-let [application (get-in response [:data :account :application])]
-     {:db       (assoc db :application-id (:id application))
+     {:db       (assoc db :application-id (:id application)
+                       :communities-options (get-in response [:data :properties]))
       :dispatch [:app.init/somehow-figure-out-where-they-left-off application]}
-     {:dispatch [:app.init/create-application (get-in response [:data :account :id])]})))
+     {:db       (assoc db :communities-options (get-in response [:data :properties]))
+      :dispatch [:app.init/create-application (get-in response [:data :account :id])]})))
 
 
 ;;TODO
@@ -121,18 +136,24 @@
 (reg-event-fx
  :application/update
  (fn [{db :db} [_ params]]
-   {:dispatch [:ui/loading :step.current/save true]
-    :graphql  {:mutation   [[:application_update {:application (:application-id db)
-                                                  :params      params}
-                             application-attrs]]
-               :on-success [::application-update-success]
-               :on-failure [:graphql/failure]}}))
+   ;; NOTE somehow graphql doesn't like communities being in a list
+   ;; so I have to move it into a vector before the mutation
+   (let [params' (tb/transform-when-key-exists params
+                   {:communities #(into [] %)})]
+     (log/log "updating application " params')
+     {:dispatch [:ui/loading :step.current/save true]
+      :graphql  {:mutation   [[:application_update {:application (:application-id db)
+                                                    :params      params'}
+                               application-attrs]]
+                 :on-success [::application-update-success]
+                 :on-failure [:graphql/failure]}})))
 
 
 (reg-event-fx
  ::application-update-success
  (fn [{db :db} [_ response]]
    (let [application (get-in response [:data :application_update])]
+     (log/log "response " application)
      {:db       (parse-gql-response db application)
       :dispatch [:step/advance]})))
 

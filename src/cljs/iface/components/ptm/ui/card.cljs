@@ -106,7 +106,10 @@
      [:div.card-description
       (when title [:h3.ma0 title])
       (when subtitle [:h4.ma0 subtitle])
-      (when description [:p.mb0.mt3 description])])
+      (when-let [d description]
+        (if (string? d)
+          [:p.mb0.mt3 description]
+          d))])
    (when footer
      [:div.card-footer
       footer])])
