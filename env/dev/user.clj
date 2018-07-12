@@ -25,6 +25,7 @@
             [odin.datomic :refer [conn]]
             [odin.seed :as seed]
             [odin.teller :refer [teller]]
+            [odin.tipe :refer [tipe]]
             [reactor.reactor :as reactor]
             [taoensso.timbre :as timbre]))
 
