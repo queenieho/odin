@@ -1,7 +1,8 @@
 (ns apply.sections.personal.background-check-info
   (:require [apply.content :as content]
             [antizer.reagent :as ant]
-            [re-frame.core :refer [dispatch subscribe]]
+            [clojure.string :as s]
+            [re-frame.core :refer [dispatch subscribe reg-event-fx]]
             [apply.events :as events]
             [apply.db :as db]
             [iface.components.ptm.ui.form :as form]
@@ -34,12 +35,30 @@
   true)
 
 
+(defn- form-complete
+  [{:keys [dob first-name middle-name last-name country city state zip]}]
+  (and (some? dob)
+       (not (s/blank? first-name))
+       (not (s/blank? last-name))
+       (not (s/blank? country))
+       (not (s/blank? city))
+       (not (s/blank? state))))
+
+
 (defmethod db/step-complete? step
   [db step]
-  false)
+  false
+  ;; NOTE commenting this out until this works
+  #_(not (form-complete (step db))))
 
 
 ;; events =======================================================================
+
+
+(reg-event-fx
+ ::update-background-info
+ (fn [{db :db} [_ k v]]
+   {:db (assoc-in db [step k] v)}))
 
 
 (defmethod events/save-step-fx step
@@ -66,25 +85,48 @@
           {:label "Date of Birth"}
           ;; NOTE date picker needs to be styled to match our style...
           ;; or we need to make a new one
-          [ant/date-picker {:on-change #(.log js/console (.. % -target))}]]]
+          [ant/date-picker
+           {:value     (:dob @data)
+            :on-change #(dispatch [::update-background-info :dob %])}]]]
         [:div.cf.mb3-ns.mb0
          [form/item
           {:label "Full Legal Name"}
           [:div.w-30-l.w-100.fl.pr3-l.pr0
-           [form/text {:placeholder "First"}]]
+           [form/text
+            {:placeholder "First"
+             :value       (:first-name @data)
+             :on-change   #(dispatch [::update-background-info :first-name (.. % -target -value)])}]]
           [:div.w-30-l.w-100.fl.pr3-l.pr0
-           [form/text {:placeholder "Middle"}]]
+           [form/text
+            {:placeholder "Middle"
+             :value       (:middle-name @data)
+             :on-change   #(dispatch [::update-background-info :middle-name (.. % -target -value)])}]]
           [:div.w-30-l.w-100.fl.pr3-l.pr0
-           [form/text {:placeholder "Last"}]]]]
+           [form/text
+            {:placeholder "Last"
+             :value       (:last-name @data)
+             :on-change   #(dispatch [::update-background-info :last-name (.. % -target -value)])}]]]]
         [:div.cf.mb3-ns.mb0
          [form/item
           [form/item
            {:label "Location of residence"}
            [:div.w-30-l.w-100.fl.pr3-l.pr0
-            [form/text {:placeholder "Country"}]]
+            [form/text
+             {:placeholder "Country"
+              :value       (:country @data)
+              :on-change   #(dispatch [::update-background-info :country (.. % -target -value)])}]]
            [:div.w-30-l.w-100.fl.pr3-l.pr0
-            [form/text {:placeholder "City"}]]
+            [form/text
+             {:placeholder "City/Town"
+              :value       (:city @data)
+              :on-change   #(dispatch [::update-background-info :city (.. % -target -value)])}]]
            [:div.w-30-l.w-100.fl.pr3-l.pr0
-            [form/text {:placeholder "State"}]]
+            [form/text
+             {:placeholder "State/Province/Region"
+              :value       (:state @data)
+              :on-change   #(dispatch [::update-background-info :state (.. % -target -value)])}]]
            [:div.w-10-l.w-100.fl.pr0-l.pr0
-            [form/text {:placeholder "Zip"}]]]]]]]]]))
+            [form/text
+             {:placeholder "Zip"
+              :value       (:zip @data)
+              :on-change   #(dispatch [::update-background-info :zip (.. % -target -value)])}]]]]]]]]]))

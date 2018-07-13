@@ -70,7 +70,7 @@
  (fn [_ [_ {:keys [id] :as account}]]
    (log/log "fetching account:" id)
    {:graphql {:query      [[:account {:id id}
-                            [:name :id
+                            [:name :id :first_name :middle_name :last_name :dob
                              [:application application-attrs]]]
                            [:properties [:id :name :code :cover_image_url :copy_id
                                          [:application_copy [:name :images :introduction :building
@@ -90,14 +90,21 @@
 (reg-event-fx
  ::init-fetch-application-success
  (fn [{db :db} [_ response]]
-   (if-let [application (get-in response [:data :account :application])]
-     {:db       (assoc db :application-id (:id application)
-                       :communities-options (get-in response [:data :properties])
-                       :license-options (get-in response [:data :license_terms]))
-      :dispatch [:app.init/somehow-figure-out-where-they-left-off application]}
-     {:db       (assoc db :license-options (get-in response [:data :license_terms])
-                       :communities-options (get-in response [:data :properties]))
-      :dispatch [:app.init/create-application (get-in response [:data :account :id])]})))
+   (let [ainfo   (get-in response [:data :account])
+         init-db (merge
+                  db
+                  {:communities-options            (get-in response [:data :properties])
+                   :license-options                (get-in response [:data :license_terms])
+                   :personal.background-check/info {:first-name  (:first_name ainfo)
+                                                    :middle-name (:middle_name ainfo)
+                                                    :last-name   (:last_name ainfo)
+                                                    :dob         (:dob ainfo)}})]
+     (if-let [application (get-in response [:data :account :application])]
+       {:db       (assoc init-db :application-id (:id application))
+        :dispatch [:app.init/somehow-figure-out-where-they-left-off application]}
+       {:db       init-db
+        :dispatch [:app.init/create-application (get-in response [:data :account :id])]}))))
+
 
 
 ;;TODO
