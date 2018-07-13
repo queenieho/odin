@@ -33,7 +33,8 @@
   [:id :term :move_in_range :move_in :occupancy :has_pet
    [:pet [:id :name :breed :weight :sterile :vaccines :bitten
           :demeanor :daytime_care :about :type]]
-   [:communities [:id :code]]])
+   [:communities [:id :code]]
+   [:current_location [:locality :region :country :zip]]])
 
 
 (defn parse-gql-response
@@ -47,6 +48,17 @@
      (assoc d (gql->rfdb k v) (gql->value k v)))
    db
    application))
+
+
+(defn- get-account-params
+  "Gets the needed params for updating an account's information"
+  [{:keys [first-name last-name middle-name phone dob]}]
+  (tb/assoc-when {}
+                 :first_name first-name
+                 :last_name last-name
+                 :middle_name middle-name
+                 :dob dob
+                 :phone phone))
 
 
 ;; ==============================================================================
@@ -99,6 +111,7 @@
                                                     :middle-name (:middle_name ainfo)
                                                     :last-name   (:last_name ainfo)
                                                     :dob         (:dob ainfo)}})]
+     (log/log "application query" (get-in response [:data :account]))
      (if-let [application (get-in response [:data :account :application])]
        {:db       (assoc init-db :application-id (:id application))
         :dispatch [:app.init/somehow-figure-out-where-they-left-off application]}
@@ -152,13 +165,18 @@
  (fn [{db :db} [_ params]]
    ;; NOTE somehow graphql doesn't like communities being in a list
    ;; so I have to move it into a vector before the mutation
-   (let [params' (tb/transform-when-key-exists params
-                   {:communities #(into [] %)})]
-     (log/log "updating application " params')
+   (let [params'        (-> (tb/transform-when-key-exists params
+                              {:communities #(into [] %)})
+                            (dissoc :first-name :last-name :middle-name :dob))
+         account-params (get-account-params params)]
+     (log/log "updating application " params params')
      {:dispatch [:ui/loading :step.current/save true]
       :graphql  {:mutation   [[:application_update {:application (:application-id db)
                                                     :params      params'}
-                               application-attrs]]
+                               application-attrs]
+                              [:update_account {:id   (get-in db [:account :id])
+                                                :data account-params}
+                               [:first_name :middle_name :last_name :dob :phone]]]
                  :on-success [::application-update-success]
                  :on-failure [:graphql/failure]}})))
 
@@ -167,7 +185,6 @@
  ::application-update-success
  (fn [{db :db} [_ response]]
    (let [application (get-in response [:data :application_update])]
-     (log/log "response " application)
      {:db       (parse-gql-response db application)
       :dispatch [:step/advance]})))
 

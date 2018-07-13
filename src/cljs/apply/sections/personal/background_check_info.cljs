@@ -63,8 +63,18 @@
 
 (defmethod events/save-step-fx step
   [db params]
-  {:db       (assoc db step params)
-   :dispatch [:step/advance]})
+  {:dispatch [:application/update (step db)]}
+  #_{:db     (assoc db step params)
+     :dispatch [:step/advance]})
+
+
+(defmethod events/gql->rfdb :current_location [k v] step)
+
+
+(defmethod events/gql->value :current_location
+  [k v]
+  (let [data (subscribe [:db/step step])]
+    (merge @data v)))
 
 
 ;; views ========================================================================
@@ -118,12 +128,12 @@
            [:div.w-30-l.w-100.fl.pr3-l.pr0
             [form/text
              {:placeholder "City/Town"
-              :value       (:city @data)
+              :value       (:locality @data)
               :on-change   #(dispatch [::update-background-info :city (.. % -target -value)])}]]
            [:div.w-30-l.w-100.fl.pr3-l.pr0
             [form/text
              {:placeholder "State/Province/Region"
-              :value       (:state @data)
+              :value       (:region @data)
               :on-change   #(dispatch [::update-background-info :state (.. % -target -value)])}]]
            [:div.w-10-l.w-100.fl.pr0-l.pr0
             [form/text

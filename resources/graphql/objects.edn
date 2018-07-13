@@ -21,6 +21,8 @@
                                     :resolve :account/emergency-contact}
                 :first_name        {:type    (non-null String)
                                     :resolve (:get :person/first-name)}
+                :middle_name       {:type    String
+                                    :resolve (:get :person/middle-name)}
                 :full_name         {:type    (non-null String)
                                     :resolve :person/full-name}
                 :last_name         {:type    (non-null String)
@@ -43,45 +45,67 @@
                                     :resolve     :account/service-source}}}
 
 
+  :address
+  {:fields {:id       {:type    :Long
+                       :resolve (:get :db/id)}
+            :lines    {:type    (list String)
+                       :resolve (:get :address/lines)}
+            :locality {:type        String
+                       :resolve     (:get :address/locality)
+                       :description "City or town"}
+            :region   {:type        String
+                       :resolve     (:get :address/region)
+                       :description "State, province or region"}
+            :country  {:type        String
+                       :resolve     (:get :address/country)
+                       :description "Country"}
+            :zip      {:type        String
+                       :resolve     (:get :address/zip)
+                       :description "Zip code"}}}
+
+
   :application
-  {:fields {:id            {:type    (non-null :Long)
-                            :resolve (:get :db/id)}
-            :account       {:type    (non-null :account)
-                            :resolve :application/account}
-            :approved_at   {:type    :Instant
-                            :resolve :application/approved-at}
-            :approved_by   {:type    :account
-                            :resolve :application/approved-by}
-            :term          {:type        :Long
-                            :resolve     :application/term
-                            :description "Desired term."}
-            :communities   {:type    (list :property)
-                            :resolve (:get :application/communities)}
-            :move_in       {:type        :Instant
-                            :resolve     (:get :application/move-in)
-                            :description "Desired move-in date."}
-            :move_in_range {:type        :application_move_in_ranges
-                            :resolve     :application/move-in-range
-                            :description "Desired move-in range."}
-            :occupancy     {:type    :occupancies
-                            :resolve :application/occupancy}
-            :has_pet       {:type    Boolean
-                            :resolve (:get :application/has-pet)}
-            :pet           {:type    :application_pet
-                            :resolve (:get :application/pet)}
-            :fitness       {:type    :application_fitness
-                            :resolve (:get :application/fitness)}
-            :status        {:type    :application_status
-                            :resolve :application/status}
-            :income        {:type        (list :application_income_file)
-                            :resolve     :application/income
-                            :description "Income file paths."}
-            :submitted     {:type    :Instant
-                            :resolve :application/submitted-at}
-            :created       {:type    (non-null :Instant)
-                            :resolve :entity/created}
-            :updated       {:type    (non-null :Instant)
-                            :resolve :application/updated}}}
+  {:fields {:id               {:type    (non-null :Long)
+                               :resolve (:get :db/id)}
+            :account          {:type    (non-null :account)
+                               :resolve :application/account}
+            :approved_at      {:type    :Instant
+                               :resolve :application/approved-at}
+            :approved_by      {:type    :account
+                               :resolve :application/approved-by}
+            :term             {:type        :Long
+                               :resolve     :application/term
+                               :description "Desired term."}
+            :communities      {:type    (list :property)
+                               :resolve (:get :application/communities)}
+            :move_in          {:type        :Instant
+                               :resolve     (:get :application/move-in)
+                               :description "Desired move-in date."}
+            :move_in_range    {:type        :application_move_in_ranges
+                               :resolve     :application/move-in-range
+                               :description "Desired move-in range."}
+            :occupancy        {:type    :occupancies
+                               :resolve :application/occupancy}
+            :has_pet          {:type    Boolean
+                               :resolve (:get :application/has-pet)}
+            :pet              {:type    :application_pet
+                               :resolve (:get :application/pet)}
+            :fitness          {:type    :application_fitness
+                               :resolve (:get :application/fitness)}
+            :status           {:type    :application_status
+                               :resolve :application/status}
+            :income           {:type        (list :application_income_file)
+                               :resolve     :application/income
+                               :description "Income file paths."}
+            :submitted        {:type    :Instant
+                               :resolve :application/submitted-at}
+            :created          {:type    (non-null :Instant)
+                               :resolve :entity/created}
+            :updated          {:type    (non-null :Instant)
+                               :resolve :application/updated}
+            :current_location {:type        :address
+                               :resolve     (:get :application/current-location)
+                               :description "Applicant's current address"}}}
 
 
   :application_income_file
