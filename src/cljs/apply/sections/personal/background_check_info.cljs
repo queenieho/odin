@@ -4,7 +4,8 @@
             [re-frame.core :refer [dispatch subscribe]]
             [apply.events :as events]
             [apply.db :as db]
-            [iface.components.ptm.ui.form :as form]))
+            [iface.components.ptm.ui.form :as form]
+            [iface.utils.log :as log]))
 
 
 (def step :personal.background-check/info)
@@ -52,27 +53,38 @@
 
 (defmethod content/view step
   [_]
-  [:div
-   [:div.w-60-l.w-100
-    [:h1 "Please fill out your personal information."]]
-   [:div.page-content.w-90-l.w-100
-    [form/form
-     [form/item
-      {:label "Date of Birth"}
-      [ant/date-picker]]
-     [form/item
-      {:label "Full Legal Name"}
-      [form/text {:placeholder "First"}]
-      [form/text {:placeholder "Middle"}]
-      [form/text {:placeholder "Last"}]]
-     [form/item
-      [form/item
-       {:label "Location of residence"}
-       [form/select
-        {}
-        [form/select-option "Canada"]
-        [form/select-option "USA"]
-        [form/select-option "Mexico"]]
-       [form/text {:placeholder "City"}]
-       [form/text {:placeholder "State"}]
-       [form/text {:placeholder "Zip"}]]]]]])
+  (let [data (subscribe [:db/step step])]
+    [:div
+     (log/log "form" @data)
+     [:div.w-60-l.w-100
+      [:h1 "Please fill out your personal information."]]
+     [:div.w-90-l.w-100
+      [:div.page-content
+       [form/form
+        [:div.cf.mb4-ns.mb0
+         [form/item
+          {:label "Date of Birth"}
+          ;; NOTE date picker needs to be styled to match our style...
+          ;; or we need to make a new one
+          [ant/date-picker {:on-change #(.log js/console (.. % -target))}]]]
+        [:div.cf.mb3-ns.mb0
+         [form/item
+          {:label "Full Legal Name"}
+          [:div.w-30-l.w-100.fl.pr3-l.pr0
+           [form/text {:placeholder "First"}]]
+          [:div.w-30-l.w-100.fl.pr3-l.pr0
+           [form/text {:placeholder "Middle"}]]
+          [:div.w-30-l.w-100.fl.pr3-l.pr0
+           [form/text {:placeholder "Last"}]]]]
+        [:div.cf.mb3-ns.mb0
+         [form/item
+          [form/item
+           {:label "Location of residence"}
+           [:div.w-30-l.w-100.fl.pr3-l.pr0
+            [form/text {:placeholder "Country"}]]
+           [:div.w-30-l.w-100.fl.pr3-l.pr0
+            [form/text {:placeholder "City"}]]
+           [:div.w-30-l.w-100.fl.pr3-l.pr0
+            [form/text {:placeholder "State"}]]
+           [:div.w-10-l.w-100.fl.pr0-l.pr0
+            [form/text {:placeholder "Zip"}]]]]]]]]]))
