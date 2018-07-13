@@ -220,7 +220,11 @@
                              :application/occupancy (:occupancy params)
                              :application/has-pet (:has_pet params)
                              :application/pet (:pet params)
-                             :application/license (:term params))]
+                             :application/license (:term params)
+                             :address/country (:country params)
+                             :address/locality (:locality params)
+                             :address/region (:region params)
+                             :address/postal-code (:zip params))]
                            (when-some [communities (:communities params)]
                              (create-community-select-tx application communities))))
 

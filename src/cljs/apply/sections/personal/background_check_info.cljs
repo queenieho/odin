@@ -129,12 +129,12 @@
             [form/text
              {:placeholder "City/Town"
               :value       (:locality @data)
-              :on-change   #(dispatch [::update-background-info :city (.. % -target -value)])}]]
+              :on-change   #(dispatch [::update-background-info :locality (.. % -target -value)])}]]
            [:div.w-30-l.w-100.fl.pr3-l.pr0
             [form/text
              {:placeholder "State/Province/Region"
               :value       (:region @data)
-              :on-change   #(dispatch [::update-background-info :state (.. % -target -value)])}]]
+              :on-change   #(dispatch [::update-background-info :region (.. % -target -value)])}]]
            [:div.w-10-l.w-100.fl.pr0-l.pr0
             [form/text
              {:placeholder "Zip"

@@ -169,7 +169,7 @@
                               {:communities #(into [] %)})
                             (dissoc :first-name :last-name :middle-name :dob))
          account-params (get-account-params params)]
-     (log/log "updating application " params params')
+     (log/log "updating application " params')
      {:dispatch [:ui/loading :step.current/save true]
       :graphql  {:mutation   [[:application_update {:application (:application-id db)
                                                     :params      params'}
