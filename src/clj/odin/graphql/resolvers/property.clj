@@ -8,9 +8,12 @@
             [com.walmartlabs.lacinia.resolve :as resolve]
             [datomic.api :as d]
             [odin.graphql.authorization :as authorization]
+            [odin.util.tipe :as tipe]
+            [odin.tipe :refer [tipe]]
             [teller.property :as tproperty]
             [toolbelt.core :as tb]
-            [toolbelt.datomic :as td]))
+            [toolbelt.datomic :as td]
+            [taoensso.timbre :as timbre]))
 
 ;; ==============================================================================
 ;; fields =======================================================================
@@ -37,6 +40,18 @@
   "Do we have financial information?"
   [{:keys [teller]} _ property]
   (boolean (:entity (tproperty/by-community teller property))))
+
+
+(defn copy-complete
+  "All of the copy and media used for this community"
+  [_ _ property]
+  (let [copy-id (:tipe/document-id property)
+        doc     (tipe/fetch-document tipe "5b2aa642175f970013b875d7")]
+    (timbre/info "\n\n\n ------------------------ tipe" tipe)
+    (timbre/info "\n\n\n ------------------------ id" copy-id)
+    (timbre/info "\n\n\n ------------------------ copy" doc)
+    #_(timbre/info "\n\n\n FOLDER \n\n" (into [] (tipe/fetch-folder tipe "5ade238899b34a0013aa055f")))
+    copy-id))
 
 
 ;; ==============================================================================
@@ -198,6 +213,7 @@
    :property/license-prices      license-prices
    :property/tours               tours
    :property/has-financials      has-financials
+   :property/copy-complete       copy-complete
    ;; mutations
    :property/add-financial-info! add-financial-info!
    :property/create!             create!

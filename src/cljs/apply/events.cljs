@@ -72,7 +72,7 @@
    {:graphql {:query      [[:account {:id id}
                             [:name :id
                              [:application application-attrs]]]
-                           [:properties [:id :name :code :cover_image_url
+                           [:properties [:id :name :code :cover_image_url :copy_id
                                          [:rates [:rate]]
                                          [:units [[:occupant [:id]]]]]]]
               :on-success [::init-fetch-application-success]

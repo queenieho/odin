@@ -458,7 +458,9 @@
                               :resolve     :property/tours}
             :has_financials  {:type        (non-null Boolean)
                               :description "Does this community have financial information?"
-                              :resolve     :property/has-financials}}}
+                              :resolve     :property/has-financials}
+            :copy_id         {:type    String
+                              :resolve :property/copy-complete #_(:get :tipe/document-id)}}}
 
 
   :rate
