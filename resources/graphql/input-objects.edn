@@ -13,7 +13,8 @@
                  :middle_name       {:type String}
                  :last_name         {:type String}
                  :phone             {:type String}
-                 :emergency_contact {:type :update_account}}}
+                 :emergency_contact {:type :update_account}
+                 :dob               {:type :Instant}}}
 
 
    ;;; Application
@@ -27,22 +28,28 @@
 
   :application_update_params
   {:description "Inputs to update an application."
-   :fields      {:term          {:type :Long}
-                 :move_in       {:type :Instant}
-                 :move_in_range {:type :application_move_in_ranges}
-                 :occupancy     {:type :occupancies}
-                 :has_pet       {:type Boolean}
-                 :pet           {:type :application_pet_params}
-                 :status        {:type :application_status}
-                 :updated       {:type :Instant}
-                 :communities   {:type (list :Long)}
-                 :country       {:type String}
-                 :locality      {:type        String
-                                 :description "City or town applicant is from"}
-                 :region        {:type        String
-                                 :description "State, province or region applicant is from"}
-                 :zip           {:type        String
-                                 :description "Zip/postal code applicant is from"}}}
+   :fields      {:term             {:type Int}
+                 :move_in          {:type :Instant}
+                 :move_in_range    {:type :application_move_in_ranges}
+                 :occupancy        {:type :occupancies}
+                 :has_pet          {:type Boolean}
+                 :pet              {:type :application_pet_params}
+                 :status           {:type :application_status}
+                 :updated          {:type :Instant}
+                 :communities      {:type (list :Long)}
+                 :current_location {:type :application_current_location_params}}}
+
+
+  :application_current_location_params
+  {:description "Inputs needed to update an applications address."
+   :fields      {:id          {:type :Long}
+                 :country     {:type String}
+                 :locality    {:type        String
+                               :description "City or town applicant is from"}
+                 :region      {:type        String
+                               :description "State, province or region applicant is from"}
+                 :postal_code {:type        String
+                               :description "Zip/postal code applicant is from"}}}
 
 
   :application_pet_params

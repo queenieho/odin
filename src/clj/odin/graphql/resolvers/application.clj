@@ -158,6 +158,16 @@
      :pet/name (:name ps))))
 
 
+(defn- parse-current-location-params [current-location-params]
+  (when-some [ps current-location-params]
+    (tb/assoc-when
+     {:db/id (or (:id ps) (d/tempid :db.part/starcity))}
+     :address/country (:country ps)
+     :address/locality (:locality ps)
+     :address/region (:region ps)
+     :address/postal-code (:postal_code ps))))
+
+
 (defn- parse-communities-params [params]
   (when-some [p params]
     (map
@@ -168,11 +178,12 @@
 
 (defn- parse-update-params [params]
   (tb/transform-when-key-exists params
-    {:occupancy     #(keyword "application.occupancy" (name %))
-     :move_in_range #(keyword "application.move-in-range" (name %))
-     :pet           #(parse-pet-params %)
-     :communities   #(parse-communities-params %)
-     :term          #(td/id %)}))
+    {:occupancy        #(keyword "application.occupancy" (name %))
+     :move_in_range    #(keyword "application.move-in-range" (name %))
+     :pet              #(parse-pet-params %)
+     :communities      #(parse-communities-params %)
+     :term             #(td/id %)
+     :current_location #(parse-current-location-params %)}))
 
 
 (defn- update-communities-tx
@@ -221,10 +232,7 @@
                              :application/has-pet (:has_pet params)
                              :application/pet (:pet params)
                              :application/license (:term params)
-                             :address/country (:country params)
-                             :address/locality (:locality params)
-                             :address/region (:region params)
-                             :address/postal-code (:zip params))]
+                             :application/address (:current_location params))]
                            (when-some [communities (:communities params)]
                              (create-community-select-tx application communities))))
 

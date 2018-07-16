@@ -58,7 +58,7 @@
 (reg-event-fx
  ::update-background-info
  (fn [{db :db} [_ k v]]
-   {:db (assoc-in db [step k] v)}))
+   {:db (assoc-in db (into [step] k) v)}))
 
 
 (defmethod events/save-step-fx step
@@ -74,7 +74,7 @@
 (defmethod events/gql->value :current_location
   [k v]
   (let [data (subscribe [:db/step step])]
-    (merge @data v)))
+    (merge @data {:current_location v})))
 
 
 ;; views ========================================================================
@@ -84,7 +84,6 @@
   [_]
   (let [data (subscribe [:db/step step])]
     [:div
-     (log/log "form" @data)
      [:div.w-60-l.w-100
       [:h1 "Please fill out your personal information."]]
      [:div.w-90-l.w-100
@@ -97,7 +96,7 @@
           ;; or we need to make a new one
           [ant/date-picker
            {:value     (:dob @data)
-            :on-change #(dispatch [::update-background-info :dob %])}]]]
+            :on-change #(dispatch [::update-background-info [:dob] %])}]]]
         [:div.cf.mb3-ns.mb0
          [form/item
           {:label "Full Legal Name"}
@@ -105,17 +104,17 @@
            [form/text
             {:placeholder "First"
              :value       (:first-name @data)
-             :on-change   #(dispatch [::update-background-info :first-name (.. % -target -value)])}]]
+             :on-change   #(dispatch [::update-background-info [:first-name] (.. % -target -value)])}]]
           [:div.w-30-l.w-100.fl.pr3-l.pr0
            [form/text
             {:placeholder "Middle"
              :value       (:middle-name @data)
-             :on-change   #(dispatch [::update-background-info :middle-name (.. % -target -value)])}]]
+             :on-change   #(dispatch [::update-background-info [:middle-name] (.. % -target -value)])}]]
           [:div.w-30-l.w-100.fl.pr3-l.pr0
            [form/text
             {:placeholder "Last"
              :value       (:last-name @data)
-             :on-change   #(dispatch [::update-background-info :last-name (.. % -target -value)])}]]]]
+             :on-change   #(dispatch [::update-background-info [:last-name] (.. % -target -value)])}]]]]
         [:div.cf.mb3-ns.mb0
          [form/item
           [form/item
@@ -123,20 +122,20 @@
            [:div.w-30-l.w-100.fl.pr3-l.pr0
             [form/text
              {:placeholder "Country"
-              :value       (:country @data)
-              :on-change   #(dispatch [::update-background-info :country (.. % -target -value)])}]]
+              :value       (get-in @data [:current_location :country])
+              :on-change   #(dispatch [::update-background-info [:current_location :country] (.. % -target -value)])}]]
            [:div.w-30-l.w-100.fl.pr3-l.pr0
             [form/text
              {:placeholder "City/Town"
-              :value       (:locality @data)
-              :on-change   #(dispatch [::update-background-info :locality (.. % -target -value)])}]]
+              :value       (get-in @data [:current_location :locality])
+              :on-change   #(dispatch [::update-background-info [:current_location :locality] (.. % -target -value)])}]]
            [:div.w-30-l.w-100.fl.pr3-l.pr0
             [form/text
              {:placeholder "State/Province/Region"
-              :value       (:region @data)
-              :on-change   #(dispatch [::update-background-info :region (.. % -target -value)])}]]
+              :value       (get-in @data [:current_location :region])
+              :on-change   #(dispatch [::update-background-info [:current_location :region] (.. % -target -value)])}]]
            [:div.w-10-l.w-100.fl.pr0-l.pr0
             [form/text
              {:placeholder "Zip"
-              :value       (:zip @data)
-              :on-change   #(dispatch [::update-background-info :zip (.. % -target -value)])}]]]]]]]]]))
+              :value       (get-in @data [:current_location :postal_code])
+              :on-change   #(dispatch [::update-background-info [:current_location :postal_code] (.. % -target -value)])}]]]]]]]]]))

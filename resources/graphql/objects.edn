@@ -46,22 +46,22 @@
 
 
   :address
-  {:fields {:id       {:type    :Long
-                       :resolve (:get :db/id)}
-            :lines    {:type    (list String)
-                       :resolve (:get :address/lines)}
-            :locality {:type        String
-                       :resolve     (:get :address/locality)
-                       :description "City or town"}
-            :region   {:type        String
-                       :resolve     (:get :address/region)
-                       :description "State, province or region"}
-            :country  {:type        String
-                       :resolve     (:get :address/country)
-                       :description "Country"}
-            :zip      {:type        String
-                       :resolve     (:get :address/zip)
-                       :description "Zip code"}}}
+  {:fields {:id          {:type    :Long
+                          :resolve (:get :db/id)}
+            :lines       {:type    (list String)
+                          :resolve (:get :address/lines)}
+            :locality    {:type        String
+                          :resolve     (:get :address/locality)
+                          :description "City or town"}
+            :region      {:type        String
+                          :resolve     (:get :address/region)
+                          :description "State, province or region"}
+            :country     {:type        String
+                          :resolve     (:get :address/country)
+                          :description "Country"}
+            :postal_code {:type        String
+                          :resolve     (:get :address/postal-code)
+                          :description "Zip code"}}}
 
 
   :application
@@ -104,7 +104,7 @@
             :updated          {:type    (non-null :Instant)
                                :resolve :application/updated}
             :current_location {:type        :address
-                               :resolve     (:get :application/current-location)
+                               :resolve     (:get :application/address)
                                :description "Applicant's current address"}}}
 
 

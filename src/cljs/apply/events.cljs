@@ -3,7 +3,8 @@
             [apply.routes :as routes]
             [re-frame.core :refer [reg-event-db reg-event-fx path]]
             [toolbelt.core :as tb]
-            [iface.utils.log :as log]))
+            [iface.utils.log :as log]
+            [iface.utils.time :as time]))
 
 
 ;; ==============================================================================
@@ -34,7 +35,7 @@
    [:pet [:id :name :breed :weight :sterile :vaccines :bitten
           :demeanor :daytime_care :about :type]]
    [:communities [:id :code]]
-   [:current_location [:locality :region :country :zip]]])
+   [:current_location [:id :locality :region :country :postal_code]]])
 
 
 (defn parse-gql-response
@@ -57,7 +58,7 @@
                  :first_name first-name
                  :last_name last-name
                  :middle_name middle-name
-                 :dob dob
+                 :dob (when-let [d dob] (time/moment->iso d))
                  :phone phone))
 
 
@@ -110,7 +111,8 @@
                    :personal.background-check/info {:first-name  (:first_name ainfo)
                                                     :middle-name (:middle_name ainfo)
                                                     :last-name   (:last_name ainfo)
-                                                    :dob         (:dob ainfo)}})]
+                                                    :dob         (when-let [dob (:dob ainfo)]
+                                                                   (time/iso->moment dob))}})]
      (log/log "application query" (get-in response [:data :account]))
      (if-let [application (get-in response [:data :account :application])]
        {:db       (assoc init-db :application-id (:id application))
