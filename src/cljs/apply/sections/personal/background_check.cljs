@@ -3,7 +3,8 @@
             [antizer.reagent :as ant]
             [re-frame.core :refer [dispatch subscribe reg-event-fx]]
             [apply.events :as events]
-            [apply.db :as db]))
+            [apply.db :as db]
+            [iface.components.ptm.ui.card :as card]))
 
 
 (def step :personal/background-check)
@@ -61,6 +62,11 @@
     [:p "We perform background checks to ensure the safety of our community
     members. Your background check is completely confidential, and we'll share
     the results (if any) with you."]]
-   [:div.page-content.w-90-l.w-100
-    [ant/button {:on-click #(dispatch [:step.current/next :yes])} "Yes"]
-    [ant/button {:on-click #(dispatch [:step.current/next :no])} "No"]]])
+   [:div.w-80-l.w-100
+    [:div.page-content
+     [card/single
+      {:title "Yes"
+       :on-click #(dispatch [:step.current/next :yes])}]
+     [card/single
+      {:title "No"
+       :on-click #(dispatch [:step.current/next :no])}]]]])
