@@ -140,14 +140,15 @@
 
 (defn- gen-update
   [account data]
-  (let [{:keys [first_name last_name middle_name phone emergency_contact]} data]
+  (let [{:keys [first_name last_name middle_name phone emergency_contact dob]} data]
     (tb/assoc-when
      {:db/id (td/id account)}
      :person/first-name first_name
      :person/last-name last_name
      :person/middle-name middle_name
      :person/phone-number phone
-     :account/emergency-contact (gen-emergency-contact-update account emergency_contact))))
+     :account/emergency-contact (gen-emergency-contact-update account emergency_contact)
+     :account/dob dob)))
 
 
 (defn update!
