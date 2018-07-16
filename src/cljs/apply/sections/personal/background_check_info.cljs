@@ -36,20 +36,18 @@
 
 
 (defn- form-complete
-  [{:keys [dob first-name middle-name last-name country city state zip]}]
+  [{:keys [dob first-name last-name current_location]}]
   (and (some? dob)
        (not (s/blank? first-name))
        (not (s/blank? last-name))
-       (not (s/blank? country))
-       (not (s/blank? city))
-       (not (s/blank? state))))
+       (not (s/blank? (:country current_location)))
+       (not (s/blank? (:locality current_location)))
+       (not (s/blank? (:region current_location)))))
 
 
 (defmethod db/step-complete? step
   [db step]
-  false
-  ;; NOTE commenting this out until this works
-  #_(not (form-complete (step db))))
+  (not (form-complete (step db))))
 
 
 ;; events =======================================================================
@@ -63,9 +61,7 @@
 
 (defmethod events/save-step-fx step
   [db params]
-  {:dispatch [:application/update (step db)]}
-  #_{:db     (assoc db step params)
-     :dispatch [:step/advance]})
+  {:dispatch [:application/update (step db)]})
 
 
 (defmethod events/gql->rfdb :current_location [k v] step)
