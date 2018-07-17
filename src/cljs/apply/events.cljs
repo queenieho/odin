@@ -91,6 +91,8 @@
                                                              [:amenities [:label :icon]]]]
                                          [:rates [:rate]]
                                          [:units [[:occupant [:id]]]]]]
+                           [:account_background_check {:id id}
+                            [:id :consent :created]]
                            [:license_terms
                             [:id :term]]]
               :on-success [::init-fetch-application-success]
@@ -118,6 +120,7 @@
  (fn [{db :db} [_ response]]
    (let [init-db (create-init-db db (:data response))]
      (log/log "application query" init-db)
+     (log/log "background check" (get-in response [:data :account_background_check]))
      (if-let [application (get-in response [:data :account :application])]
        {:db       (assoc init-db :application-id (:id application))
         :dispatch [:app.init/somehow-figure-out-where-they-left-off application]}
