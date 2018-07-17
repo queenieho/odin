@@ -6,6 +6,7 @@
             [apply.events :as events]
             [apply.db :as db]
             [iface.components.ptm.ui.form :as form]
+            [iface.utils.locations :as locations]
             [iface.utils.log :as log]))
 
 
@@ -116,20 +117,35 @@
           [form/item
            {:label "Location of residence"}
            [:div.w-30-l.w-100.fl.pr3-l.pr0
-            [form/text
-             {:placeholder "Country"
+            [form/select
+             {:placeholder "Select country"
               :value       (get-in @data [:current_location :country])
-              :on-change   #(dispatch [::update-background-info [:current_location :country] (.. % -target -value)])}]]
+              :on-change   #(dispatch [::update-background-info [:current_location :country] (.. % -target -value)])}
+             (map
+              (fn [{:keys [name code]}]
+                ^{:key code}
+                [form/select-option {:value name} name])
+              locations/countries)]]
            [:div.w-30-l.w-100.fl.pr3-l.pr0
             [form/text
              {:placeholder "City/Town"
               :value       (get-in @data [:current_location :locality])
               :on-change   #(dispatch [::update-background-info [:current_location :locality] (.. % -target -value)])}]]
            [:div.w-30-l.w-100.fl.pr3-l.pr0
-            [form/text
-             {:placeholder "State/Province/Region"
-              :value       (get-in @data [:current_location :region])
-              :on-change   #(dispatch [::update-background-info [:current_location :region] (.. % -target -value)])}]]
+            (if (= (get-in @data [:current_location :country]) "United States")
+              [form/select
+               {:placeholder "Select state"
+                :value       (get-in @data [:current_location :region])
+                :on-change   #(dispatch [::update-background-info [:current_location :region] (.. % -target -value)])}
+               (map
+                (fn [[k v]]
+                  ^{:key k}
+                  [form/select-option {:value k} v])
+                locations/states-map)]
+              [form/text
+               {:placeholder "Province/Region"
+                :value       (get-in @data [:current_location :region])
+                :on-change   #(dispatch [::update-background-info [:current_location :region] (.. % -target -value)])}])]
            [:div.w-10-l.w-100.fl.pr0-l.pr0
             [form/text
              {:placeholder "Zip"
