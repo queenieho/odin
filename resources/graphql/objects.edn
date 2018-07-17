@@ -84,6 +84,24 @@
                             :resolve :application/updated}}}
 
 
+  :background_check
+  {:description "Information on the background check performed on the account"
+   :fields      {:id         {:type    :Long
+                              :resolve (:get :db/id)}
+                 :account    {:type    :account
+                              :resolve (:get :community-safety/account)}
+                 :report_url {:type    String
+                              :resolve (:get :community-safety/report-url)}
+                 :consent    {:type        Boolean
+                              :description "Did the user give consent to perform a background check?"
+                              :resolve     (:get :community-safety/consent-given?)}
+                 :copy       {:type        Boolean
+                              :description "Does the user want a copy of this?"
+                              :resolve     (:get :community-safety/wants-report?)}
+                 :created    {:type    (non-null :Instant)
+                              :resolve :entity/created}}}
+
+
   :application_income_file
   {:fields {:id   {:type    (non-null :Long)
                    :resolve (:get :db/id)}

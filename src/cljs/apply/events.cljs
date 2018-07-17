@@ -78,6 +78,8 @@
                                                              [:amenities [:label :icon]]]]
                                          [:rates [:rate]]
                                          [:units [[:occupant [:id]]]]]]
+                           [:account_background_check {:id id}
+                            [:id :consent :created]]
                            [:license_terms
                             [:id :term]]]
               :on-success [::init-fetch-application-success]
@@ -90,6 +92,7 @@
 (reg-event-fx
  ::init-fetch-application-success
  (fn [{db :db} [_ response]]
+   (log/log "background check" (get-in response [:data :account_background_check]))
    (if-let [application (get-in response [:data :account :application])]
      {:db       (assoc db :application-id (:id application)
                        :communities-options (get-in response [:data :properties])
