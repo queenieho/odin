@@ -75,7 +75,8 @@
                 payload
                 parse-document)]
     (log-invalid-docs validate (vector doc))
-    (nil? (validate doc))))
+    (when (nil? (validate doc))
+      doc)))
 
 
 (defn tipe
