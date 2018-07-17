@@ -38,5 +38,7 @@
 
 
 (def resolvers
-  {;; queries
+  {;; mutations
+   :background/create!    create!
+   ;; queries
    :background/by-account query-by-account})
