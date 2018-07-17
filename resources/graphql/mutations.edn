@@ -52,6 +52,16 @@
    :resolve     :application/update!}
 
 
+  ;; background check =============================================================
+
+
+  :create_background_check
+  {:type        :background_check
+   :description "Create entity for an accounts background check information."
+   :args        {:account {:type (non-null :Long)}}
+   :resolve     :background/create!}
+
+
   ;; checks =======================================================================
 
 
