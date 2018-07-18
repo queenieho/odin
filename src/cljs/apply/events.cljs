@@ -92,9 +92,9 @@
 (reg-event-fx
  ::init-fetch-application-success
  (fn [{db :db} [_ response]]
-   (log/log "latest background check" (-> (get-in response [:data :account_background_check])
-                                          (sort-by :created)
-                                          (last)))
+   (log/log "latest background check" (->> (get-in response [:data :account_background_check])
+                                           (sort-by :created)
+                                           (last)))
    (if-let [application (get-in response [:data :account :application])]
      {:db       (assoc db :application-id (:id application)
                        :communities-options (get-in response [:data :properties])
