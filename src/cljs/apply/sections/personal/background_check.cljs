@@ -4,7 +4,10 @@
             [re-frame.core :refer [dispatch subscribe reg-event-fx]]
             [apply.events :as events]
             [apply.db :as db]
-            [iface.components.ptm.ui.card :as card]))
+            [iface.components.ptm.ui.card :as card]
+            [iface.utils.log :as log]
+            [iface.components.ptm.ui.button :as button]
+            [reagent.core :as r]))
 
 
 (def step :personal/background-check)
@@ -54,19 +57,45 @@
 ;; views ========================================================================
 
 
+(defn decline-background-check-modal
+  [{:keys [visible]}]
+  (when @visible
+    [:div
+     [:div.lightbox-small
+      [:div.lightbox-content
+       [:h3 "We require background checks for all applicants."]
+       [:p "It helps keep our application process, and communities safe. Are you sure you want to decline?"]]
+      [:div.lightbox-footer
+       [:div.lightbox-footer-left
+        [button/text
+         {:on-click #(swap! visible not)}
+         "Cancel"]]
+       [:div.lightbox-footer-right
+        [button/primary
+         {:on-click #(swap! visible not)}
+         "Yes, decline"]]]]
+     [:div.scrim
+      {:on-click #(swap! visible not)}]]))
+
+
 (defmethod content/view step
   [_]
-  [:div
-   [:div.w-60-l.w-100
-    [:h1 "Do we have your consent to perform a background check?"]
-    [:p "We perform background checks to ensure the safety of our community
+  (let [is-showing (r/atom false)]
+    [:div
+     [:div.w-60-l.w-100
+      [:h1 "Do we have your consent to perform a background check?"]
+      [:p "We perform background checks to ensure the safety of our community
     members. Your background check is completely confidential, and we'll share
     the results (if any) with you."]]
-   [:div.w-80-l.w-100
-    [:div.page-content
-     [card/single
-      {:title "Yes"
-       :on-click #(dispatch [:step.current/next :yes])}]
-     [card/single
-      {:title "No"
-       :on-click #(dispatch [:step.current/next :no])}]]]])
+
+     [decline-background-check-modal {:visible  is-showing
+                                      :on-close #(swap! is-showing not)}]
+
+     [:div.w-80-l.w-100
+      [:div.page-content
+       [card/single
+        {:title    "Yes"
+         :on-click #(dispatch [:step.current/next :yes])}]
+       [card/single
+        {:title    "No"
+         :on-click #(swap! is-showing not) #_#(dispatch [:step.current/next :no])}]]]]))
