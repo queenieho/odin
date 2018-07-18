@@ -128,7 +128,6 @@
         :dispatch [:app.init/create-application (get-in response [:data :account :id])]}))))
 
 
-
 ;;TODO
 (reg-event-fx
  :app.init/somehow-figure-out-where-they-left-off
