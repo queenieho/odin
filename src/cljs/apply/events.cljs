@@ -73,6 +73,9 @@
                             [:name :id
                              [:application application-attrs]]]
                            [:properties [:id :name :code :cover_image_url :copy_id
+                                         [:application_copy [:name :images :introduction :building
+                                                             :neighborhood :community
+                                                             [:amenities [:label :icon]]]]
                                          [:rates [:rate]]
                                          [:units [[:occupant [:id]]]]]]]
               :on-success [::init-fetch-application-success]
