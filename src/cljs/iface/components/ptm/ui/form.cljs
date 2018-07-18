@@ -1,5 +1,6 @@
 (ns iface.components.ptm.ui.form
   (:require [cljs.spec.alpha :as s]
+            [cljsjs.react-day-picker]
             [reagent.core :as r]
             [devtools.defaults :as d]
             [toolbelt.core :as tb]))
@@ -183,3 +184,7 @@
 
 (s/fdef radio-group
   :args (s/cat :props (s/keys :opt-req [::name])))
+
+
+(defn date []
+  [js/DayPicker])

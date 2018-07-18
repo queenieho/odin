@@ -13,6 +13,7 @@
             [day8.re-frame.http-fx]
             [goog.dom :as gdom]
             [cljsjs.moment]
+            [cljsjs.react-day-picker]
             [iface.components.ptm.layout :as layout]
             [iface.modules.graphql :as graphql]
             [iface.utils.routes :as iroutes]

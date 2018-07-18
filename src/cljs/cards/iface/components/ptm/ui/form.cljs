@@ -294,3 +294,31 @@ A `radio-group` takes a `:value` (`list`) and an `:on-change` (`(funtion [val])`
   "
 #### Radio Group Sample Code"
   (dc/mkdn-pprint-source radio-group-component))
+
+
+(defn- date-input-component [data]
+  [form/date])
+
+
+(defcard-rg date-input
+  "
+<hr>
+<br>
+## Radio Group
+A `radio-group` can be created with multiple `radio-option`s as children.
+A `radio-group` takes a `:value` (`list`) and an `:on-change` (`(funtion [val])`), while `radio-option` only needs a `:value` prop.
+<br>
+<br>
+"
+  (fn [data _]
+    [date-input-component data])
+  (r/atom {:selected "la"})
+  {:inspect-data true
+   :frame        false
+   :header       false})
+
+
+(defcard-doc
+  "
+#### Date Input Sample Code"
+  (dc/mkdn-pprint-source date-input-component))
