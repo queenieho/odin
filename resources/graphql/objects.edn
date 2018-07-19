@@ -36,6 +36,8 @@
                                     :resolve (:get :person/phone-number)}
                 :property          {:type    :property
                                     :resolve :account/property}
+                :refundable        {:type    (non-null :Boolean)
+                                    :resolve :account/refundable}
                 :role              {:type    (non-null :role)
                                     :resolve :account/role}
                 :service_source    {:type        :payment_source
@@ -172,7 +174,9 @@
                                :resolve     :deposit/amount-pending}
             :refund_status    {:type        :deposit_refund_status
                                :description "The status of the refund, if any."
-                               :resolve     :deposit/refund-status}}}
+                               :resolve     :deposit/refund-status}
+            :line_items       {:type    (list :line_item)
+                               :resolve :deposit/line-items}}}
 
 
   :emergency_contact
@@ -350,7 +354,9 @@
             :cost  {:type    Float
                     :resolve (:get :line-item/cost)}
             :price {:type    (non-null Float)
-                    :resolve (:get :line-item/price)}}}
+                    :resolve (:get :line-item/price)}
+            :types {:type    (list :Keyword)
+                    :resolve (:get :line-item/types)}}}
 
 
   :payment
