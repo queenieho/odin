@@ -297,22 +297,39 @@ A `radio-group` takes a `:value` (`list`) and an `:on-change` (`(funtion [val])`
 
 
 (defn- date-input-component [data]
-  [form/date])
+  [form/inline-date {
+                     ;; required, it should be either the selected date
+                     ;; or default to the current date
+                     :month (or (:selected @data) (js/Date.))
+
+                     ;; defaults to true - allows selecting other months
+                     :canChangeMonth true
+
+                     ;; on-click
+                     :onDayClick #(doall
+                                   (.log js/console "click:" %)
+                                   (swap! data assoc :selected %))
+
+                     ;; value
+                     :selectedDays (:selected @data)
+
+                     ;; :disabled-days, takes a list with the indexes of disabled days
+                     :disabledDays {:daysOfWeek [0 6]}
+
+                     :showOutsideDays true
+                     }])
 
 
 (defcard-rg date-input
   "
 <hr>
 <br>
-## Radio Group
-A `radio-group` can be created with multiple `radio-option`s as children.
-A `radio-group` takes a `:value` (`list`) and an `:on-change` (`(funtion [val])`), while `radio-option` only needs a `:value` prop.
 <br>
 <br>
 "
   (fn [data _]
     [date-input-component data])
-  (r/atom {:selected "la"})
+  (r/atom {:selected nil})
   {:inspect-data true
    :frame        false
    :header       false})

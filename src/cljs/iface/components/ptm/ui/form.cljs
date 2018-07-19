@@ -186,5 +186,5 @@
   :args (s/cat :props (s/keys :opt-req [::name])))
 
 
-(defn date []
-  [js/DayPicker])
+(defn inline-date [props]
+  (.createElement js/React js/DayPicker (clj->js props)))
