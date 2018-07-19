@@ -7,7 +7,8 @@
             [member.profile.events]
             [member.services.events]
             [re-frame.core :refer [reg-event-db reg-event-fx path]]
-            [iface.utils.formatters :as format]))
+            [iface.utils.formatters :as format]
+            [antizer.reagent :as ant]))
 
 
 (graphql/configure
@@ -29,7 +30,8 @@
  ::fetch-membership-status
  (fn [{:keys [db]} [_ account-id]]
    {:graphql {:query      [[:account {:id account-id}
-                            [[:deposit [:id :due :amount :amount_remaining :amount_paid :amount_pending]]
+                            [:refundable
+                             [:deposit [:id :due :amount :amount_remaining :amount_paid :amount_pending]]
                              [:active_license [[:payments [:amount :status :due]]]]]]]
               :on-success [::fetch-success]
               :on-failure [:graphql/failure]}}))
@@ -56,16 +58,33 @@
                    :danger)))
 
 
+(defn- payout-account-missing-message []
+  (notifs/create :payout-account-missing
+                 [ant/tooltip {:title "We can send your deposit directly to your
+                  bank when we know how much to return, but we’ll need some more
+                  info first."}
+                  [:span
+                   [:b "We need a little more info."]
+                   " Can you go to " [:u "Payment Methods"] " and click “Add
+                   Deposit Info”? Thanks!"]]
+                 (routes/path-for :profile.payment/sources)
+                 :warning))
+
+
 (defn- messages [{:keys [account] :as data}]
   (let [due-payments (->> (get-in account [:active_license :payments])
                           (filter #(= (:status %) :due)))
-        deposit      (:deposit account)]
+        deposit      (:deposit account)
+        refundable   (:refundable account)]
     (cond-> []
       (not (empty? due-payments))
       (conj (rent-due-message (first due-payments)))
 
       (and (> (:amount_remaining deposit) 0) (t/is-before-now (:due deposit)))
-      (conj (deposit-overdue-message deposit)))))
+      (conj (deposit-overdue-message deposit))
+
+      (not refundable)
+      (conj (payout-account-missing-message)))))
 
 
 (reg-event-fx
