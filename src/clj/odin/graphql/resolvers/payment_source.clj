@@ -18,7 +18,8 @@
             [teller.property :as tproperty]
             [teller.source :as tsource]
             [teller.subscription :as tsubscription]
-            [toolbelt.core :as tb]))
+            [toolbelt.core :as tb]
+            [clojure.string :as str]))
 
 ;; =============================================================================
 ;; Fields
@@ -87,7 +88,10 @@
   "The types of payments this source is for."
   [_ _ source]
   (mapv
-   #(keyword (clojure.core/name %))
+   (fn [type]
+     (-> (clojure.core/name type)
+         (str/replace "-" "_")
+         (keyword)))
    (tsource/payment-types source)))
 
 
