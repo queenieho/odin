@@ -27,15 +27,18 @@
 
 (defn- term-select
   [{:keys [disabled value on-change]}]
-  [ant/select
-   {:style         {:width "50%"}
-    :value         (str value)
-    :default-value "3"
-    :disabled      disabled
-    :on-change     (comp on-change int)}
-   [ant/select-option {:value "3"} "3 months"]
-   [ant/select-option {:value "6"} "6 months"]
-   [ant/select-option {:value "12"} "12 months"]])
+  (let [terms (subscribe [:license-terms/list])]
+    [ant/select
+     {:style         {:width "50%"}
+      :value         (str value)
+      :default-value (str (:term (first @terms)))
+      :disabled      disabled
+      :on-change     (comp on-change int)}
+     (doall
+      (map
+       (fn [{:keys [id term]}]
+         ^{:key id} [ant/select-option {:value (str term)} (str term " month(s)")])
+       @terms))]))
 
 
 ;; ==============================================================================
@@ -762,30 +765,30 @@
     (ant/modal-confirm
      {:title   "Confirm License Renewal"
       :content "Are you sure you want to continue? This action can't easily be undone and will send an email notification to the member."
-      :on-ok   #(dispatch [:accounts.entry/renew-license! license @form])
+      :on-ok   #(dispatch [:accounts.entry/renew-license! license form])
       :ok-type :primary
       :ok-text "Yes - Confirm License Renewal"})))
 
 
 (defn renewal-modal-footer
-  [account form]
+  [account {:keys [editing term rate] :as form}]
   [:div
    [ant/button
     {:size     :large
      :on-click #(dispatch [:modal/hide db/renewal-modal-key])}
     "Cancel"]
-   (if (:editing @form)
+   (if editing
      (let [license-id    (get-in account [:active_license :id])
            transition-id (get-in account [:active_license :transition :id])]
        [ant/button
         {:type     :primary
          :size     :large
-         :on-click #(dispatch [:accounts.entry/update-move-out! license-id transition-id @form])}
+         :on-click #(dispatch [:accounts.entry/update-move-out! license-id transition-id form])}
         "Update Renewal Info"])
      [ant/button
       {:type     :primary
        :size     :large
-       :disabled false ;; TODO - disable when no term?
+       :disabled (or (nil? term) (nil? rate))
        :on-click #(renewal-confirmation account form)}
       "Renew License"])])
 
@@ -805,7 +808,7 @@
       :visible     @(subscribe [:modal/visible? db/renewal-modal-key])
       :after-close #(dispatch [:accounts.entry.transition/clear])
       :on-cancel   #(dispatch [:modal/hide db/renewal-modal-key])
-      :footer      (r/as-element [renewal-modal-footer account form])}
+      :footer      (r/as-element [renewal-modal-footer account @form])}
      [move-out-form-item
       [:p.bold "What will the member's new license term be?"]
       [term-select
@@ -822,7 +825,7 @@
                    :style {:margin-left 10}}]]]
       [ant/radio-group
        {:on-change #(dispatch [:accounts.entry.transition/update :rate-changing (.. % -target -value)])
-        :disabled  (nil? (:rate @form))
+        :disabled  (nil? (:term @form))
         :value     (:rate-changing @form)}
        [ant/radio (assoc {:value false} :style radio-style) "No - it will not change"]
        [ant/radio (assoc {:value true} :style radio-style) "Yes - it will change to..."
