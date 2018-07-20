@@ -297,33 +297,39 @@ A `radio-group` takes a `:value` (`list`) and an `:on-change` (`(funtion [val])`
 
 
 (defn- date-input-component [data]
-  [form/inline-date {
-                     ;; required, it should be either the selected date
-                     ;; or default to the current date
-                     :month (or (:selected @data) (js/Date.))
-
-                     ;; defaults to true - allows selecting other months
-                     :canChangeMonth true
-
-                     ;; on-click
-                     :onDayClick #(doall
-                                   (.log js/console "click:" %)
-                                   (swap! data assoc :selected %))
-
-                     ;; value
-                     :selectedDays (:selected @data)
-
-                     ;; :disabled-days, takes a list with the indexes of disabled days
-                     :disabledDays {:daysOfWeek [0 6]}
-
-                     :showOutsideDays true
-                     }])
+  [form/inline-date {:value         (:selected @data)
+                     :on-day-click  #(when-not (.. %2 -disabled)
+                                       (if (.. %2 -selected)
+                                         (swap! data dissoc :selected)
+                                         (swap! data assoc :selected %)))
+                     :disabled      {:before   (js/Date.)
+                                     :after    #inst "2018-10-20"
+                                     :weekdays [0 6]}
+                     :show-from     (js/Date.)
+                     :initial-month #inst "2018-09-02"
+                     :change-month  true
+                     :fixed-height  true
+                     :today-btn     true}])
 
 
 (defcard-rg date-input
   "
 <hr>
 <br>
+## Inline date picker
+`inline-date` allows a user to pick a date out of a calendar.
+<br>
+<br>
+Props used for this component:
+<br>
+`:value` stores the value of the selected date. It can be a single `instant` or a `list` of `instant`s. <br>
+`:on-day-click` event handler when a user clicks on a date in the following shape `(fn [val {:disabled _ :selected _}])`.<br>
+`:disabled` map to indicate disabled dates with the following keys `:before [Instant]`, `:after [Instant]`, `:weekdays (list of weekday indexes)`.<br>
+`:show-from` takes an `Instant` to indicate which month to show a caledar from. If not specified the user will be able to go back indefinitely.<br>
+`:initial-month` takes an `Instant` that represents the month that is rendered initially. Defaults to current date.<br>
+`:change-month` defaults to `true`. Allows user to cycle through different months in the calendar.<br>
+`:fixed-height` defaults to `true`. Keeps the calendar UI showing 6 weeks at a time. Out of month days are shown as disabled.<br>
+`:today-btn` defaults to `false`. When `true` shows a `Today` button that brings user back to the current date.<br>
 <br>
 <br>
 "

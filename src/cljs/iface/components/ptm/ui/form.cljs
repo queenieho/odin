@@ -186,5 +186,30 @@
   :args (s/cat :props (s/keys :opt-req [::name])))
 
 
-(defn inline-date [props]
-  (.createElement js/React js/DayPicker (clj->js props)))
+(defn- parse-disabled
+  [disabled]
+  (reduce
+   (fn [acc [k v]]
+     (let [k (if (= k :weekdays)
+               :daysOfWeek
+               k)]
+       (conj acc {k v})))
+   []
+   disabled))
+
+
+(defn inline-date
+  [{:keys [change-month month on-day-click value disabled fixed-height
+           show-from initial-month today-btn]
+    :or   {fixed-height true}
+    :as   props}]
+  (let [props' (tb/assoc-some {}
+                              :onDayClick on-day-click
+                              :selectedDays value
+                              :disabledDays (parse-disabled disabled)
+                              :fixedWeeks fixed-height
+                              :fromMonth show-from
+                              :initialMonth initial-month
+                              :todayButton (when today-btn "Today")
+                              :canChangeMonth change-month)]
+    (.createElement js/React js/DayPicker (clj->js props'))))
