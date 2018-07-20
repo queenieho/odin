@@ -10,7 +10,8 @@
             [odin.graphql.authorization :as authorization]
             [teller.property :as tproperty]
             [toolbelt.core :as tb]
-            [toolbelt.datomic :as td]))
+            [toolbelt.datomic :as td]
+            [teller.customer :as tcustomer]))
 
 ;; ==============================================================================
 ;; fields =======================================================================
@@ -37,6 +38,13 @@
   "Do we have financial information?"
   [{:keys [teller]} _ property]
   (boolean (:entity (tproperty/by-community teller property))))
+
+
+(defn sources
+  "Property customer sources"
+  [{:keys [teller] _ property}]
+  (let [customer (tproperty/customer property)]
+    (tcustomer/sources customer)))
 
 
 ;; ==============================================================================
@@ -198,6 +206,7 @@
    :property/license-prices      license-prices
    :property/tours               tours
    :property/has-financials      has-financials
+   :property/sources             sources
    ;; mutations
    :property/add-financial-info! add-financial-info!
    :property/create!             create!

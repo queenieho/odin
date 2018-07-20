@@ -437,6 +437,8 @@
                               :resolve (:get :property/name)}
             :code            {:type    (non-null String)
                               :resolve (:get :property/internal-name)}
+            :sources         {:type    (list :payment_source)
+                              :resolve :property/sources}
             :cover_image_url {:type    (non-null String)
                               :resolve (:get :property/cover-image-url)}
             :units           {:type    (list :unit)
