@@ -296,7 +296,7 @@ A `radio-group` takes a `:value` (`list`) and an `:on-change` (`(funtion [val])`
   (dc/mkdn-pprint-source radio-group-component))
 
 
-(defn- date-input-component [data]
+(defn- date-picker-component [data]
   [form/inline-date {:value         (:selected @data)
                      :on-day-click  #(when-not (.. %2 -disabled)
                                        (if (.. %2 -selected)
@@ -312,7 +312,7 @@ A `radio-group` takes a `:value` (`list`) and an `:on-change` (`(funtion [val])`
                      :today-btn     true}])
 
 
-(defcard-rg date-input
+(defcard-rg date-picker
   "
 <hr>
 <br>
@@ -334,7 +334,51 @@ Props used for this component:
 <br>
 "
   (fn [data _]
-    [date-input-component data])
+    [date-picker-component data])
+  (r/atom {:selected nil})
+  {:inspect-data true
+   :frame        false
+   :header       false})
+
+
+(defcard-doc
+  "
+#### Date Picker Sample Code"
+  (dc/mkdn-pprint-source date-picker-component))
+
+
+(defn- date-input-component [data]
+  [form/date-input {:value     (:selected @data)
+                    :on-change #(swap! data assoc :selected %)
+                    :disabled  {:weekdays [3]}
+                    :show-from (js/Date.)}])
+
+
+(defcard-rg date-input
+  "
+<hr>
+<br>
+## Date Input
+`date-input` is a form item to collect a date.
+<br>
+<br>
+Props used for this component:
+<br>
+`:value` stores the value of the selected date. It can be a single `instant` or a `list` of `instant`s. <br>
+`:on-change` event handler when a user clicks on a date in the following shape `(fn [val {:disabled _ :selected _}])`.<br>
+
+`:disabled` map to indicate disabled dates with the following keys `:before [Instant]`, `:after [Instant]`, `:weekdays (list of weekday indexes)`.<br>
+`:show-from` takes an `Instant` to indicate which month to show a caledar from. If not specified the user will be able to go back indefinitely.<br>
+`:initial-month` takes an `Instant` that represents the month that is rendered initially. Defaults to current date.<br>
+`:change-month` defaults to `true`. Allows user to cycle through different months in the calendar.<br>
+`:fixed-height` defaults to `true`. Keeps the calendar UI showing 6 weeks at a time. Out of month days are shown as disabled.<br>
+`:today-btn` defaults to `false`. When `true` shows a `Today` button that brings user back to the current date.<br>
+<br>
+<br>
+"
+  (fn [data _]
+    [:div {:style {:width "25vw"}}
+     [date-input-component data]])
   (r/atom {:selected nil})
   {:inspect-data true
    :frame        false

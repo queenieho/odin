@@ -3,7 +3,9 @@
             [cljsjs.react-day-picker]
             [reagent.core :as r]
             [devtools.defaults :as d]
-            [toolbelt.core :as tb]))
+            [toolbelt.core :as tb]
+            [antizer.reagent :as ant]
+            [iface.utils.formatters :as format]))
 
 ;; specs ========================================================================
 
@@ -213,3 +215,27 @@
                               :todayButton (when today-btn "Today")
                               :canChangeMonth change-month)]
     (.createElement js/React js/DayPicker (clj->js props'))))
+
+
+(defn date-input
+  [props]
+  (let [show-calendar (r/atom false)]
+    (fn [{:keys [value on-change disabled]
+         :as   props}]
+      (let [cprops (-> (dissoc props :on-change)
+                       (assoc :on-day-click #(when-not (.. %2 -disabled)
+                                               (on-change %))))]
+        [ant/popover
+         {:content   (r/as-element
+                      [:div
+                       [ant/icon {:type     :close
+                                  :on-click #(swap! show-calendar not)}]
+                       [:div
+                        [inline-date cprops]]])
+          :placement "bottomLeft"
+          :visible   @show-calendar}
+         [text (tb/assoc-some
+                {:placeholder "MM/DD/YYYY"
+                 :on-click    #(swap! show-calendar not)}
+                :value (format/date-short-num value)
+                :on-change #(on-change value))]]))))
