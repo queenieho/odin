@@ -39,6 +39,166 @@
    (:application (norms/get-norm db :accounts/norms account-id))))
 
 
+(defn- sum-amount [items]
+  (reduce
+   (fn [sum item]
+     (cond
+       (number? (:price item))
+       (+ sum (:price item))
+
+       :else
+       sum))
+   0
+   items))
+
+
+(reg-sub
+ :security-deposit/sum-amount
+ (fn [_ [_ items]]
+   (sum-amount items)))
+
+
+(defn- refund-amount
+  [deposit-amount form]
+  (let [charge-amount (sum-amount (:charges form))
+        credit-amount (sum-amount (:credits form))
+        refund-amount (-> deposit-amount
+                          (- charge-amount)
+                          (+ credit-amount))]
+    (if (js/Number.isNaN refund-amount)
+      0
+      refund-amount)))
+
+(reg-sub
+ :security-deposit/refund-amount
+ :<- [:security-deposit/form]
+ (fn [form [_ deposit-amount]]
+   (refund-amount deposit-amount form)))
+
+
+(defn- some-item?
+  [item]
+  (and (not= db/default-key-value item)
+       (some? item)))
+
+
+(defn- some-item-str?
+  [item]
+  (and (some-item? item)
+       (when (string? item)
+         (not (empty? item)))))
+
+
+(defn- validate-items
+  [line-items]
+  (reduce
+   (fn [result {desc :desc types :types price :price}]
+     (conj result {:desc  (some-item-str? desc)
+                   :types (some-item? types)
+                   :price (and (number? price)
+                               (<= 0 price))}))
+   []
+   line-items))
+
+
+(defn- valid-form-items?
+  [items]
+  (boolean
+   (reduce
+    (fn [return item]
+      (if (some false? (vals item))
+        (reduced false)
+        return))
+    true
+    items)))
+
+
+(defn- valid-form?
+  [db]
+  (and (valid-form-items? (:charges-form-validation db))
+       (valid-form-items? (:credits-form-validation db))))
+
+
+(defn- can-submit?
+  [deposit-amount form]
+  (let [refund-amount (refund-amount deposit-amount form)]
+    (false? (or (js/Number.isNaN refund-amount)
+                (> refund-amount deposit-amount)
+                (> 0 refund-amount)))) )
+
+
+(defn- form-validation
+  [db]
+  (let [charges (get-in db [:form :charges])
+        credits (get-in db [:form :credits])]
+    (-> (assoc-in {} [:charges-form-validation] (validate-items charges))
+        (assoc-in [:credits-form-validation] (validate-items credits)))))
+
+
+(reg-sub
+ :security-deposit.form/validation
+ :<- [db/path]
+ (fn [db _]
+   (form-validation db)))
+
+
+(reg-sub
+ :security-deposit/can-submit?
+ :<- [db/path]
+ (fn [db [_ deposit-amount]]
+   (and (valid-form? (form-validation db))
+        (can-submit? deposit-amount (:form db)))))
+
+
+(reg-sub
+ :security-deposit.line-item/is-valid?
+ :<- [:security-deposit.form/validation]
+ (fn [db [_ k refund-type item idx]]
+   (or (= db/default-key-value (k item))
+       (get-in db [(keyword (str (name refund-type) "-form-validation")) idx k]))))
+
+
+(defn- refunded?
+  [deposit]
+  (some? (#{:initiated
+              :successful} (:refund_status deposit))))
+
+
+(reg-sub
+ :security-deposit/refundable?
+ (fn [_ [_ account]]
+   (let [refunded (refunded? (:deposit account))]
+     (cond
+       refunded
+       "Member has already been refunded their deposit."
+
+       (and (not refunded) (not (:refundable account)))
+       "Member does not have a payout account. Please inform the member to where
+       to input details to be refunded their security deposit."
+
+       :else nil))))
+
+
+(reg-sub
+ :security-deposit/input-value
+ (fn [_ [_ item k]]
+   (let [value (k item)]
+     (when-not (= db/default-key-value value) value))))
+
+
+(reg-sub
+ :security-deposit/form
+ :<- [db/path]
+ (fn [db _]
+   (:form db)))
+
+
+(reg-sub
+ :security-deposit/types
+ :<- [db/path]
+ (fn [db _]
+   (:types db)))
+
 
 ;; ==============================================================================
 ;; list =========================================================================

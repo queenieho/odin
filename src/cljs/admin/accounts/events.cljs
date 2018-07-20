@@ -8,7 +8,8 @@
             [re-frame.core :refer [reg-event-fx
                                    reg-event-db
                                    path]]
-            [toolbelt.core :as tb]))
+            [toolbelt.core :as tb]
+            [taoensso.timbre :as timbre]))
 
 
 ;; ==============================================================================
@@ -61,8 +62,8 @@
      {:dispatch [:ui/loading k true]
       :graphql   {:query
                   [[:account {:id account-id}
-                    [:id :name :email :phone :role :dob
-                     [:deposit [:amount :due :status]]
+                    [:id :name :email :phone :role :dob :refundable
+                     [:deposit [:id :amount :due :refund_status :status [:line_items [:desc :types :price]]]]
                      [:property [:id :name]]
                      ;; TODO: Move to separate query
                      [:application [:id :move_in :created :updated :submitted :status :term :has_pet
@@ -519,6 +520,7 @@
                  :on-success [::move-out-success k]
                  :on-failure [:graphql/failure k]}}))
 
+
 (reg-event-fx
  :accounts.entry.renewal/populate
  [(path db/path)]
@@ -643,6 +645,76 @@
      {:dispatch-n [[:ui/loading k false]
                    [:notify/success "Transition deleted!"]
                    [:account/fetch account-id]]})))
+
+
+;; refund security deposit ======================================================
+
+
+(reg-event-fx
+ :security-deposit.line-item/create
+ [(path db/path)]
+ (fn [{db :db} [_ refund-type]]
+   {:db (-> (update-in db [:form refund-type] conj db/default-line-item)
+            (update-in [(keyword (str (name refund-type) "-form-validation"))]
+                       conj
+                       db/default-validation))}))
+
+
+(defn- parse-price
+  [k v]
+  (if (and (= k :price)
+           (or (js/Number.isNaN v) (< v 0)))
+    nil
+    v))
+
+
+(reg-event-db
+ :security-deposit.line-item/update
+ [(path db/path)]
+ (fn [db [_ idx refund-type key value]]
+   (let [value (parse-price key value)]
+     (assoc-in db [:form refund-type idx key] value))))
+
+
+(reg-event-db
+ :security-deposit.line-item/delete
+ [(path db/path)]
+ (fn [db [_ idx refund-type]]
+   (update-in db [:form refund-type] #(tb/remove-at % idx))))
+
+
+(defn prepare-edits
+  [items]
+  (mapv
+   (fn [item]
+     (tb/transform-when-key-exists item
+       {:types #(vector (clojure.core/keyword %))}))
+   items))
+
+
+(reg-event-fx
+ :security-deposit/refund!
+ [(path db/path)]
+ (fn [{db :db} [k account-id deposit-id credits charges]]
+   {:dispatch [:ui/loading k true]
+    :graphql  {:mutation
+               [[:refund_security_deposit {:deposit_id deposit-id
+                                           :credits    (prepare-edits credits)
+                                           :charges    (prepare-edits charges)}
+                 [:id]]]
+               :on-success [::security-deposit-success k account-id]
+               :on-failure [:graphql/failure k]}}))
+
+
+(reg-event-fx
+ ::security-deposit-success
+ [(path db/path)]
+ (fn [db [_ k account-id]]
+   {:dispatch-n [[:ui/loading k false]
+                 [:modal/hide :security-deposit/modal]
+                 [:account/fetch account-id {:on-success [::on-fetch-account]}]
+                 [:payments/fetch account-id]
+                 [:notify/success "Security Deposit refunded!"]]}))
 
 
 ;; payment ======================================================================

@@ -17,7 +17,8 @@
             [re-frame.core :refer [subscribe dispatch]]
             [reagent.core :as r]
             [toolbelt.core :as tb]
-            [iface.components.form :as form]))
+            [iface.components.form :as form]
+            [clojure.string :as str]))
 
 
 ;; ==============================================================================
@@ -621,7 +622,7 @@
                      [ant/tooltip
                       {:title     "To be added after Ops has reviewed the final walkthrough details"
                        :placement "topLeft"}
-                      [:span.bold "Security Desposit Refund Amount"]] )}
+                      [:span.bold "Security Deposit Refund Amount"]] )}
             [ant/input-number
              {:style     {:width "50%"}
               :value     (:deposit-refund @form)
@@ -706,7 +707,7 @@
     [ant/tooltip
      {:title     "To be added after Ops has reviewed the final walkthrough details"
       :placement "topLeft"}
-     [:p.bold "Security Desposit Refund Amount"]]
+     [:p.bold "Security Deposit Refund Amount"]]
     [ant/input-number
      {:style     {:width "50%"}
       :value     (:deposit-refund @form)
@@ -841,22 +842,269 @@
 
 
 (defn membership-actions [account]
-  (when (nil? (:transition (:active_license account)))
+  [:div
+   [ant/button
+    {:icon     "swap"
+     :on-click #(dispatch [:accounts.entry.reassign/show account])}
+    "Transfer"]
+   [ant/button
+    {:icon     "retweet"
+     :on-click #(dispatch [:accounts.entry.renewal/show (:active_license account)])}
+    "Renew License"]
+   [ant/button
+    {:icon     "home"
+     :type     :danger
+     :ghost    true
+     :on-click #(dispatch [:accounts.entry.transition/show (get-in account [:active_license :transition])])}
+    "Move-out"]])
+
+(defn- line-description
+  [type type-str item idx]
+  (let [is-valid (subscribe [:security-deposit.line-item/is-valid? :desc type item idx])
+        value    (subscribe [:security-deposit/input-value item :desc])
+        on-change #(dispatch [:security-deposit.line-item/update %1 %2 :desc %3])]
+    [:div.column.is-7
+     [ant/form-item
+      (merge
+       {:label     (when (zero? idx) "Description")
+        :read-only true}
+       (if @is-valid
+         {}
+         {:help            (format/format "Please provide a description for this %s." type-str)
+          :has-feedback    true
+          :validate-status "error"}))
+      [ant/input-text-area
+       {:value       @value
+        :placeholder (str type-str " description")
+        :on-change   #(on-change idx type (.. % -target -value))}]]]))
+
+
+(defn- line-type
+  [type type-str item idx]
+  (let [is-valid (subscribe [:security-deposit.line-item/is-valid? :types type item idx])
+        value    (subscribe [:security-deposit/input-value item :types])
+        on-change #(dispatch [:security-deposit.line-item/update %1 %2 :types %3])
+        types    (subscribe [:security-deposit/types])]
+    [:div.column.is-2
+     [ant/form-item
+      (merge
+       {:label     (when (zero? idx) "Type")
+        :read-only true}
+       (if @is-valid
+         {}
+         {:help            "Please select a type for this charge."
+          :has-feedback    true
+          :validate-status "error"}))
+      [ant/select
+       {:style       {:width "100%"}
+        :value       @value
+        :placeholder (str type-str " type")
+        :on-change   #(on-change idx type (js->clj %))}
+       (map-indexed
+        (fn [i k]
+          [ant/select-option
+           {:key   i
+            :value k}
+           (str/upper-case (name k))])
+        @types)]]]))
+
+
+(defn- line-price
+  [type item idx]
+  (let [is-valid (subscribe [:security-deposit.line-item/is-valid? :price type item idx])
+        value    (subscribe [:security-deposit/input-value item :price])
+        on-change #(dispatch [:security-deposit.line-item/update %1 %2 :price %3])]
+    [:div.column.is-2
+     [ant/form-item
+      (merge
+       {:label     (when (zero? idx) "Amount")
+        :read-only true}
+       (if @is-valid
+         {}
+         {:help            "Please provide a number greater than or equal to zero."
+          :has-feedback    true
+          :validate-status "error"}))
+      [ant/input-number
+       {:value     @value
+        :style     {:width "100%"}
+        :formatter (fn [value] (str "$" value))
+        :on-change #(on-change idx type %)}]]]))
+
+
+(defn- line-delete
+  [type idx]
+  [:div.column.is-1
+   [ant/form-item
+    {:label     (when (zero? idx) "Remove")
+     :read-only true}
+    [ant/button
+     {:icon     "close-circle-o"
+      :shape    "circle"
+      :type     "danger"
+      :on-click #(dispatch [:security-deposit.line-item/delete idx type])}]]])
+
+
+(defn edit-line-item [idx item type]
+  (let [type-str (str/join "" (drop-last (name type)))]
+    [:div.columns
+     [line-description type type-str item idx]
+     [line-type type type-str item idx]
+     [line-price type item idx]
+     [line-delete type idx]]))
+
+
+(defn create-line-item [type]
+  [:div.align-center
+   [ant/button
+    {:icon     "plus"
+     :type     "dashed"
+     :style    {:width "30%"}
+     :on-click #(dispatch [:security-deposit.line-item/create type])}
+    (str "Add " (name type))]])
+
+
+(defn list-line-items [form type]
+  [:div
+   (map-indexed
+    (fn [idx item]
+      (with-meta
+        [edit-line-item idx item type]
+        {:key idx}))
+    (type @form))
+   [create-line-item type]])
+
+
+(defn total-credit [credits]
+  [:p.bold
+   (format/format
+    "+$%.2f"
+    @(subscribe [:security-deposit/sum-amount credits]))])
+
+
+(defn total-charge [charges]
+  [:p.bold
+   {:style {:color "#f5222d"}}
+   (format/format
+    "-$%.2f"
+    @(subscribe [:security-deposit/sum-amount charges]))])
+
+
+(defn- total-refund [deposit-amount form]
+  [:p.bold
+   (format/format
+    "$%.2f"
+    @(subscribe [:security-deposit/refund-amount deposit-amount form]))])
+
+
+(defn- refund-confirmation-content
+  [charge-amount refund-amount deposit-amount]
+  (merge (if (= deposit-amount refund-amount)
+           [:span.bold
+            (format/format "Are you sure you want to return this member's ENTIRE
+                    deposit of $%.2f?" refund-amount)]
+           [:span
+            "Are you sure want to charge this member "
+            [:span.bold
+             (format/format "$%.2f" (or charge-amount 0))]
+            " and refund "
+            [:span.bold (format/format "$%.2f" refund-amount)]
+            " of their security deposit?"])
+         [:br]
+         [:br]
+         [:span.bold "This will transfer money and cannot be undone!"]))
+
+
+(defn- refund-confirmation-modal [account deposit form]
+  (let [charge-amount @(subscribe [:security-deposit/sum-amount (:charges form)])
+        refund-amount @(subscribe [:security-deposit/refund-amount (:amount deposit)])
+        on-ok         #(dispatch [:security-deposit/refund! %1 %2 %3 %4])]
+    (ant/modal-confirm
+     {:title   "Confirm Deposit Refund"
+      :content (r/as-element [refund-confirmation-content charge-amount refund-amount (:amount deposit)])
+      :ok-type "danger"
+      :ok-text "Confirm!"
+      :on-ok   #(on-ok (:id account) (:id deposit) (:credits form) (:charges form))})))
+
+
+(defn- security-deposit-footer [account deposit]
+  (let [form       (subscribe [:security-deposit/form])
+        can-submit (subscribe [:security-deposit/can-submit? (:amount deposit)])
+        is-loading (subscribe [:ui/loading? :security-deposit/refund!])]
     [:div
      [ant/button
-      {:icon     "swap"
-       :on-click #(dispatch [:accounts.entry.reassign/show account])}
-      "Transfer"]
-     [ant/button
-      {:icon     "retweet"
-       :on-click #(dispatch [:accounts.entry.renewal/show (:active_license account)])}
-      "Renew License"]
-     [ant/button
-      {:icon     "home"
-       :type     :danger
-       :ghost    true
-       :on-click #(dispatch [:accounts.entry.transition/show (get-in account [:active_license :transition])])}
-      "Move-out"]]))
+      {:on-click #(dispatch [:modal/hide :security-deposit/modal])}
+      "Cancel"]
+     [ant/tooltip
+      {:title (when (not @can-submit)
+                "Please fill out or correct all fields and make sure the refunded amount is not negative or greater than the security deposit.")}
+      [ant/button
+       {:on-click #(refund-confirmation-modal account deposit @form)
+        :disabled (not @can-submit)
+        :loading  @is-loading
+        :type     "danger"}
+       "Refund Deposit!"]]]))
+
+
+(defn line-item-sums
+  [form deposit]
+  [:div.columns
+   [:div.column.is-10.align-right
+    [:p "Security Deposit"]
+    [:p "Total Credits"]
+    [:p "Total Charges"]
+    [:p.bold
+     {:style {:text-decoration "underline"}}
+     "Total Refund"]]
+   [:div.column.is-2.align-right
+    [:p (format/format "$%.2f" (:amount deposit))]
+    [total-credit (:credits @form)]
+    [total-charge (:charges @form)]
+    [total-refund (:amount deposit) @form]]])
+
+
+(defn security-deposit-modal [account]
+  (let [is-visible (subscribe [:modal/visible? :security-deposit/modal])
+        form       (subscribe [:security-deposit/form])
+        deposit    (:deposit account)]
+    [ant/modal
+     {:title     (format/format "Refund Security Deposit for %s" (:name account))
+      :width     "80%"
+      :visible   @is-visible
+      :on-close #(dispatch [:modal/hide :security-deposit/modal])
+      :footer    (r/as-element [security-deposit-footer account deposit])}
+     [:h3 "Deposit Credits"]
+     [list-line-items form :credits]
+     [:br]
+     [:h3 "Deposit Charges"]
+     [list-line-items form :charges]
+     [:br]
+     [line-item-sums form deposit]]))
+
+
+(defn transition-actions [account]
+  [:div
+   (let [refundable @(subscribe [:security-deposit/refundable? account])]
+     [ant/tooltip
+      {:title refundable}
+      [ant/button
+       {:icon     "exclamation-circle"
+        :type     :danger
+        :ghost    true
+        :disabled (boolean refundable)
+        :on-click #(dispatch [:modal/show :security-deposit/modal])}
+       (format/format "Refund Security Deposit")]])])
+
+
+(defn account-actions [account]
+  (cond
+    (nil? (:transition (:active_license account)))
+    [membership-actions account]
+
+    (not (nil? (:transition (:active_license account))))
+    [transition-actions account]
+
+    :otherwise
+    nil))
 
 
 (defn- render-status [_ {status :status}]
@@ -1077,9 +1325,10 @@
         [move-out-modal account]
         [renewal-modal account]
         [reassign-modal account]])
+     [security-deposit-modal account]
      [:div.column
       [membership/license-summary license
-       (when is-active {:content [membership-actions account]})]]
+       (when is-active {:content [account-actions account]})]]
      [:div.column
       (when is-active [status-bar account])
       (when (not (nil? transition)) [transition-status account transition])
