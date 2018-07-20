@@ -1,17 +1,16 @@
 (ns member.profile.payments.sources.views
   (:require [antizer.reagent :as ant]
+            [iface.components.form :as form]
+            [iface.components.payments :as payments]
+            [iface.components.typography :as typography]
             [iface.media :as media]
             [iface.tooltip :as tooltip]
-            [iface.components.form :as form]
-            [iface.components.typography :as typography]
-            [iface.components.payments :as payments]
             [member.l10n :as l10n]
             [member.profile.payments.sources.views.forms :as forms]
             [member.routes :as routes]
-            [reagent.core :as r]
             [re-frame.core :refer [dispatch subscribe]]
-            [toolbelt.core :as tb]))
-
+            [reagent.core :as r]
+            [clojure.string :as str]))
 
 (defn- is-unverified [{:keys [type status] :as source}]
   (and (= type :bank) (not= status "verified")))
@@ -350,12 +349,202 @@
      (into [:span] (r/children this))]))
 
 
+(defn- last-4
+  [v]
+  (-> (take-last 4 v)
+      (str/join)))
+
+
+(defn- payout-confirmation-content []
+  (let [form @(subscribe [:payout-account/form])]
+    [:div
+    "Are you sure the information below is correct?"
+     [:p "Routing Number: *****" (last-4 (:routing-number form))]
+     [:p "Account Number: ********" (last-4 (:account-number form))]
+     [:p "Date of Birth: " (:dob form)]
+     [:p "Social Security Number: " (last-4 (:ssn form))]
+     [:p "Address Line1: " (:line1 form)]
+     [:p "Address Line2: " (:line2 form)]
+     [:p "City: " (:city form)]
+     [:p "State: " (:state form)]
+     [:p "Postal Code: " (:postal-code form)]
+     [:p "Country: " (:country form)]]))
+
+
+(defn- payout-confirmation-modal []
+  (let [account @(subscribe [:payment/account])]
+    (ant/modal-confirm
+     {:title   "Confirm Deposit Information"
+      :content (r/as-element [payout-confirmation-content])
+      :on-type :primary
+      :ok-text "Confirm!"
+      :on-ok   #(dispatch [:payout-account/create! (:id account)])})))
+
+
+(defn- payout-modal-footer []
+  (let [is-loading (subscribe [:ui/loading? :payout-account/create!])
+        can-submit (subscribe [:payout-account/can-submit?])
+        on-cancel  #(dispatch [:modal/hide :payout-account/modal])]
+    [:div
+     [ant/button
+      {:on-click #(on-cancel)}
+      "Cancel"]
+     [ant/tooltip
+      {:title (when (not @can-submit)
+                "Please fill or fix all required fields.")}
+      [ant/button
+       {:loading  @is-loading
+        :disabled (not @can-submit)
+        :on-click #(payout-confirmation-modal)
+        :type     :primary}
+       "Submit!"]]]))
+
+
+(defn- payout-dob []
+  (let [is-valid (subscribe [:payout-account.form/is-valid? :dob])
+        value (subscribe [:payout-account/input-value :dob])
+        default-date (subscribe [:payout-account.date/default-date])
+        on-change #(dispatch [:payout-account.form/update! :dob %])]
+    [ant/form-item
+     (merge
+      {:label "Date of Birth:"
+       :read-only true}
+      (if @is-valid
+        {}
+        {:help            "Please provide your date of birth."
+         :has-feedback    true
+         :validate-status "error"}))
+     [ant/date-picker
+      {:value @value
+       :default-value @default-date
+       :disabled-date #(> % @default-date)
+       :allow-clear false
+       :format "MMM Do YY"
+       :on-change #(on-change %)}]]))
+
+
+(defn- payout-field
+  [{:keys [k label help required]}]
+  (let [is-valid  (subscribe [:payout-account.form/is-valid? k])
+        value     (subscribe [:payout-account/input-value k])
+        on-change #(dispatch [:payout-account.form/update! k %])]
+    [ant/form-item
+     (merge
+      {:label     label
+       :read-only true}
+      (if @is-valid
+        {}
+        {:help            help
+         :has-feedback    true
+         :validate-status "error"}))
+     [ant/input
+      {:value @value
+       :placeholder label
+       :required required
+       :on-change #(on-change (.. % -target -value))}]]))
+
+
+(defn- payout-bank-info []
+  [:div
+   [:h3 "Bank Information"]
+   [:div.columns
+    [:div.column
+     [payout-field {:k        :routing-number
+                    :label    "Routing Number:"
+                    :help     "Please enter your 9 digit routing number"
+                    :required true}]]
+    [:div.column
+     [payout-field {:k        :account-number
+                    :label    "Account Number:"
+                    :help     "Please enter your 12 digit account number"
+                    :required true}]]]
+   [:br]])
+
+
+(defn- payout-personal-info []
+  [:div
+   [:h3 "Personal Information"]
+   [:div.columns
+    [:div.column
+     [payout-dob]]
+    [:div.column
+     [payout-field {:k        :ssn
+                    :label    "Social Security Number:"
+                    :help     "Please enter your 9 digit social security number."
+                    :required true}]]]
+   [:br]])
+
+
+(defn- payout-address-info []
+  [:div
+   [:h3 "Current Address"]
+   [:div.columns
+    [:div.column
+     [payout-field {:k        :line1
+                    :label    "Address Line1:"
+                    :help     "Please enter an address."
+                    :required true}]]
+    [:div.column
+     [payout-field {:k     :line2
+                    :label "Address Line2:"}]]]
+   [:div.columns
+    [:div.column
+     [payout-field {:k        :city
+                    :label    "City:"
+                    :help     "Please enter a City."
+                    :required true}]]
+    [:div.column
+     [payout-field {:k        :state
+                    :label    "State:"
+                    :help     "Please enter your 2 letter State code."
+                    :required true}]]]
+   [:div.columns
+    [:div.column
+     [payout-field {:k        :postal-code
+                    :label    "Postal Code:"
+                    :help     "Please enter your 5 digit postal code."
+                    :required true}]]
+    [:div.column
+     [payout-field {:k        :country
+                    :label    "Country:"
+                    :help     "Please enter your 2 letter country code."
+                    :required true}]]]])
+
+
+(defn- payout-modal-description []
+  [:div
+   [:p "Help us, help you by filling out the information below so we can
+     directly deposit your security deposit. Although we need your personal
+     information, it is only for validation purposes. We take great care to not
+     store any personal information."]
+   [:p.bold.align-center
+    {:style {:color "#1890ff"}}
+    "NOTE: This only works for US bank accounts."]
+   [:br]])
+
+
+(defn- payout-modal []
+  (let [is-visible (subscribe [:modal/visible? :payout-account/modal])
+        form       (subscribe [:payout-account/form])]
+    [ant/modal
+     {:title    "Deposit Refund Information"
+      :width    "40%"
+      :visible  @is-visible
+      :on-close #(dispatch [:modal/hide :payout-account/modal])
+      :footer   (r/as-element [payout-modal-footer])}
+     [payout-modal-description]
+     [payout-bank-info]
+     [payout-personal-info]
+     [payout-address-info]]))
+
+
 (defn source-settings []
   (let [autopay-on      (subscribe [:payment.sources/autopay-on?])
         autopay-allowed (subscribe [:payment.sources/can-enable-autopay?])
         card-sources    (subscribe [:payment/sources :card])
         service-source  (subscribe [:payment.sources/service-source])
-        setting-svc-src (subscribe [:ui/loading? :payment.source/set-default!])]
+        setting-svc-src (subscribe [:ui/loading? :payment.source/set-default!])
+        refundable      (subscribe [:account/refundable])]
     [:div.page-controls.columns
      [:div.column {:style {:padding 0}}
 
@@ -374,7 +563,14 @@
          [:span "With Autopay enabled, rent payments will automatically be withdrawn from your bank account on the "
           [:b "1st"] " of each month."])]]]
 
-     [:div.column {:style {:padding 0}}
+     (when-not @refundable
+       [:div.column {:style {:padding 0}}
+        [ant/button
+         {:type :primary
+          :on-click #(dispatch [:modal/show :payout-account/modal])}
+         "Add Deposit Info!"]])
+
+     [:div.column.is-6 {:style {:padding 0}}
       [:span.bold.mr2 "Pay for Services with:"]
       (if @setting-svc-src
         [ant/spin {:style {:width 150}}]
@@ -421,6 +617,7 @@
      [modal-verify-account]
      [modal-confirm-enable-autopay]
      [modal-confirm-disable-autopay]
+     [payout-modal]
      (typography/view-header
       (l10n/translate :payment-sources)
       "Edit your payment accounts, enable Autopay, and set default payment sources.")

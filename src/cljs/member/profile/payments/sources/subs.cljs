@@ -1,13 +1,20 @@
 (ns member.profile.payments.sources.subs
   (:require [member.profile.payments.sources.db :as db]
             [re-frame.core :as rf :refer [reg-sub]]
-            [toolbelt.core :as tb]))
+            [toolbelt.core :as tb]
+            [iface.utils.time :as time]))
 
 
 (reg-sub
  ::sources
  (fn [db _]
    (db/path db)))
+
+
+(reg-sub
+ ::payout-account
+ (fn [db _]
+   (db/add-payout db)))
 
 
 ;; =============================================================================
@@ -107,6 +114,107 @@
  :<- [::add-source]
  (fn [db _]
    (:microdeposits db)))
+
+
+;; ==============================================================================
+;; Add Deposit Payout Account ===================================================
+;; ==============================================================================
+
+
+(reg-sub
+ :payment/account
+ :<- [:payment/sources]
+ (fn [sources _]
+   (:account (first sources))))
+
+
+(reg-sub
+ :account/refundable
+ :<- [:payment/account]
+ (fn [account _]
+   (:refundable account)))
+
+
+(reg-sub
+ :payout-account/form
+ :<- [::payout-account]
+ (fn [db _]
+   (:form db)))
+
+
+(defn- some-item?
+  [item]
+  (and (not= db/default-key-value item)
+       (some? item)))
+
+
+(defn- some-item-str?
+  ([item]
+   (and (some-item? item)
+        (when (string? item)
+          (not (empty? item)))))
+  ([item num]
+   (and (some-item-str? item)
+        (= num (count item)))))
+
+
+(defn- form-validation
+  [{:keys [line1 line2 city state postal-code country
+           dob ssn routing-number account-number]}]
+  {;; Address
+   :line1       (some-item-str? line1)
+   ;; :line2       (some-item-str? line2) ;; Ignore since it's optional
+   :city        (some-item-str? city)
+   :state       (some-item-str? state (:state db/char-limit))
+   :postal-code (some-item-str? postal-code (:postal-code db/char-limit))
+   :country     (some-item-str? country (:country db/char-limit))
+
+   ;; Personal
+   :dob (some-item? dob)
+   :ssn (some-item-str? ssn (:ssn db/char-limit))
+
+   ;; Bank
+   :routing-number (some-item-str? routing-number (:routing-number db/char-limit))
+   :account-number (some-item-str? account-number (:account-number db/char-limit))})
+
+
+(reg-sub
+ :payout-account.form/validation
+ :<- [:payout-account/form]
+ (fn [form _]
+   (form-validation form)))
+
+(reg-sub
+ :payout-account.form/is-valid?
+ :<- [:payout-account.form/validation]
+ :<- [:payout-account/form]
+ (fn [[vdb form] [_ k]]
+   (or (= db/default-key-value (k form))
+       (k vdb)
+       (= k :line2))))
+
+
+(reg-sub
+ :payout-account/can-submit?
+ :<- [:payout-account.form/validation]
+ (fn [db _]
+   (every? true? (vals db))))
+
+
+(reg-sub
+ :payout-account/input-value
+ :<- [:payout-account/form]
+ (fn [form [_ k]]
+   (let [value (k form)]
+     (when-not (= db/default-key-value value) value))))
+
+
+(reg-sub
+ :payout-account.date/default-date
+ (fn [_]
+   (-> (js/moment (time/now))
+       (.subtract 13 "year" )
+       (.subtract 1 "day"))))
 
 
 ;; =============================================================================
