@@ -59,7 +59,7 @@
   [:div
    [:div.w-60-l.w-100
     [:h1 "We currently only accept applicants who want to move in by [date] or sooner."]
-    [:p "You cna change your move-in date, or get notified when it's time to apply."]]
+    [:p "You can change your move-in date, or get notified when it's time to apply."]]
    [:div.w-80-l.w-100
     [:div.page-content
      [card/single
