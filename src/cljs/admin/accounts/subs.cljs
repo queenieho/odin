@@ -158,21 +158,15 @@
        (get-in db [(keyword (str (name refund-type) "-form-validation")) idx k]))))
 
 
-(defn- refunded?
-  [deposit]
-  (some? (#{:initiated
-              :successful} (:refund_status deposit))))
-
-
 (reg-sub
  :security-deposit/refundable?
  (fn [_ [_ account]]
-   (let [refunded (refunded? (:deposit account))]
+   (let [refunded (deposit/refunded? (:deposit account))]
      (cond
        refunded
        "Member has already been refunded their deposit."
 
-       (and (not refunded) (not (:refundable account)))
+       (not (deposit/refundable? (:deposit account)))
        "Member does not have a payout account. Please inform the member to where
        to input details to be refunded their security deposit."
 

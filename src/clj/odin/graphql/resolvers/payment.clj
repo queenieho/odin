@@ -111,7 +111,6 @@
                   (tpayment/query teller
                                   {:customers     [customer]
                                    :payment-types [:payment.type/deposit]}))]
-    (timbre/info payments)
     (or (= (count payments) 1)
         (= (tpayment/id payment)
            (->> payments

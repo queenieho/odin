@@ -81,16 +81,14 @@
   (:account/notes account))
 
 
-(defn- is-refundable?
-  [teller account]
-  (let [customer   (tcustomer/by-account teller account)]
-    (some? (when-some [c customer]
-             (tcustomer/payout-account-id c)))))
-
-
 (defn refundable
+  [{teller :teller conn :conn} _ account]
+  (deposit/is-refundable? teller (deposit/by-account account)))
+
+
+(defn payout-account
   [{teller :teller} _ account]
-  (is-refundable? teller account))
+  (account/has-payout-account? teller account))
 
 
 ;; =============================================================================
@@ -263,6 +261,7 @@
    :account/service-source    service-source
    :account/notes             notes
    :account/refundable        refundable
+   :account/payout-account    payout-account
    ;; mutations
    :account/update!           update!
    :account/change-password!  change-password!

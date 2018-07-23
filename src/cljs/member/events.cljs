@@ -30,7 +30,7 @@
  ::fetch-membership-status
  (fn [{:keys [db]} [_ account-id]]
    {:graphql {:query      [[:account {:id account-id}
-                            [:refundable
+                            [:refundable :payout_account
                              [:deposit [:id :due :amount :amount_remaining :amount_paid :amount_pending]]
                              [:active_license [[:payments [:amount :status :due]]]]]]]
               :on-success [::fetch-success]
@@ -74,8 +74,7 @@
 (defn- messages [{:keys [account] :as data}]
   (let [due-payments (->> (get-in account [:active_license :payments])
                           (filter #(= (:status %) :due)))
-        deposit      (:deposit account)
-        refundable   (:refundable account)]
+        deposit      (:deposit account)]
     (cond-> []
       (not (empty? due-payments))
       (conj (rent-due-message (first due-payments)))
@@ -83,7 +82,7 @@
       (and (> (:amount_remaining deposit) 0) (t/is-before-now (:due deposit)))
       (conj (deposit-overdue-message deposit))
 
-      (not refundable)
+      (false? (:payout-account account))
       (conj (payout-account-missing-message)))))
 
 

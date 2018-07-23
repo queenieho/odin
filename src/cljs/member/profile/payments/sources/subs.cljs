@@ -129,10 +129,10 @@
 
 
 (reg-sub
- :account/refundable
+ :account/payout-account
  :<- [:payment/account]
  (fn [account _]
-   (:refundable account)))
+   (:payout_account account)))
 
 
 (reg-sub

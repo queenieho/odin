@@ -17,8 +17,8 @@
   {:routing-number 9
    :account-number 12
    :ssn 9
-   :city 2
    :state 2
+   :country 2
    :postal-code 5})
 
 

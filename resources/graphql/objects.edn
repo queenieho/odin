@@ -38,6 +38,8 @@
                                     :resolve :account/property}
                 :refundable        {:type    (non-null :Boolean)
                                     :resolve :account/refundable}
+                :payout_account    {:type    (non-null :Boolean)
+                                    :resolve :account/payout-account}
                 :role              {:type    (non-null :role)
                                     :resolve :account/role}
                 :service_source    {:type        :payment_source

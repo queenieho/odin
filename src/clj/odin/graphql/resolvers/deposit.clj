@@ -107,13 +107,6 @@
     (concat charge-payments credit-payments)))
 
 
-(defn- is-refunded?
-  [deposit]
-  (some?
-   (#{:deposit.refund-status/successful
-      :deposit.refund-status/initiated} (deposit/refund-status deposit))))
-
-
 (defn- line-item-data
   [line-items subtype]
   (map
@@ -134,7 +127,7 @@
             customer (tcustomer/by-account teller account)
             amount   (refund-amount (deposit/amount deposit) charges credits)]
         (cond
-          (is-refunded? deposit)
+          (deposit/is-refundable? teller deposit)
           (resolve/resolve-as nil {:message "Member has already been refuned their security deposit"})
 
           (nil? (tcustomer/payout-account-id customer))
@@ -148,23 +141,23 @@
 
           :else
           (try
-            (when-let [payment (tcustomer/pay! customer amount :payment.type/deposit {:subtypes [:deposit-refund]
+            (when-let [payment (tcustomer/pay! customer amount :payment.type/deposit {:subtypes   [:deposit-refund]
                                                                                       :absorb-fee true})]
-             (let [assoc-payments (create-associated-payments! customer charges credits)]
-               (->> [{:db/id                 deposit_id
-                      :deposit/refund-status :deposit.refund-status/successful
-                      :deposit/lines         (concat
-                                              (line-item-data charges :refund-charge)
-                                              (line-item-data credits :refund-credit))}
-                     {:db/id              (td/id payment)
-                      :payment/associated (map
-                                           #(td/id %)
-                                           assoc-payments)}
-                     (event/job :deposit/refund {:params {:deposit-id deposit_id
-                                                          :account-id (td/id account)}})]
-                    (d/transact conn)
-                    (deref)))
-             (d/entity (d/db conn) deposit_id))
+              (let [assoc-payments (create-associated-payments! customer charges credits)]
+                (->> [{:db/id                 deposit_id
+                       :deposit/refund-status :deposit.refund-status/successful
+                       :deposit/lines         (concat
+                                               (line-item-data charges :refund-charge)
+                                               (line-item-data credits :refund-credit))}
+                      {:db/id              (td/id payment)
+                       :payment/associated (map
+                                            #(td/id %)
+                                            assoc-payments)}
+                      (event/job :deposit/refund {:params {:deposit-id deposit_id
+                                                           :account-id (td/id account)}})]
+                     (d/transact conn)
+                     (deref)))
+              (d/entity (d/db conn) deposit_id))
             (catch Throwable t
               (timbre/error t ::refund! {:email (tcustomer/email customer)})
               (resolve/resolve-as nil {:message (error-message t)}))))))))

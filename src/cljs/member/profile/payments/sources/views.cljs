@@ -349,33 +349,17 @@
      (into [:span] (r/children this))]))
 
 
-(defn- last-4
-  [v]
-  (-> (take-last 4 v)
-      (str/join)))
-
-
-(defn- payout-confirmation-content []
-  (let [form @(subscribe [:payout-account/form])]
-    [:div
-    "Are you sure the information below is correct?"
-     [:p "Routing Number: *****" (last-4 (:routing-number form))]
-     [:p "Account Number: ********" (last-4 (:account-number form))]
-     [:p "Date of Birth: " (:dob form)]
-     [:p "Social Security Number: " (last-4 (:ssn form))]
-     [:p "Address Line1: " (:line1 form)]
-     [:p "Address Line2: " (:line2 form)]
-     [:p "City: " (:city form)]
-     [:p "State: " (:state form)]
-     [:p "Postal Code: " (:postal-code form)]
-     [:p "Country: " (:country form)]]))
+(defn- payout-confirmation-content [form]
+  [:div
+   [:p "Before submitting, please make sure your information is correct."]])
 
 
 (defn- payout-confirmation-modal []
-  (let [account @(subscribe [:payment/account])]
+  (let [account @(subscribe [:payment/account])
+        form @(subscribe [:payout-account/form])]
     (ant/modal-confirm
      {:title   "Confirm Deposit Information"
-      :content (r/as-element [payout-confirmation-content])
+      :content (r/as-element [payout-confirmation-content form])
       :on-type :primary
       :ok-text "Confirm!"
       :on-ok   #(dispatch [:payout-account/create! (:id account)])})))
@@ -513,13 +497,9 @@
 
 (defn- payout-modal-description []
   [:div
-   [:p "Help us, help you by filling out the information below so we can
-     directly deposit your security deposit. Although we need your personal
-     information, it is only for validation purposes. We take great care to not
-     store any personal information."]
-   [:p.bold.align-center
-    {:style {:color "#1890ff"}}
-    "NOTE: This only works for US bank accounts."]
+   [:p "If you’re getting a security deposit refund, we can make sure it happens even faster. All you need to do is put in the necessary bank and personal info and we’ll be able to deposit it directly into your account. Don’t worry, to protect your privacy we won’t store any of this information."]
+   [:br]
+   [:p "Unfortunately, this just works for US bank accounts at this time."]
    [:br]])
 
 
@@ -527,7 +507,7 @@
   (let [is-visible (subscribe [:modal/visible? :payout-account/modal])
         form       (subscribe [:payout-account/form])]
     [ant/modal
-     {:title    "Deposit Refund Information"
+     {:title    "Faster Security Deposit Refund"
       :width    "40%"
       :visible  @is-visible
       :on-close #(dispatch [:modal/hide :payout-account/modal])
@@ -544,7 +524,7 @@
         card-sources    (subscribe [:payment/sources :card])
         service-source  (subscribe [:payment.sources/service-source])
         setting-svc-src (subscribe [:ui/loading? :payment.source/set-default!])
-        refundable      (subscribe [:account/refundable])]
+        payout-account  (subscribe [:account/payout-account])]
     [:div.page-controls.columns
      [:div.column {:style {:padding 0}}
 
@@ -563,10 +543,10 @@
          [:span "With Autopay enabled, rent payments will automatically be withdrawn from your bank account on the "
           [:b "1st"] " of each month."])]]]
 
-     (when-not @refundable
+     (when-not @payout-account
        [:div.column {:style {:padding 0}}
         [ant/button
-         {:type :primary
+         {:type     :primary
           :on-click #(dispatch [:modal/show :payout-account/modal])}
          "Add Deposit Info!"]])
 

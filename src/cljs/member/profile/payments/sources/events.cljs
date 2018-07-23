@@ -382,6 +382,7 @@
    {:dispatch-n [[:ui/loading k false]
                  [:modal/hide :payout-account/modal]
                  [:payment-sources/fetch account-id]
+                 [:member.events/fetch-membership-status account-id]
                  [:notify/success "Deposit Information Submitted!"]]}))
 
 
