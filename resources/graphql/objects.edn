@@ -424,13 +424,21 @@
                             :resolve :payment-source/autopay?}
             :type          {:type    (non-null :payment_source_type)
                             :resolve :payment-source/type}
-            :payment-types {:type    (list :payment_type)
-                            :resolve :payment-source/payment-types}
             :name          {:type    String
                             :resolve :payment-source/name}
             :payments      {:type        (list :payment)
                             :description "Payments associated with this source."
                             :resolve     :payment-source/payments}}}
+
+
+  :property_bank_account_type
+  {:fields {:id {:type (non-null :String)
+                 :resolve :property/bank-account-id}
+            :verified {:type (non-null :Boolean)
+                       :resolve :property/bank-verified}
+            :type {:type (non-null :bank_account_type)
+                   :resolve :property/bank-type}}}
+
 
   :property
   {:fields {:id              {:type    (non-null :Long)
@@ -439,8 +447,8 @@
                               :resolve (:get :property/name)}
             :code            {:type    (non-null String)
                               :resolve (:get :property/internal-name)}
-            :sources         {:type    (list :payment_source)
-                              :resolve :property/sources}
+            :bank_accounts   {:type    (list :property_bank_account_type)
+                              :resolve :property/bank-accounts}
             :cover_image_url {:type    (non-null String)
                               :resolve (:get :property/cover-image-url)}
             :units           {:type    (list :unit)

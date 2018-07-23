@@ -11,7 +11,8 @@
             [teller.property :as tproperty]
             [toolbelt.core :as tb]
             [toolbelt.datomic :as td]
-            [teller.customer :as tcustomer]))
+            [teller.customer :as tcustomer]
+            [teller.source :as tsource]))
 
 ;; ==============================================================================
 ;; fields =======================================================================
@@ -40,9 +41,24 @@
   (boolean (:entity (tproperty/by-community teller property))))
 
 
-(defn sources
-  "Property customer sources"
-  [{:keys [teller] _ property}]
+(defn bank-account-id
+  [_ _ property-source]
+  (tsource/id property-source))
+
+
+(defn bank-verified?
+  [_ _ property-source]
+  (= :payment-source.status/verified (tsource/status property-source)))
+
+
+(defn bank-type
+  [_ _ property-source]
+  (tsource/payment-types property-source))
+
+
+(defn bank-accounts
+  "Property banks"
+  [{:keys [teller]} _ property]
   (let [customer (tproperty/customer property)]
     (tcustomer/sources customer)))
 
@@ -206,7 +222,10 @@
    :property/license-prices      license-prices
    :property/tours               tours
    :property/has-financials      has-financials
-   :property/sources             sources
+   :property/bank-account-id     bank-account-id
+   :property/bank-verified       bank-verified?
+   :property/bank-type           bank-type
+   :property/bank-accounts       bank-accounts
    ;; mutations
    :property/add-financial-info! add-financial-info!
    :property/create!             create!

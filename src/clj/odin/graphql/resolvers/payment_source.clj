@@ -84,17 +84,6 @@
   (keyword (clojure.core/name (tsource/type source))))
 
 
-(defn payment-types
-  "The types of payments this source is for."
-  [_ _ source]
-  (mapv
-   (fn [type]
-     (-> (clojure.core/name type)
-         (str/replace "-" "_")
-         (keyword)))
-   (tsource/payment-types source)))
-
-
 (defn name
   "The name of this source."
   [_ _ source]
@@ -279,7 +268,6 @@
    :payment-source/status          status
    :payment-source/autopay?        autopay?
    :payment-source/type            type
-   :payment-source/payment-types   payment-types
    :payment-source/name            name
    :payment-source/payments        payments
    ;; queries
