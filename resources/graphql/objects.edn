@@ -431,7 +431,7 @@
                        :resolve     :payment-source/payments}}}
 
 
-  :property_bank_account_type
+  :property_bank_account
   {:fields {:id       {:type    (non-null :String)
                        :resolve :property/bank-account-id}
             :verified {:type    (non-null :Boolean)
@@ -447,7 +447,7 @@
                               :resolve (:get :property/name)}
             :code            {:type    (non-null String)
                               :resolve (:get :property/internal-name)}
-            :bank_accounts   {:type    (list :property_bank_account_type)
+            :bank_accounts   {:type    (list :property_bank_account)
                               :resolve :property/bank-accounts}
             :cover_image_url {:type    (non-null String)
                               :resolve (:get :property/cover-image-url)}
