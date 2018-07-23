@@ -406,38 +406,38 @@
 
 
   :payment_source
-  {:fields {:id            {:type    (non-null String)
-                            :resolve :payment-source/id}
-            :account       {:type    (non-null :account)
-                            :resolve :payment-source/account}
-            :last4         {:type    (non-null String)
-                            :resolve :payment-source/last4}
-            :default       {:type    (non-null Boolean)
-                            :resolve :payment-source/default?}
-            :expires       {:type    String
-                            :resolve :payment-source/expiration}
-            :customer      {:type    String
-                            :resolve :payment-source/customer}
-            :status        {:type    String
-                            :resolve :payment-source/status}
-            :autopay       {:type    Boolean
-                            :resolve :payment-source/autopay?}
-            :type          {:type    (non-null :payment_source_type)
-                            :resolve :payment-source/type}
-            :name          {:type    String
-                            :resolve :payment-source/name}
-            :payments      {:type        (list :payment)
-                            :description "Payments associated with this source."
-                            :resolve     :payment-source/payments}}}
+  {:fields {:id       {:type    (non-null String)
+                       :resolve :payment-source/id}
+            :account  {:type    (non-null :account)
+                       :resolve :payment-source/account}
+            :last4    {:type    (non-null String)
+                       :resolve :payment-source/last4}
+            :default  {:type    (non-null Boolean)
+                       :resolve :payment-source/default?}
+            :expires  {:type    String
+                       :resolve :payment-source/expiration}
+            :customer {:type    String
+                       :resolve :payment-source/customer}
+            :status   {:type    String
+                       :resolve :payment-source/status}
+            :autopay  {:type    Boolean
+                       :resolve :payment-source/autopay?}
+            :type     {:type    (non-null :payment_source_type)
+                       :resolve :payment-source/type}
+            :name     {:type    String
+                       :resolve :payment-source/name}
+            :payments {:type        (list :payment)
+                       :description "Payments associated with this source."
+                       :resolve     :payment-source/payments}}}
 
 
   :property_bank_account_type
-  {:fields {:id {:type (non-null :String)
-                 :resolve :property/bank-account-id}
-            :verified {:type (non-null :Boolean)
+  {:fields {:id       {:type    (non-null :String)
+                       :resolve :property/bank-account-id}
+            :verified {:type    (non-null :Boolean)
                        :resolve :property/bank-verified}
-            :type {:type (non-null :bank_account_type)
-                   :resolve :property/bank-type}}}
+            :type     {:type    (non-null :bank_account_type)
+                       :resolve :property/bank-type}}}
 
 
   :property
