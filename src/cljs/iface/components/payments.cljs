@@ -107,7 +107,7 @@
       "pending"  (-hollow "Pending")
       "failed"   (-hollow "Failed")
       "paid"     (-hollow "Paid")
-      "refund"   (-hollow "Refund")
+      "refunded" (-hollow "Refund")
       [:span])))
 
 
