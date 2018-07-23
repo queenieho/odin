@@ -559,13 +559,15 @@
                     :resolve (:get :svc-variant/price)}}}
 
 
-  :term_license
+  :license_term
   {:fields {:id        {:type    (non-null :Long)
                         :resolve (:get :db/id)}
-            :term      {:type    (non-null :Long)
-                        :resolve (:get :license/term)}
-            :available {:type    Boolean
-                        :resolve (:get :license/available)}}}
+            :term      {:type        (non-null :Long)
+                        :resolve     (:get :license/term)
+                        :description "The term in months."}
+            :available {:type        (non-null Boolean)
+                        :resolve     :license-term/available
+                        :description "Is this term available for members to select?"}}}
 
 
   :unit

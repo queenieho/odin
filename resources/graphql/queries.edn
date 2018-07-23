@@ -5,6 +5,11 @@
   :accounts        {:type    (list :account)
                     :args    {:params {:type :accounts_query_params}}
                     :resolve :account/list}
+  :license_terms   {:type    (list :license_term)
+                    :args    {:only_available {:type          Boolean
+                                               :default-value true
+                                               :description   "Only provide available license terms?"}}
+                    :resolve :license-term/list}
   :notes           {:type    (list :note)
                     :args    {:params {:type :notes_query_params}}
                     :resolve :note/query}
@@ -36,9 +41,6 @@
   :services        {:type    (list :service)
                     :args    {:params {:type :services_query_params}}
                     :resolve :service/query}
-  :term_licenses   {:type    (list :term_license)
-                    :args    {}
-                    :resolve :license/query-available}
   :unit            {:type    :unit
                     :args    {:id {:type (non-null :Long)}}
                     :resolve (:entity/fetch :id)}

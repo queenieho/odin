@@ -62,7 +62,7 @@
    {:graphql {:query      [[:account {:id id}
                             [:name :id
                              [:application application-attrs]]]
-                           [:term_licenses
+                           [:license_terms
                             [:id :term]]]
               :on-success [::init-fetch-application-success]
               :on-failure [:graphql/failure]}}))
@@ -76,9 +76,9 @@
  (fn [{db :db} [_ response]]
    (if-let [application (get-in response [:data :account :application])]
      {:db       (assoc db :application-id (:id application)
-                       :license-options (get-in response [:data :term_licenses]))
+                       :license-options (get-in response [:data :license_terms]))
       :dispatch [:app.init/somehow-figure-out-where-they-left-off application]}
-     {:db       (assoc db :license-options (get-in response [:data :term_licenses]))
+     {:db       (assoc db :license-options (get-in response [:data :license_terms]))
       :dispatch [:app.init/create-application (get-in response [:data :account :id])]})))
 
 
