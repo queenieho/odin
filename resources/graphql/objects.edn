@@ -441,24 +441,43 @@
                        :resolve     :payment-source/payments}}}
 
   :property
-  {:fields {:id              {:type    (non-null :Long)
-                              :resolve (:get :db/id)}
-            :name            {:type    (non-null String)
-                              :resolve (:get :property/name)}
-            :code            {:type    (non-null String)
-                              :resolve (:get :property/internal-name)}
-            :cover_image_url {:type    (non-null String)
-                              :resolve (:get :property/cover-image-url)}
-            :units           {:type    (list :unit)
-                              :resolve (:get :property/units)}
-            :rates           {:type    (list :rate)
-                              :resolve :property/license-prices}
-            :tours           {:type        (non-null Boolean)
-                              :description "Is touring enabled?"
-                              :resolve     :property/tours}
-            :has_financials  {:type        (non-null Boolean)
-                              :description "Does this community have financial information?"
-                              :resolve     :property/has-financials}}}
+  {:fields {:id               {:type    (non-null :Long)
+                               :resolve (:get :db/id)}
+            :name             {:type    (non-null String)
+                               :resolve (:get :property/name)}
+            :code             {:type    (non-null String)
+                               :resolve (:get :property/internal-name)}
+            :cover_image_url  {:type    (non-null String)
+                               :resolve (:get :property/cover-image-url)}
+            :units            {:type    (list :unit)
+                               :resolve (:get :property/units)}
+            :rates            {:type    (list :rate)
+                               :resolve :property/license-prices}
+            :tours            {:type        (non-null Boolean)
+                               :description "Is touring enabled?"
+                               :resolve     :property/tours}
+            :has_financials   {:type        (non-null Boolean)
+                               :description "Does this community have financial information?"
+                               :resolve     :property/has-financials}
+            :copy_id          {:type    String
+                               :resolve (:get :tipe/document-id)}
+            :application_copy {:type    :community_application_copy
+                               :resolve :property/application-copy}}}
+
+
+  :community_application_copy
+  {:fields {:name         {:type String}
+            :images       {:type (list String)}
+            :introduction {:type String}
+            :building     {:type String}
+            :neighborhood {:type String}
+            :community    {:type String}
+            :amenities    {:type (list :community_amenities)}}}
+
+
+  :community_amenities
+  {:fields {:label {:type String}
+            :icon  {:type String}}}
 
 
   :rate

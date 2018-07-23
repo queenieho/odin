@@ -8,9 +8,12 @@
             [com.walmartlabs.lacinia.resolve :as resolve]
             [datomic.api :as d]
             [odin.graphql.authorization :as authorization]
+            [odin.util.tipe :as tipe]
+            [odin.tipe :refer [tipe]]
             [teller.property :as tproperty]
             [toolbelt.core :as tb]
-            [toolbelt.datomic :as td]))
+            [toolbelt.datomic :as td]
+            [taoensso.timbre :as timbre]))
 
 ;; ==============================================================================
 ;; fields =======================================================================
@@ -37,6 +40,67 @@
   "Do we have financial information?"
   [{:keys [teller]} _ property]
   (boolean (:entity (tproperty/by-community teller property))))
+
+
+(defn get-images
+  [images-id]
+  (reduce
+   (fn [acc [k v]]
+     (if-let [url (:url v)]
+       (conj acc url)
+       acc))
+   []
+   (tipe/fetch-document tipe images-id)))
+
+
+(defn get-amenity-doc-id [doc]
+  (reduce
+   (fn [acc [k v]]
+     (if-let [blocks (:blocks v)]
+       (conj acc (:document (first blocks)))
+       acc))
+   []
+   doc))
+
+
+(defn fetch-and-parse-documents [ids]
+  (map
+   (fn [id]
+     (tipe/parse-document (tipe/fetch-document tipe id)))
+   ids))
+
+
+(defn get-amenities-content [docs]
+  (reduce
+   (fn [acc a]
+     (let [amenity {:label (:text a)
+                    :icon (get-in a [:icon :url])}]
+       (conj acc amenity)))
+   []
+   docs))
+
+
+(defn fetch-amenities [amenities-id]
+  (let [doc  (tipe/parse-document (tipe/fetch-document tipe amenities-id))]
+    (->> (filter (fn [[k v]] (map? v)) doc)
+         (get-amenity-doc-id)
+         (fetch-and-parse-documents)
+         (get-amenities-content))))
+
+
+(defn application-copy
+  "All of the copy and media on this community used for the application process"
+  [_ _ property]
+  (let [copy-id  (:tipe/document-id property)
+        doc      (tipe/fetch-document tipe copy-id)
+        app-copy (tipe/parse-document (:ptmInfo doc))]
+    {:name         (:name app-copy)
+     :images       (get-images (:images app-copy))
+     :introduction (:introduction app-copy)
+     :building     (:buildingDetails app-copy)
+     :neighborhood (:neighborhood app-copy)
+     :community    (:yourCommunity app-copy)
+     :amenities    (fetch-amenities (:amenities app-copy))}))
 
 
 ;; ==============================================================================
@@ -198,6 +262,7 @@
    :property/license-prices      license-prices
    :property/tours               tours
    :property/has-financials      has-financials
+   :property/application-copy    application-copy
    ;; mutations
    :property/add-financial-info! add-financial-info!
    :property/create!             create!
