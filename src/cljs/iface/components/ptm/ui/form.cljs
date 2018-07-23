@@ -1,8 +1,11 @@
 (ns iface.components.ptm.ui.form
   (:require [cljs.spec.alpha :as s]
+            [cljsjs.react-day-picker]
             [reagent.core :as r]
             [devtools.defaults :as d]
-            [toolbelt.core :as tb]))
+            [toolbelt.core :as tb]
+            [antizer.reagent :as ant]
+            [iface.utils.formatters :as format]))
 
 ;; specs ========================================================================
 
@@ -183,3 +186,56 @@
 
 (s/fdef radio-group
   :args (s/cat :props (s/keys :opt-req [::name])))
+
+
+(defn- parse-disabled
+  [disabled]
+  (reduce
+   (fn [acc [k v]]
+     (let [k (if (= k :weekdays)
+               :daysOfWeek
+               k)]
+       (conj acc {k v})))
+   []
+   disabled))
+
+
+(defn inline-date
+  [{:keys [change-month month on-day-click value disabled fixed-height
+           show-from initial-month today-btn]
+    :or   {fixed-height true}
+    :as   props}]
+  (let [props' (tb/assoc-some {}
+                              :onDayClick on-day-click
+                              :selectedDays value
+                              :disabledDays (parse-disabled disabled)
+                              :fixedWeeks fixed-height
+                              :fromMonth show-from
+                              :initialMonth initial-month
+                              :todayButton (when today-btn "Today")
+                              :canChangeMonth change-month)]
+    (.createElement js/React js/DayPicker (clj->js props'))))
+
+
+(defn date-input
+  [props]
+  (let [show-calendar (r/atom false)]
+    (fn [{:keys [value on-change disabled]
+         :as   props}]
+      (let [cprops (-> (dissoc props :on-change)
+                       (assoc :on-day-click #(when-not (.. %2 -disabled)
+                                               (on-change %))))]
+        [ant/popover
+         {:content   (r/as-element
+                      [:div
+                       [ant/icon {:type     :close
+                                  :on-click #(swap! show-calendar not)}]
+                       [:div
+                        [inline-date cprops]]])
+          :placement "bottomLeft"
+          :visible   @show-calendar}
+         [text (tb/assoc-some
+                {:placeholder "MM/DD/YYYY"
+                 :on-click    #(swap! show-calendar not)}
+                :value (format/date-short-num value)
+                :on-change #(on-change value))]]))))

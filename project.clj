@@ -45,6 +45,7 @@
                  [cljsjs/filesaverjs "1.3.3-0"]
                  [cljsjs/libphonenumber "8.4.1-1"]
                  [cljsjs/react "15.6.1-0"]
+                 [cljsjs/react-day-picker "5.5.3-1"]
                  [cljsjs/react-dom "15.6.1-0"]
                  [starcity/accountant "0.2.0"
                   :exclusions [org.clojure/clojurescript
