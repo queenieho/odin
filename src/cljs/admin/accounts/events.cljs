@@ -304,6 +304,7 @@
  (fn [_ [_ account]]
    (let [current-community-id (get-in account [:property :id])]
      {:dispatch-n [[:modal/show db/reassign-modal-key]
+                   [:license-terms/query]
                    [:properties/query]
                    [:accounts.entry.reassign/update :fee true]
                    [:accounts.entry.reassign/update :community current-community-id]
@@ -531,7 +532,8 @@
  :accounts.entry.renewal/show
  [(path db/path)]
  (fn [{db :db} [_ license]]
-   {:dispatch-n [[:modal/show db/renewal-modal-key]
+   {:dispatch-n [[:license-terms/query]
+                 [:modal/show db/renewal-modal-key]
                  [:accounts.entry.renewal/populate license]]}))
 
 

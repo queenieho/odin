@@ -3,6 +3,7 @@
             [admin.accounts.events]
             [admin.overview.events]
             [admin.kami.events]
+            [admin.license-terms.events]
             [admin.metrics.events]
             [admin.notes.events]
             [admin.profile.events]
