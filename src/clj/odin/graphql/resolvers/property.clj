@@ -41,6 +41,7 @@
   (boolean (:entity (tproperty/by-community teller property))))
 
 
+<<<<<<< HEAD
 (defn bank-accounts
   "Property banks"
   [{:keys [teller]} _ property]
@@ -59,6 +60,30 @@
                        :ops)})
         sources)
            (into [])))))
+=======
+
+(comment
+  (require '[teller.property :as tproperty])
+
+  (def mish (d/entity (d/db conn) [:property/code "2072mission"]))
+
+  )
+
+
+(defn has-verified-financials
+  "Has this community's financial information been verified?"
+  [{:keys [teller]} _ property]
+  (clojure.pprint/pprint property)
+  ;;TODO - your code here!
+  false)
+
+
+(defn sources
+  "The source IDs for the bank accounts associated with this commnunity."
+  [{:keys [teller]} _ property]
+  ;;TODO - your code here!
+  nil)
+>>>>>>> add verify community financials to admin UI
 
 
 ;; ==============================================================================
@@ -119,8 +144,17 @@
   (tproperty/business business_name tax_id owner address))
 
 
+<<<<<<< HEAD
 (defn- bank-account [{:keys [account_number routing_number account_type account_holder]}]
   (tproperty/bank-account account_number routing_number account_type account_holder))
+=======
+(defn- bank-account [{:keys [account_number routing_number]}]
+  (tproperty/bank-account account_number routing_number "business"
+                          {:account_holder_name "Jesse Suarez"
+                           :country             "US"
+                           :currency            "usd"
+                           :account_holder_type "company"}))
+>>>>>>> add verify community financials to admin UI
 
 
 (defn- owner [{:keys [first_name last_name dob ssn]}]
@@ -139,6 +173,12 @@
                         :ops       (tproperty/connect-account business bops "daily")
                         :community community})
     (d/entity (d/db conn) (td/id community))))
+
+
+(defn verify-financial-info!
+  [{:keys [conn teller]} {:keys [params id]}]
+  ;;TODO - your code here!
+  (resolve/resolve-as nil {:message "this mutation has not been implemented yet!"}))
 
 
 ;; create =======================================================================
@@ -213,15 +253,23 @@
 
 (def resolvers
   {;; fields
+<<<<<<< HEAD
    :property/license-prices      license-prices
    :property/tours               tours
    :property/has-financials      has-financials
    :property/bank-accounts       bank-accounts
+=======
+   :property/license-prices          license-prices
+   :property/tours                   tours
+   :property/has-financials          has-financials
+   :property/has-verified-financials has-verified-financials
+>>>>>>> add verify community financials to admin UI
    ;; mutations
-   :property/add-financial-info! add-financial-info!
-   :property/create!             create!
-   :property/set-rate!           set-rate!
-   :property/toggle-touring!     toggle-touring!
+   :property/add-financial-info!     add-financial-info!
+   ;; :property/verify-financial-info!  verify-financial-info!
+   :property/create!                 create!
+   :property/set-rate!               set-rate!
+   :property/toggle-touring!         toggle-touring!
    ;; queries
-   :property/entry               entry
-   :property/query               query})
+   :property/entry                   entry
+   :property/query                   query})

@@ -9,7 +9,8 @@
                                    reg-event-fx
                                    path]]
             [taoensso.timbre :as timbre]
-            [toolbelt.core :as tb]))
+            [toolbelt.core :as tb]
+            [iface.utils.log :as log]))
 
 
 ;; ==============================================================================
@@ -24,7 +25,7 @@
    {:dispatch [:ui/loading k true]
     :graphql  {:query
                [[:properties
-                 [:id :name :code :cover_image_url :has_financials
+                 [:id :name :code :cover_image_url :has_financials :has_verified_financials
                   [:bank_accounts [:id :verified :type]]
                   [:units [:id]]]]]
                :on-success [::properties-query k params]
@@ -74,6 +75,9 @@
 
 (defmethod routes/dispatches :properties/list [_]
   [[:properties/query]])
+
+
+;; add financials =======================
 
 
 (reg-event-fx
@@ -147,6 +151,45 @@
                    [:properties/query]
                    [:modal/hide :community.add-financial/modal]]
       :db         (update-in db [:form] dissoc :financial)})))
+
+
+;; verify financials ====================
+
+
+(reg-event-fx
+ :community.verify-financial/show
+ [(path db/path)]
+ (fn [{db :db} [k]]
+   {:dispatch [:modal/show :community.verify-financial/modal]}))
+
+
+(reg-event-fx
+ :community/verify-financial-info!
+ [(path db/path)]
+ (fn [{db :db} [k id]]
+   (log/log "verifing info... id is" id)
+   {:dispatch [:community.verify-financial/cancel]}
+   #_{:dispatch [:ui/loading k true]
+    :graphql  {:mutation
+               [[:community_verify_financial_info {:ops_source     "12345"
+                                                   :deposit_source "54321"}]
+                [:id]]
+               :on-success [::verify-financial-info-success]
+               :on-failure [:graphql/failure k]}}))
+
+
+(reg-event-fx
+ ::verify-financial-info-success
+ [(path db/path)]
+ (fn [{db :db} [_ k response]]
+   {:dispatch-n [[:ui/loading k false]
+                 [:community.verify-financial/cancel]]}))
+
+(reg-event-fx
+ :community.verify-financial/cancel
+ [(path db/path)]
+ (fn [{db :db} _]
+   {:dispatch [:modal/hide :community.verify-financial/modal]}))
 
 
 (defn- create-address-params [{:keys [address] :as params}]

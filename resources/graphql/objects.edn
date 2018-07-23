@@ -451,26 +451,29 @@
 
 
   :property
-  {:fields {:id              {:type    (non-null :Long)
-                              :resolve (:get :db/id)}
-            :name            {:type    (non-null String)
-                              :resolve (:get :property/name)}
-            :code            {:type    (non-null String)
-                              :resolve (:get :property/internal-name)}
-            :bank_accounts   {:type    (list :property_bank_account)
-                              :resolve :property/bank-accounts}
-            :cover_image_url {:type    (non-null String)
-                              :resolve (:get :property/cover-image-url)}
-            :units           {:type    (list :unit)
-                              :resolve (:get :property/units)}
-            :rates           {:type    (list :rate)
-                              :resolve :property/license-prices}
-            :tours           {:type        (non-null Boolean)
-                              :description "Is touring enabled?"
-                              :resolve     :property/tours}
-            :has_financials  {:type        (non-null Boolean)
-                              :description "Does this community have financial information?"
-                              :resolve     :property/has-financials}}}
+  {:fields {:id                      {:type    (non-null :Long)
+                                      :resolve (:get :db/id)}
+            :name                    {:type    (non-null String)
+                                      :resolve (:get :property/name)}
+            :code                    {:type    (non-null String)
+                                      :resolve (:get :property/internal-name)}
+            :bank_accounts           {:type    (list :property_bank_account)
+                                      :resolve :property/bank-accounts}
+            :cover_image_url         {:type    (non-null String)
+                                      :resolve (:get :property/cover-image-url)}
+            :units                   {:type    (list :unit)
+                                      :resolve (:get :property/units)}
+            :rates                   {:type    (list :rate)
+                                      :resolve :property/license-prices}
+            :tours                   {:type        (non-null Boolean)
+                                      :description "Is touring enabled?"
+                                      :resolve     :property/tours}
+            :has_financials          {:type        (non-null Boolean)
+                                      :description "Does this community have financial information?"
+                                      :resolve     :property/has-financials}
+            :has_verified_financials {:type        (non-null Boolean)
+                                      :resolve     :property/has-verified-financials
+                                      :description "Has the financial information for this community been verified?"}}}
 
 
   :rate
