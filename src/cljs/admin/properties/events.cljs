@@ -24,8 +24,8 @@
    {:dispatch [:ui/loading k true]
     :graphql  {:query
                [[:properties
-                 [:id :name :code :cover_image_url
-                  :has_financials
+                 [:id :name :code :cover_image_url :has_financials
+                  [:bank_accounts [:id :verified :type]]
                   [:units [:id]]]]]
                :on-success [::properties-query k params]
                :on-failure [:graphql/failure k]}}))
@@ -108,19 +108,21 @@
 
 (defn- create-bank-account-params [{:keys [account-number routing-number]}]
   {:account_number account-number
+   :account_type   "company"
+   :account_holder "Jesse Suarez"
    :routing_number routing-number})
 
 
 (defn- create-financial-info-params
   [{:keys [business-name tax-id first-name last-name ssn dob deposit ops]}]
-  {:business_name business-name
-   :tax_id        tax-id
-   :first_name    first-name
-   :last_name     last-name
-   :ssn           ssn
-   :dob           dob
-   :deposit       (create-bank-account-params deposit)
-   :ops           (create-bank-account-params ops)})
+  {:business_name  business-name
+   :tax_id         tax-id
+   :first_name     first-name
+   :last_name      last-name
+   :ssn            ssn
+   :dob            dob
+   :deposit        (create-bank-account-params deposit)
+   :ops            (create-bank-account-params ops)})
 
 
 (reg-event-fx

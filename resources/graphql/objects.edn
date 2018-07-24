@@ -430,6 +430,16 @@
                        :description "Payments associated with this source."
                        :resolve     :payment-source/payments}}}
 
+
+  :property_bank_account
+  {:fields {:id       {:type    (non-null :String)
+                       :resolve (:get :id)}
+            :verified {:type    (non-null :Boolean)
+                       :resolve (:get :verified)}
+            :type     {:type    (non-null :bank_account_type)
+                       :resolve (:get :type)}}}
+
+
   :property
   {:fields {:id              {:type    (non-null :Long)
                               :resolve (:get :db/id)}
@@ -437,6 +447,8 @@
                               :resolve (:get :property/name)}
             :code            {:type    (non-null String)
                               :resolve (:get :property/internal-name)}
+            :bank_accounts   {:type    (list :property_bank_account)
+                              :resolve :property/bank-accounts}
             :cover_image_url {:type    (non-null String)
                               :resolve (:get :property/cover-image-url)}
             :units           {:type    (list :unit)

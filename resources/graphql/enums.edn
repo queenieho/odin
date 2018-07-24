@@ -43,6 +43,10 @@
   {:description "Different types of payment."
    :values      [:order :rent :deposit :fee :application_fee :guest_booking :late_fee]}
 
+  :bank_account_type
+  {:description "Property bank account types."
+   :values      [:ops :deposit]}
+
   :payments_date_key
   {:description "Allowed keys for date-based payment queries."
    :values      [:created :paid]}
