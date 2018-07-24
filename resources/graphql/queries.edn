@@ -5,6 +5,11 @@
   :accounts        {:type    (list :account)
                     :args    {:params {:type :accounts_query_params}}
                     :resolve :account/list}
+  :license_terms   {:type    (list :license_term)
+                    :args    {:only_available {:type          Boolean
+                                               :default-value true
+                                               :description   "Only provide available license terms?"}}
+                    :resolve :license-term/list}
   :notes           {:type    (list :note)
                     :args    {:params {:type :notes_query_params}}
                     :resolve :note/query}

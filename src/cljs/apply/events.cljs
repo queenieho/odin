@@ -77,7 +77,9 @@
                                                              :neighborhood :community
                                                              [:amenities [:label :icon]]]]
                                          [:rates [:rate]]
-                                         [:units [[:occupant [:id]]]]]]]
+                                         [:units [[:occupant [:id]]]]]]
+                           [:license_terms
+                            [:id :term]]]
               :on-success [::init-fetch-application-success]
               :on-failure [:graphql/failure]}}))
 
@@ -90,9 +92,11 @@
  (fn [{db :db} [_ response]]
    (if-let [application (get-in response [:data :account :application])]
      {:db       (assoc db :application-id (:id application)
-                       :communities-options (get-in response [:data :properties]))
+                       :communities-options (get-in response [:data :properties])
+                       :license-options (get-in response [:data :license_terms]))
       :dispatch [:app.init/somehow-figure-out-where-they-left-off application]}
-     {:db       (assoc db :communities-options (get-in response [:data :properties]))
+     {:db       (assoc db :license-options (get-in response [:data :license_terms])
+                       :communities-options (get-in response [:data :properties]))
       :dispatch [:app.init/create-application (get-in response [:data :account :id])]})))
 
 
