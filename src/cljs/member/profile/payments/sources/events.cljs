@@ -4,7 +4,8 @@
             [member.routes :as routes]
             [re-frame.core :refer [path reg-event-db reg-event-fx]]
             [taoensso.timbre :as timbre]
-            [toolbelt.core :as tb]))
+            [toolbelt.core :as tb]
+            [clojure.string :as str]))
 
 ;; =============================================================================
 ;; Routing/Nav
@@ -316,6 +317,74 @@
                    [:notify/success "Payment method deleted successfully."]]
       :route       (routes/path-for :profile.payment/sources
                                     :query-params {:source-id (:id new-source)})})))
+
+
+;; ==============================================================================
+;; Payout Account ===============================================================
+;; ==============================================================================
+
+
+(defn- parse-value
+  ([k v]
+   (cond
+     (and (some? (k db/char-limit))
+          (> (count v) (k db/char-limit)))
+     nil
+
+     (= k :dob)
+     (js/moment v)
+
+     (or (= k :routing-number)
+         (= k :account-number)
+         (= k :ssn)
+         (= k :postal-code))
+     (str/join (re-seq #"[0-9]+" v))
+
+     :else v)))
+
+
+(reg-event-db
+ :payout-account.form/update!
+ [(path db/add-payout)]
+ (fn [db [_ k v]]
+   (if-some [value (parse-value k v)]
+     (assoc-in db [:form k] value)
+     db)))
+
+
+(defn- prepare-payout-account-args
+  [args]
+  (-> (assoc args
+             :postal_code (:postal-code args)
+             :dob (.toISOString (:dob args))
+             :routing_number (:routing-number args)
+             :account_number (:account-number args))
+      (dissoc :postal-code :routing-number :account-number)))
+
+
+(reg-event-fx
+ :payout-account/create!
+ [(path db/add-payout)]
+ (fn [{db :db} [k account-id]]
+   (let [form (prepare-payout-account-args (:form db))]
+     {:dispatch [:ui/loading k true]
+      :graphql {:mutation [[:create_payout_account {:id account-id
+                                                    :params form}
+                            [:id]]]
+               :on-success [::payout-account-success k account-id]
+               :on-failure [:graphql/failure k]}})))
+
+
+(reg-event-fx
+ ::payout-account-success
+ [(path db/add-payout)]
+ (fn [db [_ k account-id]]
+   {:dispatch-n [[:ui/loading k false]
+                 [:modal/hide :payout-account/modal]
+                 [:payment-sources/fetch account-id]
+                 [:member.events/fetch-membership-status account-id]
+                 [:iface.components.notifications/clear :payout-account-missing]
+                 [:notify/success "Deposit Information Submitted!"]]}))
 
 
 ;; =============================================================================

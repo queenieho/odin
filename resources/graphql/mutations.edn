@@ -257,6 +257,19 @@
    :resolve     :payment.sources/set-default!}
 
 
+  ;; payout account================================================================
+
+
+  :create_payout_account
+  {:type        :account
+   :description "Create a payout account for legacy customers to refund their security deposit"
+   :args        {:id {:type (non-null :Long)
+                      :description "The id of the account"}
+                 :params {:type :create_payout_params}}
+   :resolve     :account/create-payout!}
+
+
+
   ;; properties ===================================================================
 
 
@@ -313,6 +326,18 @@
                               :description "The service's id"}
                  :params     {:type :service_update_params}}
    :resolve     :service/update!}
+
+
+  ;; refund security deposit ======================================================
+
+
+  :refund_security_deposit
+  {:type        :deposit
+   :description "Payout the remainder of the security deposit."
+   :args        {:deposit_id {:type (non-null :Long)}
+                 :credits    {:type (list :mutate_line_item_params)}
+                 :charges    {:type (list :mutate_line_item_params)}}
+   :resolve     :deposit/refund!}
 
 
   ;; units ========================================================================
