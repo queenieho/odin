@@ -81,14 +81,19 @@
   (:account/notes account))
 
 
+(defn refunded
+  [_ _ account]
+  (deposit/is-refunded? (deposit/by-account account)))
+
+
 (defn refundable
   [{teller :teller conn :conn} _ account]
-  (deposit/is-refundable? teller (deposit/by-account account)))
+  (deposit/is-refundable? (deposit/by-account account)))
 
 
 (defn payout-account
   [{teller :teller} _ account]
-  (account/has-payout-account? teller account))
+  (account/has-payout-account? account))
 
 
 ;; =============================================================================
@@ -260,6 +265,7 @@
    :account/emergency-contact emergency-contact
    :account/service-source    service-source
    :account/notes             notes
+   :account/refunded          refunded
    :account/refundable        refundable
    :account/payout-account    payout-account
    ;; mutations

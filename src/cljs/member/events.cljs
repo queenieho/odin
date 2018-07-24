@@ -82,7 +82,7 @@
       (and (> (:amount_remaining deposit) 0) (t/is-before-now (:due deposit)))
       (conj (deposit-overdue-message deposit))
 
-      (false? (:payout-account account))
+      (false? (:payout_account account))
       (conj (payout-account-missing-message)))))
 
 

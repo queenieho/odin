@@ -62,7 +62,7 @@
      {:dispatch [:ui/loading k true]
       :graphql   {:query
                   [[:account {:id account-id}
-                    [:id :name :email :phone :role :dob :refundable
+                    [:id :name :email :phone :role :dob :refundable :refunded
                      [:deposit [:id :amount :due :refund_status :status [:line_items [:desc :types :price]]]]
                      [:property [:id :name]]
                      ;; TODO: Move to separate query

@@ -161,12 +161,12 @@
 (reg-sub
  :security-deposit/refundable?
  (fn [_ [_ account]]
-   (let [refunded (deposit/refunded? (:deposit account))]
+   (let [refunded (:refunded account)]
      (cond
        refunded
        "Member has already been refunded their deposit."
 
-       (not (deposit/refundable? (:deposit account)))
+       (not (:refundable account))
        "Member does not have a payout account. Please inform the member to where
        to input details to be refunded their security deposit."
 
