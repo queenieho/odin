@@ -3,7 +3,8 @@
             [antizer.reagent :as ant]
             [re-frame.core :refer [dispatch subscribe]]
             [apply.events :as events]
-            [apply.db :as db]))
+            [apply.db :as db]
+            [iface.components.ptm.ui.card :as card]))
 
 
 (def step :logistics.move-in-date/outside-application-window)
@@ -58,11 +59,14 @@
   [:div
    [:div.w-60-l.w-100
     [:h1 "We currently only accept applicants who want to move in by [date] or sooner."]
-    [:p "You cna change your move-in date, or get notified when it's time to apply."]]
-   [:div.page-content.w-90-l.w-100
-    [ant/button
-     {:on-click #(dispatch [:step.current/next :choose-new-date])}
-     "change date"]
-    [ant/button
-     {:on-click #(dispatch [:step.current/next :get-notified])}
-     "get notified"]]])
+    [:p "You can change your move-in date, or get notified when it's time to apply."]]
+   [:div.w-80-l.w-100
+    [:div.page-content
+     [card/single
+      {:title    "Change date"
+       :img      "/assets/images/ptm/icons/sketch-calendar.svg"
+       :on-click #(dispatch [:step.current/next :choose-new-date])}]
+     [card/single
+      {:title    "Get notified"
+       :img      "/assets/images/ptm/icons/sketch-notification.svg"
+       :on-click #(dispatch [:step.current/next :get-notified])}]]]])
