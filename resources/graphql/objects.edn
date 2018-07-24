@@ -433,11 +433,11 @@
 
   :property_bank_account
   {:fields {:id       {:type    (non-null :String)
-                       :resolve :property/bank-account-id}
+                       :resolve (:get :id)}
             :verified {:type    (non-null :Boolean)
-                       :resolve :property/bank-verified}
+                       :resolve (:get :verified)}
             :type     {:type    (non-null :bank_account_type)
-                       :resolve :property/bank-type}}}
+                       :resolve (:get :type)}}}
 
 
   :property
