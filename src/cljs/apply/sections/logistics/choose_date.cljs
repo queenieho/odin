@@ -6,7 +6,8 @@
             [apply.db :as db]
             [iface.utils.log :as log]
             [iface.utils.time :as time]
-            [toolbelt.core :as tb]))
+            [toolbelt.core :as tb]
+            [iface.components.ptm.ui.form :as form]))
 
 
 (def step :logistics.move-in-date/choose-date)
@@ -73,8 +74,8 @@
       [:p "We'll do our best to accommodate your move-in date, but we cannot
     guarantee that the date you choose will be the date that you move in."]]
      [:div.page-content.w-90-l.w-100
-      [ant/date-picker
-       {:on-change #(dispatch [:step.current/next %])
-        :value (if (some? @data)
-                 (js/moment @data)
-                 (js/moment))}]]]))
+      [form/inline-date {:value        @data
+                         :on-day-click #(when-not (.. %2 -disabled)
+                                          (dispatch [:step.current/next %]))
+                         :show-from    (js/Date.)
+                         :disabled     {:before (js/Date.)}}]]]))
