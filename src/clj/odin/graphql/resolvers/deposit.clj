@@ -128,7 +128,7 @@
             amount   (refund-amount (deposit/amount deposit) charges credits)]
         (cond
           (deposit/is-refundable? deposit)
-          (resolve/resolve-as nil {:message "Member has already been refuned their security deposit"})
+          (resolve/resolve-as nil {:message "Member has already been refunded their security deposit"})
 
           (nil? (tcustomer/payout-account-id customer))
           (resolve/resolve-as nil {:message "Member does not have a payout account."})

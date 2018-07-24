@@ -383,6 +383,7 @@
                  [:modal/hide :payout-account/modal]
                  [:payment-sources/fetch account-id]
                  [:member.events/fetch-membership-status account-id]
+                 [:iface.components.notifications/clear :payout-account-missing]
                  [:notify/success "Deposit Information Submitted!"]]}))
 
 
