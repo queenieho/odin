@@ -10,7 +10,7 @@
                                                         :default-value true
                                                         :description   "Only provide available license terms?"}}
                              :resolve :license-term/list}
-  :account_background_check {:type    (list :background_check)
+  :account_background_check {:type    :background_check
                              :args    {:id {:type (non-null :Long)}}
                              :resolve :background/by-account}
   :notes                    {:type    (list :note)

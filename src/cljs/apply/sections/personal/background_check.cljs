@@ -18,14 +18,14 @@
 
 (defmethod db/get-last-saved step
   [db s]
-  (if (= :no (s db))
+  (if (= false (s db))
     :personal.background-check/declined
     :personal.background-check/info))
 
 
 (defmethod db/next-step step
   [db]
-  (if (= :no (step db))
+  (if (= false (step db))
     :personal.background-check/declined
     :personal.background-check/info))
 
@@ -49,9 +49,10 @@
 
 
 (defmethod events/save-step-fx step
-  [db params]
-  {:db       (assoc db step params)
-   :dispatch [:step/advance]})
+  [db consent]
+  (case consent
+    :yes (dispatch [:application/update {:background-check-consent true}])
+    :no  (dispatch [:application/update {:background-check-consent false}])))
 
 
 ;; views ========================================================================
@@ -68,14 +69,13 @@
       [:div.lightbox-footer
        [:div.lightbox-footer-left
         [button/text
-         {:on-click #(swap! visible not)}
-         "Cancel"]]
+         {:on-click #(dispatch [:step.current/next :no])}
+         "Cancel application"]]
        [:div.lightbox-footer-right
         [button/primary
-         {:on-click #(swap! visible not)}
-         "Yes, decline"]]]]
-     [:div.scrim
-      {:on-click #(swap! visible not)}]]))
+         {:on-click #(dispatch [:step.current/next :yes])}
+         "Agree to background check"]]]]
+     [:div.scrim]]))
 
 
 (defmethod content/view step
@@ -98,4 +98,4 @@
          :on-click #(dispatch [:step.current/next :yes])}]
        [card/single
         {:title    "No"
-         :on-click #(swap! is-showing not) #_#(dispatch [:step.current/next :no])}]]]]))
+         :on-click #(swap! is-showing not)}]]]]))
