@@ -21,6 +21,18 @@
     (safety/by-account (d/db conn) account)))
 
 
+(defn update!
+  [{conn :conn} {:keys [background_check_id params]} _]
+  (let [background-check    (d/entity (d/db conn) background_check_id)
+        background-check-tx (tb/assoc-some
+                             {:db/id (td/id background-check)}
+                             :community-safety/consent-given? (:consent params)
+                             :community-safety/wants-report? (:wants_report params)
+                             :community-safety/report-url (:report_url params))]
+    @(d/transact conn [background-check-tx])
+    (d/entity (d/db conn) (td/id background-check))))
+
+
 ;; ==============================================================================
 ;; queries ======================================================================
 ;; ==============================================================================
@@ -40,5 +52,6 @@
 (def resolvers
   {;; mutations
    :background/create!    create!
+   :background/update!    update!
    ;; queries
    :background/by-account query-by-account})
