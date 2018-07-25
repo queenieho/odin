@@ -8,7 +8,9 @@
             [com.walmartlabs.lacinia.resolve :as resolve]
             [datomic.api :as d]
             [odin.graphql.authorization :as authorization]
+            [teller.customer :as tcustomer]
             [teller.property :as tproperty]
+            [teller.source :as tsource]
             [toolbelt.core :as tb]
             [toolbelt.datomic :as td]))
 
@@ -37,6 +39,26 @@
   "Do we have financial information?"
   [{:keys [teller]} _ property]
   (boolean (:entity (tproperty/by-community teller property))))
+
+
+(defn bank-accounts
+  "Property banks"
+  [{:keys [teller]} _ property]
+  (let [teller-property (tproperty/by-community teller property)
+        customer        (when (some? (:entity teller-property))
+                          (tproperty/customer teller-property))
+        sources         (when-some [c customer]
+                          (tcustomer/sources c))]
+    (when (some? sources)
+      (->> (map
+        (fn [source]
+          {:id       (tsource/id source)
+           :verified (= :payment-source.status/verified (tsource/status source))
+           :type     (if (some? (tsource/payment-types source))
+                       :deposit
+                       :ops)})
+        sources)
+           (into [])))))
 
 
 ;; ==============================================================================
@@ -97,12 +119,8 @@
   (tproperty/business business_name tax_id owner address))
 
 
-(defn- bank-account [{:keys [account_number routing_number]}]
-  (tproperty/bank-account account_number routing_number
-                          {:account_holder_name "Jesse Suarez"
-                           :country             "US"
-                           :currency            "usd"
-                           :account_holder_type "company"}))
+(defn- bank-account [{:keys [account_number routing_number account_type account_holder]}]
+  (tproperty/bank-account account_number routing_number account_type account_holder))
 
 
 (defn- owner [{:keys [first_name last_name dob ssn]}]
@@ -117,8 +135,8 @@
         bdeposit  (bank-account (:deposit params))
         bops      (bank-account (:ops params))]
     (tproperty/create! teller (property/code community) (property/name community) account-holder-email
-                       {:deposit   (tproperty/connect-account business bdeposit)
-                        :ops       (tproperty/connect-account business bops)
+                       {:deposit   (tproperty/connect-account business bdeposit "daily")
+                        :ops       (tproperty/connect-account business bops "daily")
                         :community community})
     (d/entity (d/db conn) (td/id community))))
 
@@ -198,6 +216,7 @@
    :property/license-prices      license-prices
    :property/tours               tours
    :property/has-financials      has-financials
+   :property/bank-accounts       bank-accounts
    ;; mutations
    :property/add-financial-info! add-financial-info!
    :property/create!             create!
