@@ -37,6 +37,7 @@
     (and (nil? (deposit/refund-status deposit))
          (not (empty? (deposit/payments deposit)))
          (let [charge-total (->> (deposit/payments deposit)
+                                 (map (partial tpayment/by-entity teller))
                                  (filter #(tpayment/paid? %1))
                                  (reduce #(+ %1 (tpayment/amount %2)) 0))]
            (= (deposit/amount deposit) charge-total))

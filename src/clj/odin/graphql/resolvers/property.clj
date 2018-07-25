@@ -52,7 +52,6 @@
     (when (some? sources)
       (->> (map
         (fn [source]
-          (timbre/info (tsource/payment-types source))
           {:id       (tsource/id source)
            :verified (= :payment-source.status/verified (tsource/status source))
            :type     (if (some? (tsource/payment-types source))

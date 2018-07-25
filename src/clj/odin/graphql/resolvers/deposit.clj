@@ -6,6 +6,7 @@
             [com.walmartlabs.lacinia.resolve :as resolve]
             [datomic.api :as d]
             [odin.graphql.resolvers.utils :refer [error-message]]
+            [odin.graphql.resolvers.utils.deposit :as utils-deposit]
             [taoensso.timbre :as timbre]
             [teller.customer :as tcustomer]
             [teller.payment :as tpayment]
@@ -127,7 +128,7 @@
             customer (tcustomer/by-account teller account)
             amount   (refund-amount (deposit/amount deposit) charges credits)]
         (cond
-          (deposit/is-refundable? deposit)
+          (utils-deposit/is-refundable? deposit)
           (resolve/resolve-as nil {:message "Member has already been refunded their security deposit"})
 
           (nil? (tcustomer/payout-account-id customer))

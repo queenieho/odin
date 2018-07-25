@@ -11,6 +11,7 @@
             [datomic.api :as d]
             [odin.graphql.authorization :as authorization]
             [odin.graphql.resolvers.utils :refer [error-message]]
+            [odin.graphql.resolvers.utils.deposit :as utils-deposit]
             [odin.models.payment-source :as payment-source]
             [taoensso.timbre :as timbre]
             [toolbelt.async :refer [<!?]]
@@ -83,17 +84,17 @@
 
 (defn refunded
   [_ _ account]
-  (deposit/is-refunded? (deposit/by-account account)))
+  (utils-deposit/is-refunded? (deposit/by-account account)))
 
 
 (defn refundable
   [{teller :teller conn :conn} _ account]
-  (deposit/is-refundable? (deposit/by-account account)))
+  (utils-deposit/is-refundable? teller (deposit/by-account account)))
 
 
 (defn payout-account
   [{teller :teller} _ account]
-  (account/has-payout-account? account))
+  (utils-deposit/has-payout-account? teller account))
 
 
 ;; =============================================================================
