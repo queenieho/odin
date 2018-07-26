@@ -60,18 +60,3 @@ $button-radius: 1.2rem;
     color: $blue;
   }
 }
-
-.button-upload {
-  @extend .fast-all;
-  width: 100%;
-  background: white;
-  font-weight: bold;
-  padding: $spacing-medium;
-  color: $black;
-  text-align: center;
-  border: $border-width dashed $line-gray;
-  cursor: pointer;
-  &:hover {
-    border-color: $light-gray;
-  }
-}
