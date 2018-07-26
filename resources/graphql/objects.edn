@@ -36,6 +36,12 @@
                                     :resolve (:get :person/phone-number)}
                 :property          {:type    :property
                                     :resolve :account/property}
+                :refundable        {:type    (non-null :Boolean)
+                                    :resolve :account/refundable}
+                :refunded          {:type    (non-null :Boolean)
+                                    :resolve :account/refunded}
+                :payout_account    {:type    (non-null :Boolean)
+                                    :resolve :account/payout-account}
                 :role              {:type    (non-null :role)
                                     :resolve :account/role}
                 :service_source    {:type        :payment_source
@@ -172,7 +178,9 @@
                                :resolve     :deposit/amount-pending}
             :refund_status    {:type        :deposit_refund_status
                                :description "The status of the refund, if any."
-                               :resolve     :deposit/refund-status}}}
+                               :resolve     :deposit/refund-status}
+            :line_items       {:type    (list :line_item)
+                               :resolve :deposit/line-items}}}
 
 
   :emergency_contact
@@ -350,7 +358,9 @@
             :cost  {:type    Float
                     :resolve (:get :line-item/cost)}
             :price {:type    (non-null Float)
-                    :resolve (:get :line-item/price)}}}
+                    :resolve (:get :line-item/price)}
+            :types {:type    (list :Keyword)
+                    :resolve (:get :line-item/types)}}}
 
 
   :payment
@@ -430,25 +440,40 @@
                        :description "Payments associated with this source."
                        :resolve     :payment-source/payments}}}
 
+
+  :property_bank_account
+  {:fields {:id       {:type    (non-null :String)
+                       :resolve (:get :id)}
+            :verified {:type    (non-null :Boolean)
+                       :resolve (:get :verified)}
+            :type     {:type    (non-null :bank_account_type)
+                       :resolve (:get :type)}}}
+
+
   :property
-  {:fields {:id              {:type    (non-null :Long)
-                              :resolve (:get :db/id)}
-            :name            {:type    (non-null String)
-                              :resolve (:get :property/name)}
-            :code            {:type    (non-null String)
-                              :resolve (:get :property/internal-name)}
-            :cover_image_url {:type    (non-null String)
-                              :resolve (:get :property/cover-image-url)}
-            :units           {:type    (list :unit)
-                              :resolve (:get :property/units)}
-            :rates           {:type    (list :rate)
-                              :resolve :property/license-prices}
-            :tours           {:type        (non-null Boolean)
-                              :description "Is touring enabled?"
-                              :resolve     :property/tours}
-            :has_financials  {:type        (non-null Boolean)
-                              :description "Does this community have financial information?"
-                              :resolve     :property/has-financials}}}
+  {:fields {:id                      {:type    (non-null :Long)
+                                      :resolve (:get :db/id)}
+            :name                    {:type    (non-null String)
+                                      :resolve (:get :property/name)}
+            :code                    {:type    (non-null String)
+                                      :resolve (:get :property/internal-name)}
+            :bank_accounts           {:type    (list :property_bank_account)
+                                      :resolve :property/bank-accounts}
+            :cover_image_url         {:type    (non-null String)
+                                      :resolve (:get :property/cover-image-url)}
+            :units                   {:type    (list :unit)
+                                      :resolve (:get :property/units)}
+            :rates                   {:type    (list :rate)
+                                      :resolve :property/license-prices}
+            :tours                   {:type        (non-null Boolean)
+                                      :description "Is touring enabled?"
+                                      :resolve     :property/tours}
+            :has_financials          {:type        (non-null Boolean)
+                                      :description "Does this community have financial information?"
+                                      :resolve     :property/has-financials}
+            :has_verified_financials {:type        (non-null Boolean)
+                                      :resolve     :property/has-verified-financials
+                                      :description "Has the financial information for this community been verified?"}}}
 
 
   :rate

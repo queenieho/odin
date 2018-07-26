@@ -18,7 +18,8 @@
             [teller.property :as tproperty]
             [teller.source :as tsource]
             [teller.subscription :as tsubscription]
-            [toolbelt.core :as tb]))
+            [toolbelt.core :as tb]
+            [clojure.string :as str]))
 
 ;; =============================================================================
 ;; Fields

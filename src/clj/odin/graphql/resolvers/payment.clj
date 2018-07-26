@@ -73,7 +73,8 @@
 (defn account
   "The account associated with this `payment`."
   [_ _ payment]
-  (tcustomer/account (tpayment/customer payment)))
+  (or (tcustomer/account (tpayment/customer payment))
+      (tcustomer/account (tpayment/payee payment))))
 
 
 (defn amount
@@ -105,9 +106,11 @@
 (defn- is-first-deposit-payment?
   [teller payment]
   (let [customer (tpayment/customer payment)
-        payments (tpayment/query teller
-                                 {:customers     [customer]
-                                  :payment-types [:payment.type/deposit]})]
+        payments (filterv
+                  (comp nil? tpayment/subtypes)
+                  (tpayment/query teller
+                                  {:customers     [customer]
+                                   :payment-types [:payment.type/deposit]}))]
     (or (= (count payments) 1)
         (= (tpayment/id payment)
            (->> payments
@@ -119,10 +122,22 @@
 (defn- deposit-desc
   "Description for a security deposit `payment`."
   [teller account payment]
-  (let [entire-deposit-desc  "entire security deposit payment"
-        partial-deposit-desc "security deposit installment"
+  (let [entire-deposit-desc  "Entire security deposit payment"
+        partial-deposit-desc "Security deposit installment"
+        deposit-refund-desc  "Deposit refund"
+        deposit-refund-credit-desc  "Deposit refund credit"
+        deposit-refund-charge-desc  "Deposit refund charge"
         deposit              (deposit/by-account account)]
     (cond
+      (= :deposit-refund (first (tpayment/subtypes payment)))
+      deposit-refund-desc
+
+      (= :deposit-refund-credit (first (tpayment/subtypes payment)))
+      deposit-refund-credit-desc
+
+      (= :deposit-refund-charge (first (tpayment/subtypes payment)))
+      deposit-refund-charge-desc
+
       (= :deposit.type/full (deposit/type deposit))
       entire-deposit-desc
 
@@ -147,7 +162,8 @@
 (defn description
   "A description of this `payment`. Varies based on payment type."
   [{:keys [teller conn]} _ payment]
-  (let [account  (-> payment tpayment/customer tcustomer/account)
+  (let [account  (or (-> payment tpayment/customer tcustomer/account)
+                     (-> payment tpayment/payee tcustomer/account))
         property (account/current-property (d/db conn) account)]
     (letfn [(-rent-desc [payment]
               (str "Rent" (period-desc (d/db conn) payment)))
@@ -173,7 +189,7 @@
       (case (tpayment/type payment)
         :payment.type/rent            (-rent-desc payment)
         :payment.type/order           (-order-desc payment)
-        :payment.type/deposit         (deposit-desc teller (tcustomer/account (tpayment/customer payment)) payment)
+        :payment.type/deposit         (deposit-desc teller account payment)
         :payment.type/late-fee        (-late-fee-desc payment)
         :payment.type/application-fee (-application-fee-desc payment)
         :payment.type/fee             (-fee-desc payment)
@@ -299,6 +315,8 @@
    (assoc params :limit 100)
    :customers (when-let [c (and (some? account) (tcustomer/by-account teller account))]
                 [c])
+   :payees (when-let [c (and (some? account) (tcustomer/by-account teller account))]
+             [c])
    :properties (when-some [p property]
                  [(tproperty/by-community teller p)])
    :sources (when-some [s source]
@@ -432,9 +450,6 @@
 ;; make payments ===============================================================
 
 
-;; TODO: How to deal with passing the fee?
-;; TODO: How do we communicate what the fee will be to the person making the
-;; payment?
 ;; TODO: We'll need to be able to update the fee amount before we make the
 ;; charge if they're going to be paying with a card
 

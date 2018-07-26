@@ -250,7 +250,6 @@
 (defn other-payments-card
   "Renders a card for payments that are neither rent nor deposits, with a CTA to pay"
   [sources payment]
-  (.log js/console payment)
   [ant/card
    [:div.columns
     [:div.column.is-2

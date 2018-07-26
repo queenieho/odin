@@ -83,6 +83,7 @@
         applicants (->> (repeatedly #(applicant db)) (take 15) distinct)]
     (apply concat
            (accounts/member [:unit/name "52gilbert-1"] (:db/id license) :email "member@test.com")
+           (accounts/member [:unit/name "52gilbert-2"] (:db/id license) :email "member2@test.com")
            (accounts/admin :email "admin@test.com")
            members
            applicants)))
@@ -92,15 +93,39 @@
   (c/to-date (t/date-time 2017 (inc (rand-int 12)) (inc (rand-int 28)))))
 
 
+(defn connect-accounts
+  ([]
+   (connect-accounts nil))
+  ([n]
+   (case n
+     0 ["acct_1C2uQOIzZr6Q6ry2" "acct_1C2qvRCueGnwKM0f"]
+     1 ["acct_1C62oFLkpCo2QFDA" "acct_1C62oDK27w9Kloc6"]
+     2 ["acct_1C5hzFCEVXaYpJ9y" "acct_1C76Z2DuehY0g8Wa"]
+     3 ["acct_1C5ge4IqMbgblOxy" "acct_1C3TmMEBSLaHdiO2"]
+     4 ["acct_1C5hz8CK9y2mH034" "acct_1C5LHYIlUOddUmnv"]
+     (let [owner    (tproperty/owner "Jesse" "Suarez" #inst "1986-08-21" "123456789")
+           address  (tproperty/address "1020 Kearny St" "San Francisco" "CA" "94133")
+           business (tproperty/business "6 Nottingham" "18t10655" owner address)
+           bank     (tproperty/bank-account "000123456789" "110000000" "individual" "test")
+           bank2    (tproperty/bank-account "000222222227" "110000000" "individual" "test")
+           deposit  (tproperty/connect-account business bank "daily")
+           ops      (tproperty/connect-account business bank2 "daily")]
+       [deposit ops]))))
+
+
 (defn- seed-properties [teller]
-  (let [fees (tproperty/construct-fees (tproperty/fee 5))]
+  (let [fees (tproperty/construct-fees (tproperty/format-fee 5))
+        [deposit ops] (connect-accounts)]
     (when-not (tproperty/by-id teller "52gilbert")
-      (tproperty/create! teller "52gilbert" "52 Gilbert" "jesse@starcity.com"
-                         {:fees      fees
-                          :deposit   "acct_1C5LJXEd7myLyyjs"
-                          :ops       "acct_1C3TmPHnEDeEkGIS"
-                          :community [:property/code "52gilbert"]
-                          :timezone  "America/Los_Angeles"}))
+      (let [property (tproperty/create! teller "52gilbert" "52 Gilbert" "jesse@starcity.com"
+                               {:fees      fees
+                                :deposit   deposit
+                                :ops       ops
+                                :community [:property/code "52gilbert"]
+                                :timezone  "America/Los_Angeles"})]
+       (let [customer (tproperty/customer property)]
+         (doseq [source (tcustomer/sources customer)]
+           (tsource/verify-bank-account! source [32 45])))))
     (when-not (tproperty/by-id teller "2072mission")
       (tproperty/create! teller "2072mission" "2072 Mission" "jesse@starcity.com"
                          {:fees      fees
@@ -117,31 +142,55 @@
    :number    "4242424242424242"})
 
 
+(def bank-account
+  {:object "bank_account"
+   :country "US"
+   :currency "usd"
+   :account_holder_name "Holder of Account"
+   :account_holder_type "individual"
+   :account_number "000123456789"
+   :routing_number "110000000"})
+
+
 (defn- seed-payments [teller]
   (when (nil? (tcustomer/by-email teller "member@test.com"))
-    (let [customer (tcustomer/create! teller "member@test.com"
-                                      {:account  [:account/email "member@test.com"]
-                                       :source   mock-visa-credit
-                                       :property (tproperty/by-id teller "52gilbert")})
-          tz       (t/time-zone-for-id "America/Los_Angeles")
-          license (member-license/active (d/db (teller/db teller)) [:account/email "member@test.com"])]
+    (let [customer  (tcustomer/create! teller "member@test.com"
+                                       {:account  [:account/email "member@test.com"]
+                                        :source   mock-visa-credit
+                                        :property (tproperty/by-id teller "52gilbert")})
+          customer2 (tcustomer/create! teller "member2@test.com"
+                                       {:account  [:account/email "member2@test.com"]
+                                        :source   mock-visa-credit
+                                        :property (tproperty/by-id teller "52gilbert")})
+          bank      (tsource/add-source! customer bank-account {:first-name  "Member"
+                                                                :last-name   "Test"
+                                                                :line1       "1020 Test St."
+                                                                :city        "San Frantestco"
+                                                                :state       "CA"
+                                                                :postal-code "94133"
+                                                                :dob-inst    #inst "2000-01-01"
+                                                                :ssn         "123456789"})
+          tz        (t/time-zone-for-id "America/Los_Angeles")
+          license   (member-license/active (d/db (teller/db teller)) [:account/email "member@test.com"])]
+      (tsource/verify-bank-account! bank [32 45])
+      (tsource/set-default! bank :payment.type/deposit)
       (tsource/set-default! (first (tcustomer/sources customer)) :payment.type/order)
       (tpayment/create! customer 2000.0 :payment.type/rent
                         {:subtypes [:fee :redicuous-fee]
-                         :due    (date/end-of-day (java.util.Date.) tz)
-                         :period [(date/beginning-of-month (java.util.Date.) tz)
-                                  (date/end-of-month (java.util.Date.) tz)]})
+                         :due      (date/end-of-day (java.util.Date.) tz)
+                         :period   [(date/beginning-of-month (java.util.Date.) tz)
+                                    (date/end-of-month (java.util.Date.) tz)]})
       ;; Late payments
       (tpayment/create! customer 2000.0 :payment.type/rent
                         {:subtypes [:fee :old-rent]
-                         :due    #inst "2018-01-06"
-                         :period [#inst "2018-01-01"
-                                  #inst "2018-01-31"]})
+                         :due      #inst "2018-01-06"
+                         :period   [#inst "2018-01-01"
+                                    #inst "2018-01-31"]})
       (tpayment/create! customer 2000.0 :payment.type/rent
                         {:subtypes [:fee :old-rent]
-                         :due    #inst "2018-02-06"
-                         :period [#inst "2018-02-01"
-                                  #inst "2018-02-28"]}))))
+                         :due      #inst "2018-02-06"
+                         :period   [#inst "2018-02-01"
+                                    #inst "2018-02-28"]}))))
 
 
 (defn seed-teller [teller]

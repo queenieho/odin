@@ -88,12 +88,14 @@
     :to         {:type        :Instant
                  :description "Orders until."}}}
 
+
   :mutate_line_item_params
   {:description "Parameters to create a line item."
    :fields      {:id    {:type :Long}
                  :desc  {:type (non-null String)}
                  :cost  {:type Float}
-                 :price {:type (non-null Float)}}}
+                 :price {:type (non-null Float)}
+                 :types {:type (list :line_item_type)}}}
 
 
   :mutate_order_params
@@ -156,6 +158,31 @@
                  :datekey      {:type          :payments_date_key
                                 :default-value :created
                                 :description   "Specifies which date attribute to use for date params."}}}
+
+
+  ;;; Payout Account
+  :create_payout_params
+  {:description "Inputs to create a payout account."
+   :fields      {:routing_number {:type        (non-null :String)
+                                  :description "Bank Routing Number"}
+                 :account_number {:type        (non-null :String)
+                                  :description "Bank Account Number"}
+                 :dob            {:type        (non-null :Instant)
+                                  :description "Date of Birth of Member"}
+                 :ssn            {:type        (non-null :String)
+                                  :description "SSN of Member"}
+                 :line1          {:type        (non-null :String)
+                                  :description "Line1 of Address"}
+                 :line2          {:type        :String
+                                  :description "Line2 of Address"}
+                 :city           {:type        (non-null :String)
+                                  :description "City of Address"}
+                 :state          {:type        (non-null :String)
+                                  :description "State of Address"}
+                 :postal_code    {:type        (non-null :String)
+                                  :description "Postal code of Address"}
+                 :country        {:type        (non-null :String)
+                                  :description "Country of Address"}}}
 
 
   ;;; Note
@@ -261,18 +288,20 @@
   ;;; Communities - previously properties
   :bank_account_create_params
   {:fields {:account_number {:type (non-null String)}
+            :account_type   {:type (non-null String)}
+            :account_holder {:type (non-null String)}
             :routing_number {:type (non-null String)}}}
 
   :community_add_financial_info_params
   {:description "Parameters to add financial information to a community."
-   :fields      {:deposit       {:type (non-null :bank_account_create_params)}
-                 :ops           {:type (non-null :bank_account_create_params)}
-                 :first_name    {:type (non-null String)}
-                 :last_name     {:type (non-null String)}
-                 :dob           {:type :Instant}
-                 :ssn           {:type (non-null String)}
-                 :business_name {:type (non-null String)}
-                 :tax_id        {:type (non-null String)}}}
+   :fields      {:deposit        {:type (non-null :bank_account_create_params)}
+                 :ops            {:type (non-null :bank_account_create_params)}
+                 :first_name     {:type (non-null String)}
+                 :last_name      {:type (non-null String)}
+                 :dob            {:type :Instant}
+                 :ssn            {:type (non-null String)}
+                 :business_name  {:type (non-null String)}
+                 :tax_id         {:type (non-null String)}}}
 
   :community_create_params
   {:description "Parameters to create a new community"
