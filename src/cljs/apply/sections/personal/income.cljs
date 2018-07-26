@@ -1,11 +1,13 @@
 (ns apply.sections.personal.income
-  (:require [apply.content :as content]
+  (:require [ajax.core :as ajax]
+            [apply.content :as content]
             [antizer.reagent :as ant]
             [re-frame.core :refer [dispatch subscribe reg-event-fx reg-sub]]
             [apply.events :as events]
             [apply.db :as db]
             [iface.components.ptm.ui.form :as form]
-            [iface.utils.log :as log]))
+            [iface.utils.log :as log]
+            [taoensso.timbre :as timbre]))
 
 
 (def step :personal/income)
@@ -49,8 +51,55 @@
 
 (defmethod events/save-step-fx step
   [db params]
-  {:db       (assoc db step params)
-   :dispatch [:step/advance]})
+  {
+   ;; :db       (assoc db step params)
+   :dispatch [::upload-income-verification!] #_[:step/advance]})
+
+
+(reg-event-fx
+ ::upload-income-verification!
+ (fn [{db :db} _]
+   (let [account-id     (get-in db [:account :id])
+         application-id (:application-id db)]
+     (log/log "next" (get-in db [:income-files :files]))
+     {:http-xhrio {:uri             (str "/api/communities/" application-id "/cover-photo") #_(str "/api/applications/" account-id "/" application-id "/income-verification")
+                   :body            (get-in db [:income-files :files])
+                   :method          :post
+                   :format          (ajax/json-request-format)
+                   :response-format (ajax/json-response-format {:keywords? true})
+                   :on-success      [::upload-income-verification-success account-id]
+                   :on-failure      [::upload-income-verification-failure]}})))
+
+
+(reg-event-fx
+ ::upload-income-verification-success
+ (fn [{db :db} [_ k account-id]]
+   (log/log "success!!")
+   {:graphql {:query [[:account {:id account-id}
+                       [:application events/application-attrs]]]
+              :on-success [::income-verification-success]
+              :on-failure [::income-verification-failure]}}))
+
+
+(reg-event-fx
+ ::upload-income-verification-failure
+ (fn [{db :db} [_ error]]
+   (timbre/error error)
+   (log/log "upload failed" error)))
+
+
+(reg-event-fx
+ ::income-verification-success
+ (fn [{db :db} [_ response]]
+   (log/log "we got it!!!" response)
+   {:db       (assoc db step response)
+    :dispatch [:step/advance]}))
+
+
+(reg-event-fx
+ ::income-verification-failure
+ (fn [{db :db} _]
+   (log/log "i have no idea what im doing")))
 
 
 (defn- files->form-data [files]
