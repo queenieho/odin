@@ -128,7 +128,7 @@
             customer (tcustomer/by-account teller account)
             amount   (refund-amount (deposit/amount deposit) charges credits)]
         (cond
-          (utils-deposit/is-refundable? deposit)
+          (utils-deposit/is-refunded? deposit)
           (resolve/resolve-as nil {:message "Member has already been refunded their security deposit"})
 
           (nil? (tcustomer/payout-account-id customer))

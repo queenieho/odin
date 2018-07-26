@@ -26,7 +26,7 @@
       :deposit.refund-status/initiated} (deposit/refund-status deposit))))
 
 (s/fdef is-refunded?
-        :args (s/cat :deposit td/entity?)
+        :args (s/cat :deposit td/entityd?)
         :ret boolean?)
 
 
