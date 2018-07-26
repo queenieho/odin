@@ -52,7 +52,6 @@
     (when (some? sources)
       (->> (map
             (fn [source]
-              (println "\n\n-------- this payment source's status is..." (tsource/status source))
               {:id       (tsource/id source)
                :verified (= "verified" (tsource/status source))
                :type     (if (some? (tsource/payment-types source))
