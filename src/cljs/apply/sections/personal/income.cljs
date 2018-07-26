@@ -1,7 +1,7 @@
 (ns apply.sections.personal.income
   (:require [apply.content :as content]
             [antizer.reagent :as ant]
-            [re-frame.core :refer [dispatch subscribe reg-event-fx]]
+            [re-frame.core :refer [dispatch subscribe reg-event-fx reg-sub]]
             [apply.events :as events]
             [apply.db :as db]
             [iface.components.ptm.ui.form :as form]
@@ -40,7 +40,8 @@
 
 (defmethod db/step-complete? step
   [db step]
-  false)
+  (let [file-count (get-in db [:income-files :count])]
+    (not (and (some? file-count) (not (zero? file-count))))))
 
 
 ;; events =======================================================================
@@ -62,8 +63,18 @@
 
 (reg-event-fx
  ::income-verification-selected
- (fn [{db :db} [_ files]]
-   (assoc db :income-files (files->form-data files))))
+ (fn [{db :db} [_ files count]]
+   {:db (-> (assoc-in db [:income-files :files] (files->form-data files))
+            (assoc-in [:income-files :count] count))}))
+
+
+;; subs =========================================================================
+
+
+(reg-sub
+ ::income-files
+ (fn [db _]
+   (:income-files db)))
 
 
 ;; views ========================================================================
@@ -86,33 +97,39 @@
 
 (defmethod content/view step
   [_]
-  [:div
-   [:div.w-60-l.w-100
-    [:h1 "Please verify your income."]
-    [:p "To qualify to live in Starcity, your gross income must be at least 2.5x the cost of rent. Please submit acceptable forms of verification."]]
-   [:div.w-60-l.w-100
-    [:div.page-content
-     [:div.w-50-l.w-100.fl.pl4-l.pl2
-      [bullet-item true "Most recent pay stub"]
-      [bullet-item true "Last three months' bank statements"]
-      [bullet-item true "Offer letter"]]
-     [:div.w-50-l.w-100.fl.pr4-l.pl2
-      [bullet-item false "Stock portfolio"]
-      [bullet-item false "Photo of your crypto wallet"]
-      [bullet-item false "Photo of your actual wallet"]]
+  (let [income-files (subscribe [::income-files])
+        count        (:count @income-files)]
+    [:div
+     [:div.w-60-l.w-100
+      [:h1 "Please verify your income."]
+      [:p "To qualify to live in Starcity, your gross income must be at least 2.5x the cost of rent. Please submit acceptable forms of verification."]]
+     [:div.w-60-l.w-100
+      [:div.page-content
+       [:div.w-50-l.w-100.fl.pl4-l.pl2
+        [bullet-item true "Most recent pay stub"]
+        [bullet-item true "Last three months' bank statements"]
+        [bullet-item true "Offer letter"]]
+       [:div.w-50-l.w-100.fl.pr4-l.pl2
+        [bullet-item false "Stock portfolio"]
+        [bullet-item false "Photo of your crypto wallet"]
+        [bullet-item false "Photo of your actual wallet"]]
 
-     [:input
-      {:type     "file"
-       :multiple true
-       :name     "income"
-       :id       "income"
-       :on-change #(log/log (.. % -currentTarget -files)
-                            (.. % -currentTarget -files -length))}]
-     [:label.button-upload
-      {:for "income"}
-      "Upload files"]
+       [:div
+        [:input
+         {:type      "file"
+          :multiple  true
+          :name      "income"
+          :id        "income"
+          :on-change #(dispatch [::income-verification-selected (.. % -currentTarget -files) (.. % -currentTarget -files -length)])}]
+        [:label.button-upload
+         {:for "income"}
+         (if (and (some? count) (not (zero? count)))
+           (str count " files selected")
+           "Upload files")]]
 
-     #_[:p.mt3.mb3 "Are you taking a picture with your phone? Get an SMS link to finish this part of the application on your phone."]
+       ;; NOTE commented out because we don't have this capability yet
+       #_[:p.mt3.mb3 "Are you taking a picture with your phone? Get an SMS link to finish this part of the application on your phone."]
 
-     #_[:span {:on-click #(dispatch [:step.current/next :cosigner])}
-        [form/checkbox {} "I am applying with a cosigner (i)"]]]]])
+       ;; NOTE commented out until we add cosigner to the flow
+       #_[:span {:on-click #(dispatch [:step.current/next :cosigner])}
+          [form/checkbox {} "I am applying with a cosigner (i)"]]]]]))
