@@ -129,8 +129,18 @@
 
 (reg-event-fx
  ::income-verification-selected
- (fn [{db :db} [_ files]]
-   (assoc db :income-files (files->form-data files))))
+ (fn [{db :db} [_ files count]]
+   {:db (-> (assoc-in db [:income-files :files] (files->form-data files))
+            (assoc-in [:income-files :count] count))}))
+
+
+;; subs =========================================================================
+
+
+(reg-sub
+ ::income-files
+ (fn [db _]
+   (:income-files db)))
 
 
 ;; views ========================================================================
