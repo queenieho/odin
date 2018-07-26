@@ -70,9 +70,11 @@
 (defn has-verified-financials
   "Has this community's financial information been verified?"
   [{:keys [teller]} _ property]
-  (->> (bank-accounts* teller property)
-       (some :verified)
-       (boolean)))
+  (reduce
+   (fn [verified-so-far bank-account]
+     (and verified-so-far (:verified bank-account)))
+   true
+   (bank-accounts* teller property)))
 
 
 ;; ==============================================================================
