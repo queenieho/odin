@@ -138,10 +138,10 @@
                 :value       (get-in @data [:current_location :region])
                 :on-change   #(dispatch [::update-background-info [:current_location :region] (.. % -target -value)])}
                (map
-                (fn [[k v]]
-                  ^{:key k}
-                  [form/select-option {:value k} v])
-                locations/states-map)]
+                (fn [state]
+                  ^{:key state}
+                  [form/select-option {:value state} state])
+                locations/states)]
               [form/text
                {:placeholder "Province/Region"
                 :value       (get-in @data [:current_location :region])

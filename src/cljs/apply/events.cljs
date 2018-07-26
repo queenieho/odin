@@ -97,23 +97,27 @@
               :on-failure [:graphql/failure]}}))
 
 
+(defn- create-init-db
+  [db {:keys [properties license_terms account]}]
+  (let [{:keys [first_name middle_name last_name dob]} account]
+    (merge db
+           {:communities-options            properties
+            :license-options                license_terms
+            :personal.background-check/info {:first-name  first_name
+                                             :last-name   last_name
+                                             :middle-name middle_name
+                                             :dob         (when-let [d dob]
+                                                            (time/iso->moment d))}})))
+
+
 ;; At this point, we'll assume that if we received a nil value for the
 ;; application, then an application simply doesn't exist for that account. In
 ;; that case, we should create one.
 (reg-event-fx
  ::init-fetch-application-success
  (fn [{db :db} [_ response]]
-   (let [ainfo   (get-in response [:data :account])
-         init-db (merge
-                  db
-                  {:communities-options            (get-in response [:data :properties])
-                   :license-options                (get-in response [:data :license_terms])
-                   :personal.background-check/info {:first-name  (:first_name ainfo)
-                                                    :middle-name (:middle_name ainfo)
-                                                    :last-name   (:last_name ainfo)
-                                                    :dob         (when-let [dob (:dob ainfo)]
-                                                                   (time/iso->moment dob))}})]
-     (log/log "application query" (get-in response [:data :account]))
+   (let [init-db (create-init-db db (:data response))]
+     (log/log "application query" init-db)
      (if-let [application (get-in response [:data :account :application])]
        {:db       (assoc init-db :application-id (:id application))
         :dispatch [:app.init/somehow-figure-out-where-they-left-off application]}
@@ -167,14 +171,14 @@
  (fn [{db :db} [_ params]]
    ;; NOTE somehow graphql doesn't like communities being in a list
    ;; so I have to move it into a vector before the mutation
-   (let [params'        (-> (tb/transform-when-key-exists params
-                              {:communities #(into [] %)})
-                            (dissoc :first-name :last-name :middle-name :dob))
-         account-params (get-account-params params)]
-     (log/log "updating application " params')
+   (let [application-params (-> (tb/transform-when-key-exists params
+                                  {:communities #(into [] %)})
+                                (dissoc :first-name :last-name :middle-name :dob))
+         account-params     (get-account-params params)]
+     (log/log "updating application " application-params)
      {:dispatch [:ui/loading :step.current/save true]
       :graphql  {:mutation   [[:application_update {:application (:application-id db)
-                                                    :params      params'}
+                                                    :params      application-params}
                                application-attrs]
                               [:update_account {:id   (get-in db [:account :id])
                                                 :data account-params}
