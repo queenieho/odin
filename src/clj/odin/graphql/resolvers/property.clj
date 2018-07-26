@@ -41,10 +41,9 @@
   (boolean (:entity (tproperty/by-community teller property))))
 
 
-<<<<<<< HEAD
-(defn bank-accounts
-  "Property banks"
-  [{:keys [teller]} _ property]
+(defn- bank-accounts*
+  "Given a community entity, fetch all bank accounts associated with this community."
+  [teller property]
   (let [teller-property (tproperty/by-community teller property)
         customer        (when (some? (:entity teller-property))
                           (tproperty/customer teller-property))
@@ -52,38 +51,28 @@
                           (tcustomer/sources c))]
     (when (some? sources)
       (->> (map
-        (fn [source]
-          {:id       (tsource/id source)
-           :verified (= :payment-source.status/verified (tsource/status source))
-           :type     (if (some? (tsource/payment-types source))
-                       :deposit
-                       :ops)})
-        sources)
+            (fn [source]
+              {:id       (tsource/id source)
+               :verified (= :payment-source.status/verified (tsource/status source))
+               :type     (if (some? (tsource/payment-types source))
+                           :deposit
+                           :ops)})
+            sources)
            (into [])))))
-=======
 
-(comment
-  (require '[teller.property :as tproperty])
 
-  (def mish (d/entity (d/db conn) [:property/code "2072mission"]))
-
-  )
+(defn bank-accounts
+  "Given a community entity, fetch all bank accounts associated with this community."
+  [{:keys [teller]} _ property]
+  (bank-accounts* teller property))
 
 
 (defn has-verified-financials
   "Has this community's financial information been verified?"
   [{:keys [teller]} _ property]
-  (clojure.pprint/pprint property)
-  ;;TODO - your code here!
-  false)
-
-
-(defn sources
-  "The source IDs for the bank accounts associated with this commnunity."
-  [{:keys [teller]} _ property]
-  ;;TODO - your code here!
-  nil)
->>>>>>> add verify community financials to admin UI
+  (->> (bank-accounts* teller property)
+       (some :verified)
+       (boolean)))
 
 
 ;; ==============================================================================
@@ -144,17 +133,8 @@
   (tproperty/business business_name tax_id owner address))
 
 
-<<<<<<< HEAD
 (defn- bank-account [{:keys [account_number routing_number account_type account_holder]}]
   (tproperty/bank-account account_number routing_number account_type account_holder))
-=======
-(defn- bank-account [{:keys [account_number routing_number]}]
-  (tproperty/bank-account account_number routing_number "business"
-                          {:account_holder_name "Jesse Suarez"
-                           :country             "US"
-                           :currency            "usd"
-                           :account_holder_type "company"}))
->>>>>>> add verify community financials to admin UI
 
 
 (defn- owner [{:keys [first_name last_name dob ssn]}]
@@ -253,17 +233,11 @@
 
 (def resolvers
   {;; fields
-<<<<<<< HEAD
-   :property/license-prices      license-prices
-   :property/tours               tours
-   :property/has-financials      has-financials
-   :property/bank-accounts       bank-accounts
-=======
    :property/license-prices          license-prices
    :property/tours                   tours
    :property/has-financials          has-financials
    :property/has-verified-financials has-verified-financials
->>>>>>> add verify community financials to admin UI
+   :property/bank-accounts       bank-accounts
    ;; mutations
    :property/add-financial-info!     add-financial-info!
    ;; :property/verify-financial-info!  verify-financial-info!
