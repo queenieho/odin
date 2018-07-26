@@ -205,59 +205,64 @@
     [ant/modal
      {:title     (str "Add Financial Information for " (:name form))
       :width     "60%"
-      :on-ok     #(dispatch [:community/add-financial-info! (:id form) form])
+      :on-ok     #(dispatch [])
       :visible   @(subscribe [:modal/visible? :community.add-financial/modal])
       :on-cancel #(dispatch [:community.add-financial/cancel])}
      [add-financial-info-form form]]))
 
 
-(defn verify-financial-info-form []
-  [:div
-   [ant/card
-    {:title "Operations Account"
-     :extra (r/as-element [ant/button "Verify"])}
-    [:div.columns
-     [:div.column.is-half
-      [ant/form-item
-       {:label "First amount"}
-       [ant/input-number
-        {:placeholder "¢"}]]]
-     [:div.column.is-half
-      [ant/form-item
-       {:label "Second amount"}
-       [ant/input-number
-        {:placeholder "¢"}]]]]]
+(defn verify-financial-info-form-item
+  [name account-type {:keys [id verified] :as account}]
+  [ant/card
+   {:title name
+    :extra (r/as-element
+            [ant/button
+             {:on-click #(dispatch [:community/verify-financial-info! account-type account])
+              :disabled verified}
+             "Verify"])}
+   (if verified
+     [:div
+      [ant/alert
+       {:show-icon   true
+        :type        "success"
+        :message     "Verified"
+        :description "This bank account has been verified!"}]]
+     [:div.columns
+      [:div.column.is-half
+       [ant/form-item
+        {:label "First amount"}
+        [ant/input-number
+         {:placeholder "¢"
+          :on-change   #(dispatch [:community.verify-financial/update account-type :first %])}]]]
+      [:div.column.is-half
+       [ant/form-item
+        {:label "Second amount"}
+        [ant/input-number
+         {:placeholder "¢"
+          :on-change   #(dispatch [:community.verify-financial/update account-type :second %])}]]]])])
 
-   [ant/card
-    {:title "Operations Account"
-     :extra (r/as-element [ant/button "Verify"])}
-    [:div.columns
-     [:div.column.is-half
-      [ant/form-item
-       {:label "First amount"}
-       [ant/input-number
-        {:placeholder "¢"}]]]
-     [:div.column.is-half
-      [ant/form-item
-       {:label "Second amount"}
-       [ant/input-number
-        {:placeholder "¢"}]]]]]])
+
+(defn verify-financial-info-form
+  [accounts]
+  [:div
+   [verify-financial-info-form-item "Operations Account" :ops (:ops accounts)]
+   [verify-financial-info-form-item "Deposit Account" :deposit (:deposit accounts)]])
 
 
 (defn verify-financial-info-modal []
-  [ant/modal
-   {:title     "Verify Financial Information"
-    :width     "40%"
-    :on-ok     #(dispatch [:community/verify-financial-info!])
-    :ok-text   "Verify Information"
-    :on-cancel #(dispatch [:community.verify-financial/cancel])
-    :visible   @(subscribe [:modal/visible? :community.verify-financial/modal])}
-   [verify-financial-info-form]])
+  (let [accounts (subscribe [:verify/form])]
+    [ant/modal
+     {:title     "Verify Financial Information"
+      :width     "40%"
+      :footer    nil
+      :on-cancel #(dispatch [:community.verify-financial/close])
+      :visible   @(subscribe [:modal/visible? :community.verify-financial/modal])}
+     [verify-financial-info-form @accounts]]))
 
 
 (defn property-card
   "Display a property as a card form."
-  [{:keys [id name cover-image-url href is-loading has-financials has-verified-financials]
+  [{:keys [id name cover-image-url href is-loading has-financials has-verified-financials bank-accounts]
     :or   {is-loading false, href "#"}
     :as   props}]
   [ant/card {:class   "is-flush"
@@ -287,7 +292,7 @@
           {:style {:float "right"}
            :size :small
            :icon "check"
-           :on-click #(dispatch [:community.verify-financial/show])}
+           :on-click #(dispatch [:community.verify-financial/show bank-accounts])}
 
           "Verify Financial Info"]))]]])
 
@@ -529,7 +534,7 @@
 (defn community-row [communities]
   [:div.columns
    (map
-    (fn [{:keys [id name cover_image_url units has_financials has_verified_financials]}]
+    (fn [{:keys [id name cover_image_url units has_financials has_verified_financials bank_accounts]}]
       ^{:key id}
       [:div.column.is-4
        [property-card
@@ -538,7 +543,8 @@
          :cover-image-url         cover_image_url
          :href                    (routes/path-for :properties/entry :property-id id)
          :has-financials          has_financials
-         :has-verified-financials has_verified_financials}]])
+         :has-verified-financials has_verified_financials
+         :bank-accounts           bank_accounts}]])
     communities)])
 
 

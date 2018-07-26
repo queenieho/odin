@@ -81,3 +81,10 @@
  :<- [db/path]
  (fn [db [_]]
    (:financial-form db)))
+
+
+(reg-sub
+ :verify/form
+ :<- [db/path]
+ (fn [db [_]]
+   (:verify-accounts db)))

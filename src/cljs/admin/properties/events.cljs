@@ -25,7 +25,8 @@
    {:dispatch [:ui/loading k true]
     :graphql  {:query
                [[:properties
-                 [:id :name :code :cover_image_url :has_financials :has_verified_financials
+                 [:id :name :code :cover_image_url
+                  :has_financials :has_verified_financials
                   [:bank_accounts [:id :verified :type]]
                   [:units [:id]]]]]
                :on-success [::properties-query k params]
@@ -159,21 +160,47 @@
 (reg-event-fx
  :community.verify-financial/show
  [(path db/path)]
- (fn [{db :db} [k]]
-   {:dispatch [:modal/show :community.verify-financial/modal]}))
+ (fn [{db :db} [k bank-accounts]]
+   {:dispatch-n [[:modal/show :community.verify-financial/modal]
+                 [:community.verify-financial/init bank-accounts]]}))
+
+
+(defn- prepare-bank-accounts
+  "Given a set of bank accounts for a community, produce a data structure that can
+  be used in the community.verify-finanical modal"
+  [bank-accounts]
+  (reduce
+   (fn [m {:keys [type] :as bank-account}]
+     (assoc m type (dissoc bank-account :type)))
+   {}
+   bank-accounts))
+
+
+(reg-event-fx
+ :community.verify-financial/init
+ [(path db/path)]
+ (fn [{db :db} [_ bank-accounts]]
+   {:db (assoc db :verify-accounts (prepare-bank-accounts bank-accounts))}))
+
+
+(reg-event-fx
+ :community.verify-financial/update
+ [(path db/path)]
+ (fn [{db :db} [_ bank-account-type microdeposit amount]]
+   (log/log "updating financial info..." bank-account-type microdeposit amount)
+   {:db (assoc-in db [:verify-accounts bank-account-type microdeposit] amount)}))
 
 
 (reg-event-fx
  :community/verify-financial-info!
  [(path db/path)]
- (fn [{db :db} [k id]]
-   (log/log "verifing info... id is" id)
-   {:dispatch [:community.verify-financial/cancel]}
-   #_{:dispatch [:ui/loading k true]
+ (fn [{db :db} [k account-type {:keys [id first second] :as account}]]
+   (log/log "verifying bank acount" account-type id first second)
+   {:dispatch [:ui/loading k true]
     :graphql  {:mutation
-               [[:community_verify_financial_info {:ops_source     "12345"
-                                                   :deposit_source "54321"}]
-                [:id]]
+               [[:verify_bank_source {:deposits [first second]
+                                      :id       id}
+                 [:id]]]
                :on-success [::verify-financial-info-success]
                :on-failure [:graphql/failure k]}}))
 
@@ -182,14 +209,17 @@
  ::verify-financial-info-success
  [(path db/path)]
  (fn [{db :db} [_ k response]]
+   (log/log "successfully verified bank account info")
    {:dispatch-n [[:ui/loading k false]
-                 [:community.verify-financial/cancel]]}))
+                 [:community.verify-financial/close]
+                 [:properties/query]]}))
 
 (reg-event-fx
- :community.verify-financial/cancel
+ :community.verify-financial/close
  [(path db/path)]
  (fn [{db :db} _]
-   {:dispatch [:modal/hide :community.verify-financial/modal]}))
+   {:dispatch [:modal/hide :community.verify-financial/modal]
+    :db       (dissoc db :verify-accounts)}))
 
 
 (defn- create-address-params [{:keys [address] :as params}]
