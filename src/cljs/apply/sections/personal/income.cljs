@@ -119,6 +119,20 @@
    (:income-files db)))
 
 
+(defn- files->form-data [files]
+  (let [form-data (js/FormData.)]
+    (doseq [file-key (.keys js/Object files)]
+      (let [file (aget files file-key)]
+        (.append form-data "files[]" file (.-name file))))
+    form-data))
+
+
+(reg-event-fx
+ ::income-verification-selected
+ (fn [{db :db} [_ files]]
+   (assoc db :income-files (files->form-data files))))
+
+
 ;; views ========================================================================
 
 
