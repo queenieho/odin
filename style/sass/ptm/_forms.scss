@@ -176,3 +176,27 @@ input[type="radio"] {
     border-radius: $radio-radius;
   }
 }
+
+input[type="file"] {
+  width: 0.1px;
+  height: 0.1px;
+  opacity: 0;
+  overflow: hidden;
+  position: absolute;
+  z-index: -1;
+}
+
+.button-upload {
+  @extend .fast-all;
+  width: 100%;
+  background: white;
+  font-weight: bold;
+  padding: $spacing-medium;
+  color: $black;
+  text-align: center;
+  border: $border-width dashed $line-gray;
+  cursor: pointer;
+  &:hover {
+    border-color: $light-gray;
+  }
+}
