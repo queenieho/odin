@@ -33,7 +33,8 @@
   [:id :term :move_in_range :move_in :occupancy :has_pet
    [:pet [:id :name :breed :weight :sterile :vaccines :bitten
           :demeanor :daytime_care :about :type]]
-   [:communities [:id :code]]])
+   [:communities [:id :code]]
+   [:income [:id :name :uri]]])
 
 
 (defn parse-gql-response

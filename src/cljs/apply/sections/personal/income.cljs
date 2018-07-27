@@ -7,6 +7,7 @@
             [apply.db :as db]
             [iface.components.ptm.ui.form :as form]
             [iface.utils.log :as log]
+            [iface.utils.file :as ufile]
             [taoensso.timbre :as timbre]))
 
 
@@ -51,69 +52,59 @@
 
 (defmethod events/save-step-fx step
   [db params]
-  {
-   ;; :db       (assoc db step params)
-   :dispatch [::upload-income-verification!] #_[:step/advance]})
+  {:dispatch [::upload-income-verification!]})
+
+
+(defmethod events/gql->rfdb :income [k v] step)
+
+
+;; upload file ==========================
 
 
 (reg-event-fx
  ::upload-income-verification!
  (fn [{db :db} _]
-   (let [account-id     (get-in db [:account :id])
-         application-id (:application-id db)]
-     (log/log "next" (get-in db [:income-files :files]))
-     {:http-xhrio {:uri             (str "/api/communities/" application-id "/cover-photo") #_(str "/api/applications/" account-id "/" application-id "/income-verification")
+   (let [application-id (:application-id db)]
+     {:http-xhrio {:uri             (str "/api/applications/" application-id "/verify-income")
                    :body            (get-in db [:income-files :files])
                    :method          :post
                    :format          (ajax/json-request-format)
                    :response-format (ajax/json-response-format {:keywords? true})
-                   :on-success      [::upload-income-verification-success account-id]
+                   :on-success      [::upload-income-verification-success]
                    :on-failure      [::upload-income-verification-failure]}})))
 
 
 (reg-event-fx
  ::upload-income-verification-success
- (fn [{db :db} [_ k account-id]]
-   (log/log "success!!")
-   {:graphql {:query [[:account {:id account-id}
-                       [:application events/application-attrs]]]
+ (fn [{db :db} [k]]
+   {:graphql {:query [[:account {:id (get-in db [:account :id])}
+                       [[:application events/application-attrs]]]]
               :on-success [::income-verification-success]
-              :on-failure [::income-verification-failure]}}))
+              :on-failure [:graphql/failure k]}}))
 
 
 (reg-event-fx
  ::upload-income-verification-failure
  (fn [{db :db} [_ error]]
    (timbre/error error)
-   (log/log "upload failed" error)))
+   (ant/notification-error {:message "Failed to upload your income verification files."})))
 
 
 (reg-event-fx
  ::income-verification-success
  (fn [{db :db} [_ response]]
-   (log/log "we got it!!!" response)
-   {:db       (assoc db step response)
+   {:db       (-> (assoc db step (get-in response [:data :account :application :income]))
+                  (dissoc :income-files))
     :dispatch [:step/advance]}))
 
 
-(reg-event-fx
- ::income-verification-failure
- (fn [{db :db} _]
-   (log/log "i have no idea what im doing")))
-
-
-(defn- files->form-data [files]
-  (let [form-data (js/FormData.)]
-    (doseq [file-key (.keys js/Object files)]
-      (let [file (aget files file-key)]
-        (.append form-data "files[]" file (.-name file))))
-    form-data))
+;; file selected ========================
 
 
 (reg-event-fx
  ::income-verification-selected
  (fn [{db :db} [_ files count]]
-   {:db (-> (assoc-in db [:income-files :files] (files->form-data files))
+   {:db (-> (assoc-in db [:income-files :files] (ufile/files->form-data files))
             (assoc-in [:income-files :count] count))}))
 
 
@@ -144,6 +135,10 @@
       [:p label]]]))
 
 
+;; NOTE what do we want to show in this step if there's already uploaded images?
+;; also, do we want to delete files from the application?
+;; I think this works well as it is right now
+;; but for a second pass at the application we should think about this
 (defmethod content/view step
   [_]
   (let [income-files (subscribe [::income-files])
@@ -162,7 +157,6 @@
         [bullet-item false "Stock portfolio"]
         [bullet-item false "Photo of your crypto wallet"]
         [bullet-item false "Photo of your actual wallet"]]
-
        [:div
         [:input
          {:type      "file"
