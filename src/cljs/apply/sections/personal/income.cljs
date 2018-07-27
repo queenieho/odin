@@ -41,10 +41,12 @@
   true)
 
 
+;; If there's no income files in the application nor selected, disable `Next` button.
 (defmethod db/step-complete? step
   [db step]
   (let [file-count (get-in db [:income-files :count])]
-    (not (and (some? file-count) (not (zero? file-count))))))
+    (not (or (and (some? file-count) (not (zero? file-count)))
+             (step db)))))
 
 
 ;; events =======================================================================
