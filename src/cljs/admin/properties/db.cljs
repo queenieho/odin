@@ -24,7 +24,7 @@
                                 :placeholder "last name"
                                 :type        :text
                                 :keys        [:last-name]}
-                               {:label       "Last 4 SSN"
+                               {:label       "SSN"
                                 :placeholder "0000"
                                 :type        :text
                                 :keys        [:ssn]}

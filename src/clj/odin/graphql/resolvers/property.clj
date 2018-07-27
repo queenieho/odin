@@ -70,11 +70,13 @@
 (defn has-verified-financials
   "Has this community's financial information been verified?"
   [{:keys [teller]} _ property]
-  (reduce
-   (fn [verified-so-far bank-account]
-     (and verified-so-far (:verified bank-account)))
-   true
-   (bank-accounts* teller property)))
+  (if-let [bank-accounts (bank-accounts* teller property)]
+      (reduce
+       (fn [verified-so-far bank-account]
+         (and verified-so-far (:verified bank-account)))
+       true
+       (bank-accounts* teller property))
+      false))
 
 
 ;; ==============================================================================
@@ -181,7 +183,7 @@
     {:units          #(unit/create-community-units (:code params) %)
      :license_prices #(property/create-license-prices (parse-license-prices db %))
      :address        (fn [{:keys [lines locality region country postal_code]
-                          :or   {country "US"}}]
+                           :or   {country "US"}}]
                        (address/create lines locality region country postal_code))}))
 
 
