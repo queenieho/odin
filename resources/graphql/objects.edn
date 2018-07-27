@@ -94,8 +94,8 @@
                                :resolve (:get :application/fitness)}
             :status           {:type    :application_status
                                :resolve :application/status}
-            :income           {:type        (list :application_income_file)
-                               :resolve     :application/income
+            :income           {:type        (list :file)
+                               :resolve     (:get :application/income)
                                :description "Income file paths."}
             :submitted        {:type    :Instant
                                :resolve :application/submitted-at}
@@ -108,13 +108,13 @@
                                :description "Applicant's current address"}}}
 
 
-  :application_income_file
+  :file
   {:fields {:id   {:type    (non-null :Long)
                    :resolve (:get :db/id)}
             :name {:type    (non-null String)
-                   :resolve :application.income-file/name}
+                   :resolve (:get :file/name)}
             :uri  {:type    (non-null String)
-                   :resolve :application.income-file/uri}}}
+                   :resolve (:get :file/uri)}}}
 
 
   :application_pet

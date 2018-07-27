@@ -35,7 +35,8 @@
    [:pet [:id :name :breed :weight :sterile :vaccines :bitten
           :demeanor :daytime_care :about :type]]
    [:communities [:id :code]]
-   [:current_location [:id :locality :region :country :postal_code]]])
+   [:current_location [:id :locality :region :country :postal_code]]
+   [:income [:id :name :uri]]])
 
 
 (defn parse-gql-response

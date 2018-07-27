@@ -3,7 +3,6 @@
             [blueprints.models.application :as application]
             [blueprints.models.approval :as approval]
             [blueprints.models.events :as events]
-            [blueprints.models.income-file :as income-file]
             [blueprints.models.license :as license]
             [blueprints.models.source :as source]
             [clj-time.core :as t]
@@ -64,22 +63,6 @@
        (remove nil?)
        (map (partial td/updated-at (d/db conn)))
        (t/latest)))
-
-
-(defn income
-  [{conn :conn} _ application]
-  (let [account (application/account application)]
-    (income-file/by-account (d/db conn) account)))
-
-
-(defn income-file-name
-  [_ _ income-file]
-  (last (string/split (:income-file/path income-file) #"/")))
-
-
-(defn income-file-uri
-  [{config :config} _ income-file]
-  (str "/api/income/" (:db/id income-file)))
 
 
 (defn submitted-at
@@ -249,7 +232,6 @@
   {:application/account          account
    :application/approved-at      approved-at
    :application/approved-by      approved-by
-   :application/income           income
    :application/term             term
    :application/status           status
    :application/submitted-at     submitted-at
@@ -259,7 +241,4 @@
    ;; mutations
    :application/approve!         approve!
    :application/create!          create!
-   :application/update!          update!
-   ;; income file
-   :application.income-file/name income-file-name
-   :application.income-file/uri  income-file-uri})
+   :application/update!          update!})
