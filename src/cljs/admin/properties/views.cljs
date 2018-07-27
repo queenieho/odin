@@ -205,7 +205,7 @@
     [ant/modal
      {:title     (str "Add Financial Information for " (:name form))
       :width     "60%"
-      :on-ok     #(dispatch [])
+      :on-ok     #(dispatch [:community/add-financial-info! (:id form) form])
       :visible   @(subscribe [:modal/visible? :community.add-financial/modal])
       :on-cancel #(dispatch [:community.add-financial/cancel])}
      [add-financial-info-form form]]))

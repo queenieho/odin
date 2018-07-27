@@ -89,7 +89,9 @@
 
 (defn refundable
   [{teller :teller conn :conn} _ account]
-  (utils-deposit/is-refundable? teller (deposit/by-account account)))
+  (if-let [deposit (deposit/by-account account)]
+    (utils-deposit/is-refundable? teller (deposit/by-account account))
+    false))
 
 
 (defn payout-account
