@@ -130,7 +130,7 @@
 (reg-event-fx
  ::income-verification-selected
  (fn [{db :db} [_ files count]]
-   {:db (-> (assoc-in db [:income-files :files] (files->form-data files))
+   {:db (-> (assoc-in db [:income-files :files] (ufile/files->form-data files))
             (assoc-in [:income-files :count] count))}))
 
 
