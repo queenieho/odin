@@ -143,7 +143,8 @@
           :else
           (try
             (when-let [payment (tcustomer/pay! customer amount :payment.type/deposit {:subtypes   [:deposit-refund]
-                                                                                      :absorb-fee true})]
+                                                                                      :absorb-fee true
+                                                                                      :hide-fee true})]
               (let [assoc-payments (create-associated-payments! customer charges credits)]
                 (->> [{:db/id                 deposit_id
                        :deposit/refund-status :deposit.refund-status/successful
