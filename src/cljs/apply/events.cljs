@@ -178,6 +178,7 @@
    ;; NOTE somehow graphql doesn't like communities being in a list
    ;; so I have to move it into a vector before the mutation
 <<<<<<< HEAD
+<<<<<<< HEAD
    (let [application-params (-> (tb/transform-when-key-exists params
                                   {:communities #(into [] %)})
                                 (dissoc :first-name :last-name :middle-name :dob))
@@ -191,6 +192,8 @@
                                                 :data account-params}
                                [:first_name :middle_name :last_name :dob :phone]]]
 =======
+=======
+>>>>>>> 38f69056f938fb7e80d9f4251816980c57ecc1bf
    (let [params'         (-> (tb/transform-when-key-exists params
                                {:communities #(into [] %)})
                              (dissoc :background-check-consent))
@@ -204,7 +207,10 @@
                               [:update_background_check {:background_check_id (:background-check-id db)
                                                          :params              bg-check-params}
                                [:id :consent]]]
+<<<<<<< HEAD
 >>>>>>> Add step: personal/background-check
+=======
+>>>>>>> 38f69056f938fb7e80d9f4251816980c57ecc1bf
                  :on-success [::application-update-success]
                  :on-failure [:graphql/failure]}})))
 
@@ -213,16 +219,22 @@
  ::application-update-success
  (fn [{db :db} [_ response]]
 <<<<<<< HEAD
+<<<<<<< HEAD
    (let [application (get-in response [:data :application_update])]
      {:db       (parse-gql-response db application)
 =======
+=======
+>>>>>>> 38f69056f938fb7e80d9f4251816980c57ecc1bf
    (let [application (get-in response [:data :application_update])
          bg-check    (get-in response [:data :update_background_check])]
      (log/log "response " application bg-check)
      {:db       (merge
                  (parse-gql-response db application)
                  {:personal/background-check (:consent bg-check)})
+<<<<<<< HEAD
 >>>>>>> Add step: personal/background-check
+=======
+>>>>>>> 38f69056f938fb7e80d9f4251816980c57ecc1bf
       :dispatch [:step/advance]})))
 
 
