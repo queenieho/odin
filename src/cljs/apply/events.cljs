@@ -3,7 +3,8 @@
             [apply.routes :as routes]
             [re-frame.core :refer [reg-event-db reg-event-fx path]]
             [toolbelt.core :as tb]
-            [iface.utils.log :as log]))
+            [iface.utils.log :as log]
+            [iface.utils.time :as time]))
 
 
 ;; ==============================================================================
@@ -33,7 +34,8 @@
   [:id :term :move_in_range :move_in :occupancy :has_pet
    [:pet [:id :name :breed :weight :sterile :vaccines :bitten
           :demeanor :daytime_care :about :type]]
-   [:communities [:id :code]]])
+   [:communities [:id :code]]
+   [:current_location [:id :locality :region :country :postal_code]]])
 
 
 (defn parse-gql-response
@@ -47,6 +49,17 @@
      (assoc d (gql->rfdb k v) (gql->value k v)))
    db
    application))
+
+
+(defn- get-account-params
+  "Gets the needed params for updating an account's information"
+  [{:keys [first-name last-name middle-name phone dob]}]
+  (tb/assoc-when {}
+                 :first_name first-name
+                 :last_name last-name
+                 :middle_name middle-name
+                 :dob (when-let [d dob] (time/moment->iso d))
+                 :phone phone))
 
 
 ;; ==============================================================================
@@ -70,7 +83,7 @@
  (fn [_ [_ {:keys [id] :as account}]]
    (log/log "fetching account:" id)
    {:graphql {:query      [[:account {:id id}
-                            [:name :id
+                            [:name :id :first_name :middle_name :last_name :dob
                              [:application application-attrs]]]
                            [:properties [:id :name :code :cover_image_url :copy_id
                                          [:application_copy [:name :images :introduction :building
@@ -84,20 +97,33 @@
               :on-failure [:graphql/failure]}}))
 
 
+(defn- create-init-db
+  [db {:keys [properties license_terms account]}]
+  (let [{:keys [first_name middle_name last_name dob]} account]
+    (merge db
+           {:communities-options            properties
+            :license-options                license_terms
+            :personal.background-check/info {:first-name  first_name
+                                             :last-name   last_name
+                                             :middle-name middle_name
+                                             :dob         (when-let [d dob]
+                                                            (time/iso->moment d))}})))
+
+
 ;; At this point, we'll assume that if we received a nil value for the
 ;; application, then an application simply doesn't exist for that account. In
 ;; that case, we should create one.
 (reg-event-fx
  ::init-fetch-application-success
  (fn [{db :db} [_ response]]
-   (if-let [application (get-in response [:data :account :application])]
-     {:db       (assoc db :application-id (:id application)
-                       :communities-options (get-in response [:data :properties])
-                       :license-options (get-in response [:data :license_terms]))
-      :dispatch [:app.init/somehow-figure-out-where-they-left-off application]}
-     {:db       (assoc db :license-options (get-in response [:data :license_terms])
-                       :communities-options (get-in response [:data :properties]))
-      :dispatch [:app.init/create-application (get-in response [:data :account :id])]})))
+   (let [init-db (create-init-db db (:data response))]
+     (log/log "application query" init-db)
+     (if-let [application (get-in response [:data :account :application])]
+       {:db       (assoc init-db :application-id (:id application))
+        :dispatch [:app.init/somehow-figure-out-where-they-left-off application]}
+       {:db       init-db
+        :dispatch [:app.init/create-application (get-in response [:data :account :id])]}))))
+
 
 
 ;;TODO
@@ -145,13 +171,18 @@
  (fn [{db :db} [_ params]]
    ;; NOTE somehow graphql doesn't like communities being in a list
    ;; so I have to move it into a vector before the mutation
-   (let [params' (tb/transform-when-key-exists params
-                   {:communities #(into [] %)})]
-     (log/log "updating application " params')
+   (let [application-params (-> (tb/transform-when-key-exists params
+                                  {:communities #(into [] %)})
+                                (dissoc :first-name :last-name :middle-name :dob))
+         account-params     (get-account-params params)]
+     (log/log "updating application " application-params)
      {:dispatch [:ui/loading :step.current/save true]
       :graphql  {:mutation   [[:application_update {:application (:application-id db)
-                                                    :params      params'}
-                               application-attrs]]
+                                                    :params      application-params}
+                               application-attrs]
+                              [:update_account {:id   (get-in db [:account :id])
+                                                :data account-params}
+                               [:first_name :middle_name :last_name :dob :phone]]]
                  :on-success [::application-update-success]
                  :on-failure [:graphql/failure]}})))
 
@@ -160,7 +191,6 @@
  ::application-update-success
  (fn [{db :db} [_ response]]
    (let [application (get-in response [:data :application_update])]
-     (log/log "response " application)
      {:db       (parse-gql-response db application)
       :dispatch [:step/advance]})))
 
