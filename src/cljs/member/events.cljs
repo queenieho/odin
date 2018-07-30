@@ -30,7 +30,7 @@
  ::fetch-membership-status
  (fn [{:keys [db]} [_ account-id]]
    {:graphql {:query      [[:account {:id account-id}
-                            [:refundable :payout_account
+                            [:refundable :can_pay
                              [:deposit [:id :due :amount :amount_remaining :amount_paid :amount_pending]]
                              [:active_license [[:payments [:amount :status :due]]]]]]]
               :on-success [::fetch-success]
@@ -82,7 +82,7 @@
       (and (> (:amount_remaining deposit) 0) (t/is-before-now (:due deposit)))
       (conj (deposit-overdue-message deposit))
 
-      (false? (:payout_account account))
+      (false? (:can_pay account))
       (conj (payout-account-missing-message)))))
 
 

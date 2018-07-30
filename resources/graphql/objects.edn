@@ -40,8 +40,8 @@
                                     :resolve :account/refundable}
                 :refunded          {:type    (non-null :Boolean)
                                     :resolve :account/refunded}
-                :payout_account    {:type    (non-null :Boolean)
-                                    :resolve :account/payout-account}
+                :can_pay           {:type    (non-null :Boolean)
+                                    :resolve :account/can-pay}
                 :role              {:type    (non-null :role)
                                     :resolve :account/role}
                 :service_source    {:type        :payment_source

@@ -18,7 +18,7 @@
             [clojure.tools.namespace.repl :refer [refresh]]
             [datomic.api :as d]
             [figwheel-sidecar.repl-api :as ra]
-            [migrations.teller.plans :as plans-migrations]
+            ;; [migrations.teller.plans :as plans-migrations]
             [mount.core :as mount :refer [defstate]]
             [odin.config :as config :refer [config]]
             [odin.core]
@@ -53,7 +53,7 @@
            (timbre/debug "seeding dev database...")
            (seed/seed conn)
            (seed/seed-teller teller)
-           (plans-migrations/attach-plans-to-subscription-services teller conn)))
+           #_(plans-migrations/attach-plans-to-subscription-services teller conn)))
 
 
 (defstate reactor

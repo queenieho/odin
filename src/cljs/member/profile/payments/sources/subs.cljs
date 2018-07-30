@@ -129,10 +129,10 @@
 
 
 (reg-sub
- :account/payout-account
+ :account/can-pay
  :<- [:payment/account]
  (fn [account _]
-   (:payout_account account)))
+   (:can_pay account)))
 
 
 (reg-sub

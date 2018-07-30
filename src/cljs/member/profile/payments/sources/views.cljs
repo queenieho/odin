@@ -524,7 +524,7 @@
         card-sources    (subscribe [:payment/sources :card])
         service-source  (subscribe [:payment.sources/service-source])
         setting-svc-src (subscribe [:ui/loading? :payment.source/set-default!])
-        payout-account  (subscribe [:account/payout-account])]
+        can-pay         (subscribe [:account/can-pay])]
     [:div.page-controls.columns
      [:div.column {:style {:padding 0}}
 
