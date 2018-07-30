@@ -97,6 +97,9 @@
             :income           {:type        (list :application_income_file)
                                :resolve     :application/income
                                :description "Income file paths."}
+            :about            {:type        String
+                               :resolve     (:get :application/about)
+                               :description "About this applicant."}
             :submitted        {:type    :Instant
                                :resolve :application/submitted-at}
             :created          {:type    (non-null :Instant)

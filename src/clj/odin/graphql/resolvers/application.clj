@@ -232,7 +232,8 @@
                              :application/has-pet (:has_pet params)
                              :application/pet (:pet params)
                              :application/license (:term params)
-                             :application/address (:current_location params))]
+                             :application/address (:current_location params)
+                             :application/about (:about params))]
                            (when-some [communities (:communities params)]
                              (create-community-select-tx application communities))))
 
