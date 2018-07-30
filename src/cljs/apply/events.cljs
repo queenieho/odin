@@ -91,6 +91,8 @@
                                                              [:amenities [:label :icon]]]]
                                          [:rates [:rate]]
                                          [:units [[:occupant [:id]]]]]]
+                           [:account_background_check {:id id}
+                            [:id :consent :created]]
                            [:license_terms
                             [:id :term]]]
               :on-success [::init-fetch-application-success]
@@ -98,11 +100,12 @@
 
 
 (defn- create-init-db
-  [db {:keys [properties license_terms account]}]
+  [db {:keys [properties license_terms account account_background_check]}]
   (let [{:keys [first_name middle_name last_name dob]} account]
     (merge db
            {:communities-options            properties
             :license-options                license_terms
+            :background-check-id            (:id account_background_check)
             :personal.background-check/info {:first-name  first_name
                                              :last-name   last_name
                                              :middle-name middle_name
@@ -123,7 +126,6 @@
         :dispatch [:app.init/somehow-figure-out-where-they-left-off application]}
        {:db       init-db
         :dispatch [:app.init/create-application (get-in response [:data :account :id])]}))))
-
 
 
 ;;TODO
@@ -148,7 +150,9 @@
  (fn [_ [_ account-id]]
    (log/log  "no application found for %s, creating new one..." account-id)
    {:graphql {:mutation   [[:application_create {:account account-id}
-                            [:id]]]
+                            [:id]]
+                           [:create_background_check {:account account-id}
+                            [:id :consent]]]
               :on-success [::init-create-application-success]
               :on-failure [:graphql/failure]}
     :route   (routes/path-for :welcome)}))
@@ -157,8 +161,10 @@
 (reg-event-fx
  ::init-create-application-success
  (fn [{db :db} [_ response]]
-   (let [application-id (get-in response [:data :application_create :id])]
-     {:db (assoc db :application-id application-id)})))
+   (let [application-id (get-in response [:data :application_create :id])
+         bg-check-id    (get-in response [:data :create_background_check :id])]
+     {:db (assoc db :application-id application-id
+                 :background-check-id bg-check-id)})))
 
 
 ;; ==============================================================================
@@ -173,16 +179,24 @@
    ;; so I have to move it into a vector before the mutation
    (let [application-params (-> (tb/transform-when-key-exists params
                                   {:communities #(into [] %)})
-                                (dissoc :first-name :last-name :middle-name :dob))
-         account-params     (get-account-params params)]
+                                (dissoc :first-name :last-name :middle-name :dob
+                                        :background-check-consent))
+         account-params     (get-account-params params)
+         bg-check-params    (tb/assoc-some {}
+                                           :consent (:background-check-consent params))]
      (log/log "updating application " application-params)
+     (log/log "updating application " bg-check-params)
      {:dispatch [:ui/loading :step.current/save true]
       :graphql  {:mutation   [[:application_update {:application (:application-id db)
                                                     :params      application-params}
                                application-attrs]
                               [:update_account {:id   (get-in db [:account :id])
                                                 :data account-params}
-                               [:first_name :middle_name :last_name :dob :phone]]]
+                               [:first_name :middle_name :last_name :dob :phone]]
+                              [:update_background_check
+                               {:background_check_id (:background-check-id db)
+                                :params              bg-check-params}
+                               [:id :consent]]]
                  :on-success [::application-update-success]
                  :on-failure [:graphql/failure]}})))
 
@@ -190,8 +204,11 @@
 (reg-event-fx
  ::application-update-success
  (fn [{db :db} [_ response]]
-   (let [application (get-in response [:data :application_update])]
-     {:db       (parse-gql-response db application)
+   (let [application (get-in response [:data :application_update])
+         bg-check    (get-in response [:data :update_background_check])]
+     {:db       (merge
+                 (parse-gql-response db application)
+                 {:personal/background-check (:consent bg-check)})
       :dispatch [:step/advance]})))
 
 

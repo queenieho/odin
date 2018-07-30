@@ -67,6 +67,17 @@
                  :daytime_care {:type String}}}
 
 
+  ;;; Background Check
+  :background_check_params
+  {:description "Inputs to create or update a background check"
+   :fields      {:consent      {:type        Boolean
+                                :description "Has the account holder given consent to run their background check?"}
+                 :wants_report {:type        Boolean
+                                :description "Does the account holder want a copy of their background check?"}
+                 :report_url   {:type        String
+                                :description "API location of the information"}}}
+
+
   ;;; Check
   :create_check_params
   {:description "Inputs to create a check."

@@ -3,6 +3,7 @@
             [odin.graphql.authorization :as authorization]
             [odin.graphql.resolvers.account :as account]
             [odin.graphql.resolvers.application :as application]
+            [odin.graphql.resolvers.background :as background]
             [odin.graphql.resolvers.check :as check]
             [odin.graphql.resolvers.deposit :as deposit]
             [odin.graphql.resolvers.license-term :as license-term]
@@ -29,6 +30,7 @@
   (->> (merge
         account/resolvers
         application/resolvers
+        background/resolvers
         check/resolvers
         deposit/resolvers
         license-term/resolvers

@@ -52,6 +52,27 @@
    :resolve     :application/update!}
 
 
+  ;; background check =============================================================
+
+
+  :create_background_check
+  {:type        :background_check
+   :description "Create new background check information to an applicant's account."
+   :args        {:account {:type        (non-null :Long)
+                           :description "The account to which this background check belongs to."}}
+   :resolve     :background/create!}
+
+
+  :update_background_check
+  {:type        :background_check
+   :description "Create entity for an accounts background check information."
+   :args        {:background_check_id {:type        (non-null :Long)
+                                       :description "The background check information to update."}
+                 :params              {:type        (non-null :background_check_params)
+                                       :description "Required parameters to create a background check"}}
+   :resolve     :background/update!}
+
+
   ;; checks =======================================================================
 
 
