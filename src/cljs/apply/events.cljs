@@ -121,7 +121,6 @@
  (fn [{db :db} [_ response]]
    (let [init-db (create-init-db db (:data response))]
      (log/log "application query" init-db)
-     (log/log "background check" (get-in response [:data :account_background_check]))
      (if-let [application (get-in response [:data :account :application])]
        {:db       (assoc init-db :application-id (:id application))
         :dispatch [:app.init/somehow-figure-out-where-they-left-off application]}
