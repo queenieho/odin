@@ -69,8 +69,9 @@
      [:div.w-75-l.w-100
       [:h1 "Here's a little about us."]
       [:p.mb4 "We believe that community is best created by the connections formed
-    between individuals through shared values. Read more about Our Values on our
-    website."]
+    between individuals through shared values. Read more about "
+       [:a {:href "https://starcity.com/lifestyle"} "Our Values"]
+       " on our website."]
       [:p.mb4 "Starcity is a safe space for individuals to come together and share
     their skills, experiences and perspectives. Our members give to one another
     and to the greater communities in which they live. We hope you're as excited
