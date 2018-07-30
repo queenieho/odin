@@ -37,6 +37,7 @@
                  :status           {:type :application_status}
                  :updated          {:type :Instant}
                  :communities      {:type (list :Long)}
+                 :about            {:type String}
                  :current_location {:type :application_current_location_params}}}
 
 
