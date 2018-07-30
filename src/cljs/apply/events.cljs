@@ -177,40 +177,26 @@
  (fn [{db :db} [_ params]]
    ;; NOTE somehow graphql doesn't like communities being in a list
    ;; so I have to move it into a vector before the mutation
-<<<<<<< HEAD
-<<<<<<< HEAD
    (let [application-params (-> (tb/transform-when-key-exists params
                                   {:communities #(into [] %)})
-                                (dissoc :first-name :last-name :middle-name :dob))
-         account-params     (get-account-params params)]
+                                (dissoc :first-name :last-name :middle-name :dob
+                                        :background-check-consent))
+         account-params     (get-account-params params)
+         bg-check-params    (tb/assoc-some {}
+                                           :consent (:background-check-consent params))]
      (log/log "updating application " application-params)
+     (log/log "updating application " bg-check-params)
      {:dispatch [:ui/loading :step.current/save true]
       :graphql  {:mutation   [[:application_update {:application (:application-id db)
                                                     :params      application-params}
                                application-attrs]
                               [:update_account {:id   (get-in db [:account :id])
                                                 :data account-params}
-                               [:first_name :middle_name :last_name :dob :phone]]]
-=======
-=======
->>>>>>> 38f69056f938fb7e80d9f4251816980c57ecc1bf
-   (let [params'         (-> (tb/transform-when-key-exists params
-                               {:communities #(into [] %)})
-                             (dissoc :background-check-consent))
-         bg-check-params (tb/assoc-some {}
-                                        :consent (:background-check-consent params))]
-     (log/log "updating application " params' bg-check-params)
-     {:dispatch [:ui/loading :step.current/save true]
-      :graphql  {:mutation   [[:application_update {:application (:application-id db)
-                                                    :params      params'}
-                               application-attrs]
-                              [:update_background_check {:background_check_id (:background-check-id db)
-                                                         :params              bg-check-params}
+                               [:first_name :middle_name :last_name :dob :phone]]
+                              [:update_background_check
+                               {:background_check_id (:background-check-id db)
+                                :params              bg-check-params}
                                [:id :consent]]]
-<<<<<<< HEAD
->>>>>>> Add step: personal/background-check
-=======
->>>>>>> 38f69056f938fb7e80d9f4251816980c57ecc1bf
                  :on-success [::application-update-success]
                  :on-failure [:graphql/failure]}})))
 
@@ -218,23 +204,11 @@
 (reg-event-fx
  ::application-update-success
  (fn [{db :db} [_ response]]
-<<<<<<< HEAD
-<<<<<<< HEAD
-   (let [application (get-in response [:data :application_update])]
-     {:db       (parse-gql-response db application)
-=======
-=======
->>>>>>> 38f69056f938fb7e80d9f4251816980c57ecc1bf
    (let [application (get-in response [:data :application_update])
          bg-check    (get-in response [:data :update_background_check])]
-     (log/log "response " application bg-check)
      {:db       (merge
                  (parse-gql-response db application)
                  {:personal/background-check (:consent bg-check)})
-<<<<<<< HEAD
->>>>>>> Add step: personal/background-check
-=======
->>>>>>> 38f69056f938fb7e80d9f4251816980c57ecc1bf
       :dispatch [:step/advance]})))
 
 
