@@ -220,7 +220,8 @@
                              :application/occupancy (:occupancy params)
                              :application/has-pet (:has_pet params)
                              :application/pet (:pet params)
-                             :application/license (:term params))]
+                             :application/license (:term params)
+                             :application/about (:about params))]
                            (when-some [communities (:communities params)]
                              (create-community-select-tx application communities))))
 

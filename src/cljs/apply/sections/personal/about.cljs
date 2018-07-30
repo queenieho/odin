@@ -53,8 +53,10 @@
 
 (defmethod events/save-step-fx step
   [db params]
-  {:db       (assoc db step params)
-   :dispatch [:step/advance]})
+  {:dispatch [:application/update {:about (step db)}]})
+
+
+(defmethod events/gql->rfdb :about [k v] step)
 
 
 ;; views ========================================================================

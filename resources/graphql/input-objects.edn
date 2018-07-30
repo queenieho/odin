@@ -35,7 +35,8 @@
                  :pet           {:type :application_pet_params}
                  :status        {:type :application_status}
                  :updated       {:type :Instant}
-                 :communities   {:type (list :Long)}}}
+                 :communities   {:type (list :Long)}
+                 :about         {:type String}}}
 
 
   :application_pet_params

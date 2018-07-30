@@ -30,7 +30,7 @@
 
 
 (def application-attrs
-  [:id :term :move_in_range :move_in :occupancy :has_pet
+  [:id :term :move_in_range :move_in :occupancy :has_pet :about
    [:pet [:id :name :breed :weight :sterile :vaccines :bitten
           :demeanor :daytime_care :about :type]]
    [:communities [:id :code]]])
