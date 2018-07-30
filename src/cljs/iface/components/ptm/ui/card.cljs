@@ -182,32 +182,48 @@
 ;; multiple selection cards =====================================================
 
 
-(defn- get-selection-footer [selected count]
+(defn- get-selection-footer [selected count on-click value]
   (cond
     (and selected count)
     [:div
+     {:on-click (when-let [c on-click]
+                  #(c value))}
      [:a.text-link.text-green
       (str count " Selected")]
      [:img.icon-x {:src "/assets/images/ptm/icons/ic-x.svg"}]]
 
     selected
     [:div
+     {:on-click (when-let [c on-click]
+                  #(c value))}
      [:a.text-link.text-green
       [ant/icon {:type "check"}] " Selected"]
      [:img.icon-x {:src "/assets/images/ptm/icons/ic-x.svg"}]]
 
     :else
-    [:a.text-link "Select"]))
+    [:div
+     {:on-click (when-let [c on-click]
+                  #(c value))}
+     [:a.text-link "Select"]]))
 
 
-(defn multiple [{:keys [width selected count]
-                 :or   {width :third}
+(defn multiple [{:keys [width selected count on-click value on-card-click
+                        disabled align img title subtitle description tag]
+                 :or   {width :third
+                        align :left}
                  :as   props}]
-  [single
-   (r/merge-props
-    props
-    {:align  :left
-     :footer (get-selection-footer selected count)})])
+  [:div
+   {:class (get-card-width width)}
+   [:div.card.card-interactive
+    [:div
+     {:on-click (when-let [c on-card-click] c)
+      :class    (get-card-align align)}
+     (when img
+       [:div.card-illo
+        [:img.v-mid {:src img}]])
+     [card-data tag title subtitle description nil]]
+   [:div.card-footer
+    (get-selection-footer selected count on-click value)]]])
 
 (s/fdef single
   :args (s/cat :props (s/keys :req-un [::value
@@ -285,7 +301,7 @@
 
 
 (defn carousel-card [{:keys [value tag title subtitle description align on-click
-                             width images selected count]
+                             width images selected count on-card-click]
                       :or   {align :left
                              width :third}}]
   [:div
@@ -295,9 +311,10 @@
      :class (get-card-align align)}
     [carousel images]
     [:div
-     {:on-click (when-let [c on-click]
-                  #(c value))}
-     [card-data tag title subtitle description (get-selection-footer selected count)]]]])
+     {:on-click (when-let [c on-card-click] c)}
+     [card-data tag title subtitle description nil]]
+    [:div.card-footer
+     (get-selection-footer selected count on-click value)]]])
 
 (s/fdef carousel-card
   :args (s/cat :props (s/keys :req-un [::value
@@ -395,10 +412,10 @@
     ;; body
     [:div.w-75-l.w-100.fl.pv3
      (map-indexed
-        (fn [i row-items]
-          ^{:key i}
-          [summary-row row-items])
-        (partition 2 2 nil items))]]])
+      (fn [i row-items]
+        ^{:key i}
+        [summary-row row-items])
+      (partition 2 2 nil items))]]])
 
 
 (s/fdef logistics-summary

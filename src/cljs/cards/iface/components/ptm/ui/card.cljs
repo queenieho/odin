@@ -4,6 +4,7 @@
                                                  defcard-rg]])
   (:require [devcards.core]
             [iface.components.ptm.ui.card :as card]
+            [iface.utils.log :as log]
             [reagent.core :as r]))
 
 
@@ -183,23 +184,26 @@ Single Selection Groups are meant to be used like radio buttons. `single` card w
     :card-width :third
     :show-count true}
    [card/multiple
-    {:title       "Card 1"
-     :img         "http://placekitten.com/200/200"
-     :subtitle    "best option"
-     :description "buy all the bundles!"
-     :value       1}]
+    {:title         "Card 1"
+     :on-card-click #(log/log "clicking card 1")
+     :img           "http://placekitten.com/200/200"
+     :subtitle      "best option"
+     :description   "buy all the bundles!"
+     :value         1}]
    [card/multiple
-    {:title       "Card 2"
-     :img         "http://placekitten.com/200/200"
-     :subtitle    "best option"
-     :description "buy all the bundles!"
-     :value       2}]
+    {:title         "Card 2"
+     :on-card-click #(log/log "clicking card 2")
+     :img           "http://placekitten.com/200/200"
+     :subtitle      "best option"
+     :description   "buy all the bundles!"
+     :value         2}]
    [card/multiple
-    {:title       "Card 3"
-     :img         "http://placekitten.com/200/200"
-     :subtitle    "best option"
-     :description "buy all the bundles!"
-     :value       3}]])
+    {:title         "Card 3"
+     :on-card-click #(log/log "clicking card 3")
+     :img           "http://placekitten.com/200/200"
+     :subtitle      "best option"
+     :description   "buy all the bundles!"
+     :value         3}]])
 
 
 (defcard-rg groups-card-multiple
@@ -207,7 +211,10 @@ Single Selection Groups are meant to be used like radio buttons. `single` card w
 <hr>
 <br>
 ### Multiple Selection Card Groups
-Multiple Selection Card are meant to be used like checkboxes. `multiple` card with a unique `:value` should be used for this type of groups.
+`multiple` selection cards are meant to be used like checkboxes. `multiple` card with a unique `:value` should be used as children of a card `group`.
+<br>
+<br>
+A `:on-card-click` event handler can be used for each card if we want to trigger some other events (i.e. opening a lightbox).
 "
   (fn [data _]
     [multiple-card-sample data])
@@ -260,7 +267,8 @@ Multiple Selection Card are meant to be used like checkboxes. `multiple` card wi
      (map
       (fn [item]
         ^{:key (:value item)}
-        [card/carousel-card item])
+        [card/carousel-card
+         (assoc item :on-card-click #(log/log "clicking" (:title item)))])
       items)]))
 
 
@@ -270,6 +278,9 @@ Multiple Selection Card are meant to be used like checkboxes. `multiple` card wi
 <br>
 ### Carousel Card Groups
 Carousel Card are meant to be used like checkboxes. `carousel-card` card with a unique `:value` should be used for this type of groups. An `:images` prop with an array or list of image sources will be required for the carrousel.
+<br>
+<br>
+A `:on-card-click` event handler can be used for each card if we want to trigger some other events (i.e. opening a lightbox).
 "
   (fn [data _]
     [carousel-card-sample data])

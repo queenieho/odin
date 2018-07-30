@@ -16,6 +16,7 @@
             [cljsjs.react-day-picker]
             [iface.components.ptm.layout :as layout]
             [iface.modules.graphql :as graphql]
+            [iface.modules.modal]
             [iface.utils.routes :as iroutes]
             [reagent.core :as r]
             [re-frame.core :as rf :refer [dispatch subscribe]]

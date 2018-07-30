@@ -3,7 +3,8 @@
             [cljs.spec.alpha :as s]
             [iface.components.ptm.ui.carousel :as carousel]
             [reagent.core :as r]
-            [devtools.defaults :as d]))
+            [devtools.defaults :as d]
+            [iface.utils.log :as log]))
 
 
 ;; specs ========================================================================
@@ -84,10 +85,12 @@
 ;; community modal ==============================================================
 
 
-(defn- amenity-item [{:keys [label img]}]
+(defn- amenity-item [{:keys [label icon]}]
   [:div.dt.mb2
    [:div.dtc.v-mid
-    [:img {:src img}]]
+    ;; NOTE we might want to consider adding some css sizing to the icon
+    ;; if the svg file doesn't have a size, it won't show
+    [:img {:src icon}]]
    [:div.dtc.v-mid.pl2
     label]])
 
@@ -123,8 +126,8 @@
 
 (defn community-info
   "Renders detailed information of a community."
-  [{:keys [images name price units-available intro building-desc neighborhood
-           community-desc amenities on-select on-next value next selected]
+  [{:keys [images name price units-available introduction building neighborhood
+           community amenities on-select on-next value next selected]
     :as   props}]
   [:div
    [:div.lightbox-mask
@@ -134,11 +137,11 @@
      [:h3 (str "From $" price)
       [:br]
       (str units-available " units open")]
-     [:p.mt4 intro]
-     (when-let [b building-desc] [section "Building Details" b])
+     [:p.mt4 introduction]
+     (when-let [b building] [section "Building Details" b])
      (when-let [a amenities] [section "Amenities" a])
      (when-let [n neighborhood] [section "The Neighborhood" n])
-     (when-let [c community-desc] [section "Your Community" c])]]
+     (when-let [c community] [section "Your Community" c])]]
    [:div.lightbox-footer
     [:div.lightbox-footer-left
      (if selected
@@ -162,12 +165,12 @@
                                        ::name
                                        ::price
                                        ::units-available
-                                       ::intro
+                                       ::introduction
                                        ::value]
-                              :opt-un [::building-desc
+                              :opt-un [::building
                                        ::amenities
                                        ::neighborhood
-                                       ::community-desc
+                                       ::community
                                        ::selected
                                        ::on-select
                                        ::next
