@@ -64,9 +64,9 @@
     [:div
      [:div.w-60-l.w-100
       [:h1 "Tell us about your fur family."]
-      [:p "We do not allow cats. Smaller pets may be allowed only if they are
-    registered Emotional Support Animals. If your pet meets these requirements,
-    tell us about them below."]]
+      [:p "We're sorry, we don't allow cats. Smaller pets may be allowed, but only
+    if they're registered Emotional Support Animals. If you think your pet qualifies,
+    please tell us a little bit about them."]]
      [:div.w-60-l.w-100
       [:div.page-content
        [form/textarea

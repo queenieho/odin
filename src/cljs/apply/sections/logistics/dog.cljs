@@ -84,8 +84,8 @@
     [:div
      [:div.w-60-l.w-100
       [:h1 "Tell us about your fur family."]
-      [:p "Most of our communities are dog-friendly, but we unfortunately do not
-    allow cats. If you have a dog, please let us know what breed and weight."]]
+      [:p "Most of our communities are dog-friendly, but we unfortunately don't
+    allow cats. If you have a dog, please tell us a little bit about them."]]
      [:div.w-60-l.w-100
       [:div.page-content
        [:div.cf.mb3-ns.mb0
