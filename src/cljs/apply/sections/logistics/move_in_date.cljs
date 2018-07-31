@@ -56,9 +56,9 @@
   [_]
   [:div
    [:div.w-60-l.w-100
-    [:h1 "Let's get started." [:br] "When do you want to move-in?"]
-    [:p "We'll do our best to accommodate your move-in date, but we cannot
-    guarantee that the date you choose will be the date that you move in."]]
+    [:h1 "First things first:" [:br] "When do you want to move in?"]
+    [:p "We can't guarantee that the day you pick will be when you move in,
+but we'll do our best to make it work."]]
    [:div.w-80-l.w-100
     [:div.page-content
     [card/single
