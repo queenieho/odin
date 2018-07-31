@@ -28,7 +28,8 @@ label {
 input[type="text"],
 input[type="number"], textarea {
   @extend .medium-border;
-  height: 40px;
+  min-height: 40px;
+  font-size: $p-font-size;
   font-family: $sans-serif;
   border-radius: $button-radius;
   border-width: $border-width;

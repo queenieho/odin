@@ -172,18 +172,19 @@
     [:div
      [:div.w-60-l.w-100
       [:h1 "Please verify your income."]
-      [:p "To qualify to live in Starcity, your gross income must be at least 2.5x the cost of rent. Please submit acceptable forms of verification."]]
+      [:p "To qualify to live in Starcity, your gross monthly income must be at least 2.5x your monthly rent. What counts as verification?"]]
      [:div.w-60-l.w-100
       [:div.page-content
-       [:div.w-50-l.w-100.fl.pl4-l.pl2
-        [bullet-item true "Most recent pay stub"]
-        [bullet-item true "Last three months' bank statements"]
-        [bullet-item true "Offer letter"]]
-       [:div.w-50-l.w-100.fl.pr4-l.pl2
-        [bullet-item false "Stock portfolio"]
-        [bullet-item false "Photo of your crypto wallet"]
-        [bullet-item false "Photo of your actual wallet"]]
-       [:div
+       [:div {:style {:overflow "auto"}}
+        [:div.w-50-l.w-100.fl.pl4-l.pl2
+         [bullet-item true "Most recent pay stub"]
+         [bullet-item true "Last three months' bank statements"]
+         [bullet-item true "Offer letter"]]
+        [:div.w-50-l.w-100.fl.pr4-l.pl2
+         [bullet-item false "Stock portfolio"]
+         [bullet-item false "Photo of your crypto wallet"]
+         [bullet-item false "Photo of your actual wallet"]]]
+       [:div.mt4
         [:input
          {:type      "file"
           :multiple  true

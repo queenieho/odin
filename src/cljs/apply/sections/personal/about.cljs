@@ -73,15 +73,15 @@
        [:a {:href "https://starcity.com/lifestyle"} "Our Values"]
        " on our website."]
       [:p.mb4 "Starcity is a safe space for individuals to come together and share
-    their skills, experiences and perspectives. Our members give to one another
-    and to the greater communities in which they live. We hope you're as excited
+    their skills, experiences, and perspectives. Our members give to one another
+    and to the greater communities where they live. We hope you're as excited
     about sharing and giving back as we are."]
-      [:p.mb4 "Lasting relationships are often built through common interests."]
+      [:p.mb4 "That's what's important to us - what's important to you?"]
       [form/textarea
        {:on-change   #(dispatch [::update-personal-about (.. % -target -value)])
         :value       @about
-        :placeholder "Help us get to know  you by telling us more about yourself. \n\nWhere are you from? \nWhat do you like to do? \nWhat are your hopes and dreams?"
-        :rows        8}]
+        :rows        8
+        :placeholder "Help us get to know  you by telling us more about yourself. \n\nWhere are you from? \nWhat do you like to do? \nWhat are your hopes and dreams?"}]
 
       ;; NOTE will implement this after MVP for onboarding is ready
       #_[form/select
