@@ -184,7 +184,8 @@
      [:div.w-60-l.w-100
       [:h1 "Which Starcity communities do you want to join?"]
       [:p "Browse our communities and learn about what makes each special."]]
-     [:div.w-60-l.w-100
+     ;; NOTE making w-60-l w-100 until we add map
+     [:div.w-100
       [:div.page-content
        [card/group
         {:on-change  #(on-select %)

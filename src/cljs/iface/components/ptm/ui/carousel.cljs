@@ -21,11 +21,8 @@
 
 
 (defn- carousel-slide [{:keys [selected img key]}]
-  [:li.carousel-slide
-   {:style {:background-image    (str "url('" img "')")
-            :height              "500px"
-            :background-size     "cover"
-            :background-position "center"}
+  [:li.carousel-slide.carousel-image-large
+   {:style {:background-image (str "url('" img "')")}
     :class (when selected
              "active")
     :key   key}])

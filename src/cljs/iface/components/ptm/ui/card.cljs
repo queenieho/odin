@@ -259,11 +259,12 @@
 
 
 (defn- carousel-slide [{:keys [selected img key]}]
-  [:li.carousel-slide
-   {:class (when selected
+  [:li.carousel-slide.carousel-image-small
+   {:style {:background-image (str "url('" img "')")}
+    :class (when selected
              "active")
     :key   key}
-   [:img {:src img}]])
+   #_[:img {:src img}]])
 
 
 (defn- idx-next [idx total]
