@@ -216,7 +216,9 @@
                               :initialMonth initial-month
                               :todayButton (when today-btn "Today")
                               :canChangeMonth change-month)]
-    (.createElement js/React js/DayPicker (clj->js props'))))
+    [:div.w-60-l.w-100
+     [:div.card
+     (.createElement js/React js/DayPicker (clj->js props'))]]))
 
 
 (defn date-input
