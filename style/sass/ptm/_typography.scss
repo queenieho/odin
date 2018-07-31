@@ -69,6 +69,13 @@ p {
   position: relative;
 }
 
+.handwriting {
+  font-family: "Caveat";
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: $blue;
+}
+
 .small {
   font-size: $h4-font-size;
   line-height: $p-font-size;

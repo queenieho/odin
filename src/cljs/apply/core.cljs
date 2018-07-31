@@ -14,6 +14,7 @@
             [goog.dom :as gdom]
             [cljsjs.moment]
             [cljsjs.react-day-picker]
+            [clojure.string :as s]
             [iface.components.ptm.layout :as layout]
             [iface.modules.graphql :as graphql]
             [iface.modules.modal]
@@ -33,7 +34,7 @@
   [:div
    [:div.w-60-l.w-100.center
     [:h1.tc "Welcome to Starcity,"]
-    [:h2.tc.handwriting name]]
+    [:h2.tc.handwriting.f2 (first (s/split name #" "))]]
    [:div.page-content.w-90-l.w-100.center.tc
     [:p.tc "You've taken your first step to joining a Starcity community."]
     [:p.tc "We're looking forward to getting to know you."]
@@ -42,16 +43,14 @@
     #_[:p.tc "question, click on the " (icons/icon {:type "help" :class "icon-small"}) " icon to send me a message."]
     [:br]
     [:div
-     [ant/avatar
-      {:icon "user"}]]
-    [:h3 "- Mattlio from Chatlio"]
-    [:br]
+     [:img.br-100.h3.w3.dib
+      {:src "/assets/images/bio-matthew.jpg"}]]
+    [:h3.handwriting "-Matt"]
     [:br]
 
-    [button/button
+    [button/primary
      {:on-click #(swap! toggle not)
-      :type     :secondary
-      :class    "mt5"}
+      :class    "mt4"}
      "Let's go!"]]])
 
 
@@ -79,21 +78,6 @@
     [:button.button.mt5
      {:on-click #(dispatch [:ptm/start])}
      "Got it"]]])
-
-
-#_(defmethod content/view :welcome [{:keys [requester] :as route}]
-  (let [toggle (r/atom false)]
-    (fn [requester]
-      [:div
-       [:div.w-60-l.w-100.center
-        [:p "test"]
-        [:img {:src "/assets/images/ptm/blue-logomark.svg"}]
-        #_[:svg.logo
-         [:use {:xlinkHref "#logomark"}]]]
-       (if @toggle
-         [welcome-2]
-         [welcome-1 requester toggle])
-       [:div.bg-top]])))
 
 
 (defmethod content/view :logout []
