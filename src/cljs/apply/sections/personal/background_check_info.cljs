@@ -82,7 +82,7 @@
   (let [data (subscribe [:db/step step])]
     [:div
      [:div.w-60-l.w-100
-      [:h1 "Please fill out your personal information."]]
+      [:h1 "Tell us a little bit about yourself."]]
      [:div.w-90-l.w-100
       [:div.page-content
        [form/form

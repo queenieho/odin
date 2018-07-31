@@ -58,15 +58,16 @@
 ;; views ========================================================================
 
 
+;; TODO make small modal component
 (defn decline-background-check-modal
   [{:keys [visible]}]
   (when @visible
     [:div
      [:div.lightbox-small
-      [:div.lightbox-content
+      [:div.lightbox-content-small
        [:h3 "We require background checks for all applicants."]
        [:p "It helps keep our application process, and communities safe. Are you sure you want to decline?"]]
-      [:div.lightbox-footer
+      [:div.lightbox-footer-small
        [:div.lightbox-footer-left
         [button/text
          {:on-click #(dispatch [:step.current/next :no])}
@@ -83,10 +84,10 @@
   (let [is-showing (r/atom false)]
     [:div
      [:div.w-60-l.w-100
-      [:h1 "Do we have your consent to perform a background check?"]
-      [:p "We perform background checks to ensure the safety of our community
-    members. Your background check is completely confidential, and we'll share
-    the results (if any) with you."]]
+      [:h1 "Is it okay if we perform a background check?"]
+      [:p "We run background checks for the safety of our community members.
+      It’s completely confidential, and if there are any results
+      we'll share them with you."]]
 
      [decline-background-check-modal {:visible  is-showing
                                       :on-close #(swap! is-showing not)}]
