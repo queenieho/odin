@@ -52,7 +52,9 @@
                    (r/children (r/current-component)))]
      (into [:div] children))
    (when help
-     [:p.small.red help])])
+     [:p.small.red.mt2
+      {:style {:margin-bottom "1.5rem"}}
+      help])])
 
 (s/fdef form-item
   :args (s/cat :props (s/keys :opt-un [::label

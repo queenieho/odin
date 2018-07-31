@@ -49,6 +49,7 @@ $card-icon-opacity-hover: 1;
 .card-interactive {
   @extend .fast-all;
   position: relative;
+  cursor: pointer;
   &:hover {
     box-shadow: $medium-shadow;
     bottom: 2px;

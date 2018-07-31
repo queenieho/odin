@@ -100,7 +100,7 @@
 (defn- card-data [tag title subtitle description footer]
   [:div
    (when tag
-     [:h4.top-0.right-1.absolute
+     [:h4.top-1.right-1.absolute
       [:div.pill tag]])
    (when (or title subtitle description)
      [:div.card-description
