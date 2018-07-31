@@ -38,8 +38,8 @@
     [:p.tc "You've taken your first step to joining a Starcity community."]
     [:p.tc "We're looking forward to getting to know you."]
     [:br]
-    [:p.tc "I'm here to help you with your application. If you have a"]
-    [:p.tc "question, click on the " (icons/icon {:type "help" :class "icon-small"}) " icon to send me a message."]
+    #_[:p.tc "I'm here to help you with your application. If you have a"]
+    #_[:p.tc "question, click on the " (icons/icon {:type "help" :class "icon-small"}) " icon to send me a message."]
     [:br]
     [:div
      [ant/avatar
@@ -81,12 +81,14 @@
      "Got it"]]])
 
 
-(defmethod content/view :welcome [{:keys [requester] :as route}]
+#_(defmethod content/view :welcome [{:keys [requester] :as route}]
   (let [toggle (r/atom false)]
-    (fn []
+    (fn [requester]
       [:div
        [:div.w-60-l.w-100.center
-        [:svg.logo
+        [:p "test"]
+        [:img {:src "/assets/images/ptm/blue-logomark.svg"}]
+        #_[:svg.logo
          [:use {:xlinkHref "#logomark"}]]]
        (if @toggle
          [welcome-2]
@@ -155,7 +157,8 @@
       (let [applicant (subscribe [:user])]
        [layout/layout
         {:pre (list [:div.bg-top {:key 1}]
-                    (icons/icon {:type "logomark"}))}
+                    [:div.welcome-logo.pt6
+                     [:img {:src "/assets/images/ptm/blue-logomark.svg"}]])}
         (if-not @screen-two
           [welcome-1 @applicant screen-two]
           [welcome-2])]))))
