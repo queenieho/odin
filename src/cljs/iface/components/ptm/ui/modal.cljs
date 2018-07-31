@@ -87,12 +87,12 @@
 
 (defn- amenity-item [{:keys [label icon]}]
   [:div.dt.mb2
-   [:div.dtc.v-mid
+   [:div.dtc.v-top
     ;; NOTE we might want to consider adding some css sizing to the icon
     ;; if the svg file doesn't have a size, it won't show
     [:img {:src icon}]]
-   [:div.dtc.v-mid.pl2
-    label]])
+   [:div.dtc.v-top.pl2
+    [:p label]]])
 
 
 (defn- amenities [section items]
@@ -112,7 +112,7 @@
   (let [left (take (Math/ceil (/ (count content) 2)) content)
         right (drop (Math/ceil (/ (count content) 2)) content)]
     [:div
-     [:h3.mt4 title]
+     [:h3.mt4.mb2 title]
      [:div.cf
       [amenities :left left]
       [amenities :right right]]]))
