@@ -54,8 +54,8 @@
   [_]
   [:div
    [:div.w-60-l.w-100
-    [:h1 "Thank you for applying to live in Starcity."]
-    [:p "We will review your application shortly and let you know if you're qualified."]]
+    [:h1 "Thanks for applying live in Starcity! What’s next?"]
+    [:p "We’ll review your application soon and let you know if you’re qualified."]]
    [:div.page-content.w-90-l.w-100
     [:p "In the meantime, you can check out your application status here:"]
     [ant/button {:on-click #(log/log "application status!")}

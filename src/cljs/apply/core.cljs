@@ -14,6 +14,7 @@
             [goog.dom :as gdom]
             [cljsjs.moment]
             [cljsjs.react-day-picker]
+            [clojure.string :as s]
             [iface.components.ptm.layout :as layout]
             [iface.modules.graphql :as graphql]
             [iface.modules.modal]
@@ -33,65 +34,49 @@
   [:div
    [:div.w-60-l.w-100.center
     [:h1.tc "Welcome to Starcity,"]
-    [:h2.tc.handwriting name]]
+    [:h2.tc.handwriting.f2 (first (s/split name #" "))]]
    [:div.page-content.w-90-l.w-100.center.tc
-    [:p.tc "You've taken your first step to joining a Starcity community."]
-    [:p.tc "We're looking forward to getting to know you."]
+    [:p.tc "We'd love to have you join our community."]
     [:br]
-    [:p.tc "I'm here to help you with your application. If you have a"]
-    [:p.tc "question, click on the " (icons/icon {:type "help" :class "icon-small"}) " icon to send me a message."]
+    [:p.tc "I'm here to help with your application. If you have a question,"]
+    [:p.tc "just click on the " (icons/icon {:type "help" :class "icon-small"}) " icon to send me a message."]
     [:br]
     [:div
-     [ant/avatar
-      {:icon "user"}]]
-    [:h3 "- Mattlio from Chatlio"]
-    [:br]
+     [:img.br-100.h3.w3.dib
+      {:src "/assets/images/bio-matthew.jpg"}]]
+    [:h3.handwriting "-Matt"]
     [:br]
 
-    [button/button
+    [button/primary
      {:on-click #(swap! toggle not)
-      :type     :secondary
-      :class    "mt5"}
+      :class    "mt4"}
      "Let's go!"]]])
 
 
 (defn- welcome-2 []
-  [:section.main.main-no-nav.center
+  [:div
    [:div.w-60-l.w-100.center
     [:h1.tc "Here's what you'll need"]]
    [:div.page-content.w-90-l.w-100.center.tc
-    [:div.cf.mt5
+    [:div.cf.mt3
      [:div.w-third-l.w-100.fl.ph4
-      [:svg
-       [:use {:xlinkHref "#truck"}]]
+      [:div.pb4
+       [:img {:src "/assets/images/ptm/icons/ic-truck-black.svg"}]]
       [:h3 "Logistics"]
       [:p "We’ll need to know stuff like which communities you'd like to join, you’re preferred move-in date, and how long you'll be staying with us."]]
      [:div.w-third-l.w-100.fl.ph4
-      [:svg
-       [:use {:xlinkHref "#paper"}]]
+      [:div.pb4
+       [:img {:src "/assets/images/ptm/icons/ic-paper-black.svg"}]]
       [:h3 "Personal Information"]
       [:p "Provide us with some personal information so that we can perform a background check and verify your income."]]
      [:div.w-third-l.w-100.fl.ph4
-      [:svg
-       [:use {:xlinkHref "#credit-card"}]]
+      [:div.pb4
+       [:img {:src "/assets/images/ptm/icons/ic-credit-card-black.svg"}]]
       [:h3 "Application Fee"]
       [:p "It’ll cost $25 for each application – that helps cover the cost of the background check."]]]
     [:button.button.mt5
      {:on-click #(dispatch [:ptm/start])}
      "Got it"]]])
-
-
-(defmethod content/view :welcome [{:keys [requester] :as route}]
-  (let [toggle (r/atom false)]
-    (fn []
-      [:div
-       [:div.w-60-l.w-100.center
-        [:svg.logo
-         [:use {:xlinkHref "#logomark"}]]]
-       (if @toggle
-         [welcome-2]
-         [welcome-1 requester toggle])
-       [:div.bg-top]])))
 
 
 (defmethod content/view :logout []
@@ -153,12 +138,13 @@
   (let [screen-two (r/atom false)]
     (fn []
       (let [applicant (subscribe [:user])]
-       [layout/layout
-        {:pre (list [:div.bg-top {:key 1}]
-                    (icons/icon {:type "logomark"}))}
-        (if-not @screen-two
-          [welcome-1 @applicant screen-two]
-          [welcome-2])]))))
+        [layout/layout
+         {:pre (list [:div.bg-top {:key 1}]
+                     [:div.welcome-logo.pt6
+                      [:img {:src "/assets/images/ptm/blue-logomark.svg"}]])}
+         (if-not @screen-two
+           [welcome-1 @applicant screen-two]
+           [welcome-2])]))))
 
 
 (defn layout []

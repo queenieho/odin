@@ -52,7 +52,9 @@
                    (r/children (r/current-component)))]
      (into [:div] children))
    (when help
-     [:p.small.red help])])
+     [:p.small.red.mt2
+      {:style {:margin-bottom "1.5rem"}}
+      help])])
 
 (s/fdef form-item
   :args (s/cat :props (s/keys :opt-un [::label
@@ -214,7 +216,9 @@
                               :initialMonth initial-month
                               :todayButton (when today-btn "Today")
                               :canChangeMonth change-month)]
-    (.createElement js/React js/DayPicker (clj->js props'))))
+    [:div.w-60-l.w-100
+     [:div.card
+     (.createElement js/React js/DayPicker (clj->js props'))]]))
 
 
 (defn date-input

@@ -74,8 +74,8 @@
   [:div
    [:div.w-60-l.w-100
     [:h1 "What's your phone number?"]
-    [:p "We promise we'll keep your phone number private and only contact you by
-    phone with prior permission."]]
+    [:p "We promise we'll keep your phone number private and only contact you
+    in case we need to get in touch about something important."]]
    [:div.page-content.w-60-l.w-100
     [:div.w-30-l.w-100
      [form/item

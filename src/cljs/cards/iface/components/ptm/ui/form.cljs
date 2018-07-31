@@ -16,9 +16,21 @@
 
 
 (defn- text-input-sample [data]
-  [form/text
-   {:value     (:text @data)
-    :on-change #(swap! data assoc :text (.. % -target -value))}])
+  [:div
+   [form/item
+    {:label "Some text"
+     :error true
+     :help "This is an error"}
+    [form/text
+     {:value     (:text @data)
+      :on-change #(swap! data assoc :text (.. % -target -value))}]]
+   [form/item
+    {:label "Some text"
+     :error true
+     :help "This is an error"}
+    [form/text
+     {:value     (:text @data)
+      :on-change #(swap! data assoc :text (.. % -target -value))}]]])
 
 (defcard-rg text-input
   "

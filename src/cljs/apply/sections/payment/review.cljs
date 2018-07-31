@@ -54,7 +54,7 @@
   [_]
   [:div
    [:div.w-60-l.w-100
-    [:h1 "Review our terms to finish and pay your $25 application fee."]
+    [:h1 "Review our terms to finish your application and pay your $25 fee."]
     [:p "Please take a moment to review our Terms of Service and Privacy Policy."]]
    [:div.page-content.w-90-l.w-100
-    [form/checkbox {} "I have read and agrere to the Terms of Service and Privacy Policy."]]])
+    [form/checkbox {} "I have read and agree to the Terms of Service and Privacy Policy."]]])

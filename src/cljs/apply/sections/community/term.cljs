@@ -70,10 +70,10 @@
     [:div
      (log/log @options)
      [:div.w-60-l.w-100
-      [:h1 "How long will you be staying with us?"]
-      [:p "We understand that each individual ahs unique housing needs, which is
-    why we offer three membership plans ranging from most affordable to most
-    flexible."]]
+      [:h1 "How long would like to stay with us?"]
+      [:p "We know everyone has a different situation,
+      so we have membership plans that can either be
+      more affordable or more flexible."]]
      [:div.w-80-l.w-100
       [:div.page-content
        (map-indexed

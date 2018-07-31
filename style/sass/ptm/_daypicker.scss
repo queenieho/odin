@@ -5,6 +5,7 @@
 
 .DayPicker {
   display: inline-block;
+  outline: none;
 }
 
 .DayPicker-wrapper {
@@ -76,6 +77,8 @@
   display: table-caption;
   text-align: left;
   margin-bottom: 0.5rem;
+  font-size: $p-font-size;
+  font-weight: 600;
 }
 
 .DayPicker-Caption > div {

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="56px" height="56px" viewBox="0 0 56 56" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 51.1 (57501) - http://www.bohemiancoding.com/sketch -->
+    <title>ic-credit-card-black</title>
+    <desc>Created with Sketch.</desc>
+    <defs></defs>
+    <g id="design" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" opacity="0.800000012" stroke-linecap="round" stroke-linejoin="round">
+        <g id="Welcome-2" transform="translate(-913.000000, -394.000000)" stroke="#000000" stroke-width="2">
+            <g id="ic-credit-card-black" transform="translate(914.000000, 395.000000)">
+                <path d="M45,20 L3,20 C1.343,20 0,21.343 0,23 L0,51 C0,52.657 1.343,54 3,54 L45,54 C46.657,54 48,52.657 48,51 L48,23 C48,21.343 46.657,20 45,20 Z" id="Stroke-1"></path>
+                <path d="M16,26 L8,26 C7,26 6,27 6,28 L6,34 C6,35 7,36 8,36 L16,36 C17,36 18,35 18,34 L18,28 C18,27 17,26 16,26 Z" id="Stroke-3"></path>
+                <path d="M6,42 L12,42" id="Stroke-5"></path>
+                <path d="M16,42 L22,42" id="Stroke-7"></path>
+                <path d="M26,42 L32,42" id="Stroke-9"></path>
+                <path d="M36,42 L42,42" id="Stroke-11"></path>
+                <path d="M6,48 L22,48" id="Stroke-13"></path>
+                <path d="M12,26 L12,36" id="Stroke-15"></path>
+                <path d="M12,30 L6,30" id="Stroke-17"></path>
+                <path d="M51.498,25.8945 L53.144,24.2485 C54.285,23.1075 54.285,21.2595 53.144,20.1195 L33.881,0.8555 C32.74,-0.2855 30.892,-0.2855 29.752,0.8555 L14,15.9995" id="Stroke-19"></path>
+                <path d="M36.2617,3.2363 L22.9997,16.0003" id="Stroke-21"></path>
+                <path d="M42.2617,9.2363 L34.9997,16.0003" id="Stroke-23"></path>
+            </g>
+        </g>
+    </g>
+</svg>

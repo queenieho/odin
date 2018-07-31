@@ -1,0 +1,87 @@
+.dots {
+  position: absolute;
+  z-index: 103;
+  padding-left: $card-horizontal-padding;
+  bottom: 16px;
+}
+
+.dot {
+  height: 8px;
+  width: 8px;
+  margin-right: 5px;
+  background-color: white;
+  border: solid 2px white;
+  border-radius: 50%;
+  display: inline-block;
+  cursor: pointer;
+  &.inactive {
+    background-color: transparent;
+    opacity: $card-icon-opacity-default;
+    &:hover {
+      opacity: $card-icon-opacity-hover;
+    }
+  }
+}
+
+.carousel-slide {
+  margin: auto;
+  display: none;
+  list-style-type: none;
+  text-align: center;
+  &.active {
+    display: block;
+  }
+}
+
+.carousel-image-large {
+  height: 500px;
+  background-size: cover;
+  background-position: center;
+}
+
+.carousel-image-small {
+  height: 250px;
+  background-size: cover;
+  background-position: center;
+}
+
+.chevron {
+  @extend .fast-opacity;
+  position: absolute;
+  z-index: 103;
+  top: 50%;
+  opacity: 0;
+  cursor: pointer;
+  &.next {
+    right: $card-horizontal-padding;
+  }
+  &.back {
+    left: $card-horizontal-padding;
+    > img {
+      transform: rotate(180deg);
+    }
+  }
+  &:hover {
+    opacity: $card-icon-opacity-hover !important;
+  }
+}
+
+.chevron-scrim {
+  @extend .fast-opacity;
+  background: rgb(0,0,0);
+  background: linear-gradient(90deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 24%, rgba(0,0,0,0) 75%, rgba(0,0,0,0.5) 100%);
+  width: 100%;
+  height: 100%;
+  z-index: 102;
+  position: absolute;
+  opacity: 0;
+}
+
+@media screen and (max-width: $breakpoint-small) {
+  .chevron-scrim {
+    opacity: $card-icon-opacity-hover;
+  }
+  .chevron {
+    opacity: $card-icon-opacity-default;
+  }
+}
