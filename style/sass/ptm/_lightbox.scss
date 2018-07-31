@@ -24,7 +24,7 @@ $lightbox-footer-mobile-padding: $spacing-medium  $spacing-large !default;
 }
 
 .lightbox-small {
-  width: $lightbox-small-width;
+  width: 600px;
   min-height: $lightbox-small-height;
   background: white;
   border-radius: $border-radius;
@@ -68,6 +68,10 @@ $lightbox-footer-mobile-padding: $spacing-medium  $spacing-large !default;
   }
 }
 
+.lightbox-content-small {
+  padding: 2rem 3rem;
+}
+
 .lightbox-content {
   padding: $lightbox-padding;
   position: relative;
@@ -81,6 +85,15 @@ $lightbox-footer-mobile-padding: $spacing-medium  $spacing-large !default;
   top: 0;
   left: 0;
   z-index: 999;
+}
+
+.lightbox-footer-small {
+  position: relative;
+  width: 100%;
+  min-height: 60px;
+  overflow: hidden;
+  border-top: $border-width solid $line-gray;
+  padding: 1rem 3rem;
 }
 
 .lightbox-footer {
