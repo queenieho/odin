@@ -9,7 +9,7 @@
 
 (defn can-pay?
   [teller account]
-  (some? (when-let [c (tcustomer/by-account teller account)]
+  (true? (when-let [c (tcustomer/by-account teller account)]
            (tcustomer/can-pay? c))))
 
 (s/fdef can-pay?

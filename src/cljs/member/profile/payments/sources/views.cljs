@@ -543,7 +543,7 @@
          [:span "With Autopay enabled, rent payments will automatically be withdrawn from your bank account on the "
           [:b "1st"] " of each month."])]]]
 
-     (when-not @payout-account
+     (when-not @can-pay
        [:div.column {:style {:padding 0}}
         [ant/button
          {:type     :primary

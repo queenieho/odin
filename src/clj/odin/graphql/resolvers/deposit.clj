@@ -131,7 +131,7 @@
           (utils-deposit/is-refunded? deposit)
           (resolve/resolve-as nil {:message "Member has already been refunded their security deposit"})
 
-          (nil? (tcustomer/can-pay? customer))
+          (false? (tcustomer/can-pay? customer))
           (resolve/resolve-as nil {:message "Member does not have a payout account."})
 
           (> amount (deposit/amount deposit))
