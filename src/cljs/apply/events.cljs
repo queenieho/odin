@@ -84,7 +84,7 @@
  (fn [_ [_ {:keys [id] :as account}]]
    (log/log "fetching account:" id)
    {:graphql {:query      [[:account {:id id}
-                            [:name :id :first_name :middle_name :last_name :dob
+                            [:name :id :first_name :phone :middle_name :last_name :dob
                              [:application application-attrs]]]
                            [:properties [:id :name :code :cover_image_url :copy_id
                                          [:application_copy [:name :images :introduction :building
@@ -102,11 +102,12 @@
 
 (defn- create-init-db
   [db {:keys [properties license_terms account account_background_check]}]
-  (let [{:keys [first_name middle_name last_name dob]} account]
+  (let [{:keys [first_name middle_name last_name dob phone]} account]
     (merge db
            {:communities-options            properties
             :license-options                license_terms
             :background-check-id            (:id account_background_check)
+            :personal/phone-number          phone
             :personal.background-check/info {:first-name  first_name
                                              :last-name   last_name
                                              :middle-name middle_name
