@@ -42,7 +42,7 @@
                                  (reduce #(+ %1 (tpayment/amount %2)) 0))]
            (= (deposit/amount deposit) charge-total))
          (can-pay? teller (deposit/account deposit))
-         (false? (is-refunded? deposit)))))
+         (not (is-refunded? deposit)))))
 
 (s/fdef is-refundable?
         :args (s/cat :teller teller/connection?

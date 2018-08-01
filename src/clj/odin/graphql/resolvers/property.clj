@@ -75,7 +75,7 @@
        (fn [verified-so-far bank-account]
          (and verified-so-far (:verified bank-account)))
        true
-       (bank-accounts* teller property))
+       bank-accounts)
       false))
 
 
