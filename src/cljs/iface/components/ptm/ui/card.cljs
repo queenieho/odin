@@ -222,8 +222,8 @@
        [:div.card-illo
         [:img.v-mid {:src img}]])
      [card-data tag title subtitle description nil]]
-   [:div.card-footer
-    (get-selection-footer selected count on-click value)]]])
+    [:div.card-footer
+     (get-selection-footer selected count on-click value)]]])
 
 (s/fdef single
   :args (s/cat :props (s/keys :req-un [::value
@@ -382,9 +382,9 @@
 (defn- summary-item
   "Summary information item"
   [{:keys [label value edit on-click]}]
-  [:div.w-50-l.w-100.fl.ph4
-   [:h4.w-50.mv1.fl label]
-   [:p.w-50.fl.tr.mv0 value
+  [:div.w-50-l.w-100.fl.ph4.pv1
+   [:h4.w-40.mv1.fl label]
+   [:p.w-60.fl.tr.mv0 value
     (when edit
       [:img.icon-edit {:src      "/assets/images/ptm/icons/ic-edit.svg"
                        :on-click (when-let [c on-click]
@@ -463,30 +463,32 @@
   [:div
    [:div.card-top
     [:h2.mt0 community]
-    [:div.cf
-     [:h4.w-70.mv1.fl "Preferred Unit Selections"]
-     [:p.w-30.fl.tr.mv0 units
-      (when-let [c on-click]
-        [:img.icon-edit {:src      "/assets/images/ptm/icons/ic-edit.svg"
-                         :on-click #(c)}])]]]
+    (when-let [u units]
+      [:div.cf
+       [:h4.w-70.mv1.fl "Preferred Unit Selections"]
+       [:p.w-30.fl.tr.mv0 u
+        (when-let [c on-click]
+          [:img.icon-edit {:src      "/assets/images/ptm/icons/ic-edit.svg"
+                           :on-click #(c)}])]])]
    [:div.card-footer
-    [:h3 "Cost Breakdown"]
+    [:h3.mv2 "Cost Breakdown"]
     ;; line items
     (map-indexed
      (fn [i {:keys [label tooltip price max]}]
        ^{:key i}
        [line-item :line label tooltip price max])
      line-items)
-    [:hr]
-    (let [{:keys [label tooltip price max]} total]
-      [line-item :total label tooltip price max])]])
+    (when-let [{:keys [label tooltip price max]} total]
+      [:div
+       [:hr]
+       [line-item :total label tooltip price max]])]])
 
 (s/fdef community-breakdown
   :args (s/cat :props (s/keys :req-un [::community
-                                       ::units
-                                       ::line-items
-                                       ::total]
-                              :opt-un [::on-click])))
+                                       ::line-items]
+                              :opt-un [::units
+                                       ::on-click
+                                       ::total])))
 
 
 (defn community-selection
@@ -499,10 +501,10 @@
 
 (s/fdef community-selection
   :args (s/cat :props (s/keys :req-un [::community
+                                       ::line-items]
+                              :opt-un [::on-click
                                        ::units
-                                       ::line-items
-                                       ::total]
-                              :opt-un [::on-click])))
+                                       ::total])))
 
 
 (defn coapplicant-community-selection

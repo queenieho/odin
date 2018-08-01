@@ -90,7 +90,7 @@
                                          [:application_copy [:name :images :introduction :building
                                                              :neighborhood :community
                                                              [:amenities [:label :icon]]]]
-                                         [:rates [:rate]]
+                                         [:rates [:rate :term]]
                                          [:units [[:occupant [:id]]]]]]
                            [:account_background_check {:id id}
                             [:id :consent :created]]
