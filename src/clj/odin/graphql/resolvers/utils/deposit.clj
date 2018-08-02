@@ -7,12 +7,12 @@
             [teller.payment :as tpayment]
             [toolbelt.datomic :as td]))
 
-(defn has-payout-account?
+(defn can-pay?
   [teller account]
-  (some? (when-let [c (tcustomer/by-account teller account)]
-           (tcustomer/payout-account-id c))))
+  (true? (when-let [c (tcustomer/by-account teller account)]
+           (tcustomer/can-pay? c))))
 
-(s/fdef has-payout-account?
+(s/fdef can-pay?
         :args (s/cat :teller teller/connection?
                      :deposit td/entityd?)
         :ret boolean?)
@@ -41,8 +41,8 @@
                                  (filter #(tpayment/paid? %1))
                                  (reduce #(+ %1 (tpayment/amount %2)) 0))]
            (= (deposit/amount deposit) charge-total))
-         (has-payout-account? teller (deposit/account deposit))
-         (false? (is-refunded? deposit)))))
+         (can-pay? teller (deposit/account deposit))
+         (not (is-refunded? deposit)))))
 
 (s/fdef is-refundable?
         :args (s/cat :teller teller/connection?

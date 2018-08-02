@@ -94,9 +94,9 @@
     false))
 
 
-(defn payout-account
+(defn can-pay
   [{teller :teller} _ account]
-  (utils-deposit/has-payout-account? teller account))
+  (utils-deposit/can-pay? teller account))
 
 
 ;; =============================================================================
@@ -270,7 +270,7 @@
    :account/notes             notes
    :account/refunded          refunded
    :account/refundable        refundable
-   :account/payout-account    payout-account
+   :account/can-pay           can-pay
    ;; mutations
    :account/update!           update!
    :account/change-password!  change-password!

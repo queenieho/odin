@@ -524,7 +524,7 @@
         card-sources    (subscribe [:payment/sources :card])
         service-source  (subscribe [:payment.sources/service-source])
         setting-svc-src (subscribe [:ui/loading? :payment.source/set-default!])
-        payout-account  (subscribe [:account/payout-account])]
+        can-pay         (subscribe [:account/can-pay])]
     [:div.page-controls.columns
      [:div.column {:style {:padding 0}}
 
@@ -543,7 +543,7 @@
          [:span "With Autopay enabled, rent payments will automatically be withdrawn from your bank account on the "
           [:b "1st"] " of each month."])]]]
 
-     (when-not @payout-account
+     (when-not @can-pay
        [:div.column {:style {:padding 0}}
         [ant/button
          {:type     :primary
