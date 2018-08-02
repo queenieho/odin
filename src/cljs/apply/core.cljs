@@ -1,6 +1,7 @@
 (ns apply.core
   (:require [accountant.core :as accountant]
             [antizer.reagent :as ant]
+            [apply.applications.views]
             [apply.content :as content]
             [apply.db :as db]
             [apply.events]
@@ -80,7 +81,7 @@
 
 
 (defmethod content/view :logout []
-  [:div "Logging out"])
+  [:h1 "Logging out"])
 
 
 (defn- nav-item
@@ -150,7 +151,14 @@
 (defn layout []
   (let [route (subscribe [:route/current])
         step  (subscribe [:step/current])]
-    (if (= (:page @route) :welcome)
+    (case (:page @route)
+      :welcome      [welcome-layout]
+      :applications [content/view @route]
+      :logout       [content/view @route]
+      [layout/layout
+       {:nav [nav] :footer [footer]}
+       [content/view @route]])
+    #_(if (= (:page @route) :welcome)
       [welcome-layout]
       [layout/layout
        {:nav [nav] :footer [footer]}

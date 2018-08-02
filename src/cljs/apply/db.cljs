@@ -2,13 +2,14 @@
   (:require [apply.routes :as routes]
             [clojure.string :as string]
             [iface.modules.loading :as loading]
-            [iface.utils.formatters :as formatters :refer [format]]))
+            [iface.utils.formatters :as formatters :refer [format]]
+            [iface.utils.log :as log]))
 
 
 (def ^:private nav-items
   [{:section    :logistics
     :label      "Logistics"
-    :icon       "check"
+    :icon       "truck"
     :first-step :logistics/move-in-date}
    {:section    :community
     :label      "Community"
@@ -70,9 +71,14 @@
 
 
 (defn route->step
-  "Produce the step that corresponds to this `route`."
-  [{{:keys [section-id step-id substep-id]} :params, :as route}]
+  "If the page is a section/step, produce the step that corresponds to this `route`
+  otherwise produce the correct page route."
+  [{:keys [page] {:keys [section-id step-id substep-id]} :params, :as route}]
   (cond
+    (and (not= page :section/step)
+         (not= page :section.step/substep))
+    page
+
     (nil? section-id)
     first-step
 
