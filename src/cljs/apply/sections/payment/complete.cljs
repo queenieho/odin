@@ -62,5 +62,5 @@
    [:div.w-80-l.w-100
     [:div.page-content
      [button/primary
-      {:on-click #(log/log "application status!")}
+      {:on-click #(dispatch [:finish])}
       "application status"]]]])

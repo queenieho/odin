@@ -291,3 +291,9 @@
  :step.current/next
  (fn [{db :db} [_ params]]
    {:dispatch [:step.current/save params]}))
+
+
+(reg-event-fx
+ :finish
+ (fn [{db :db} _]
+   {:route (routes/path-for :applications)}))
