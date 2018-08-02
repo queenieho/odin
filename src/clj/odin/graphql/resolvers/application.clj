@@ -6,13 +6,17 @@
             [blueprints.models.license :as license]
             [blueprints.models.source :as source]
             [clj-time.core :as t]
+            [clojure.set :as set]
             [clojure.string :as string]
             [com.walmartlabs.lacinia.resolve :as resolve]
             [datomic.api :as d]
-            [toolbelt.datomic :as td]
-            [toolbelt.core :as tb]
+            [ring.util.response :as response]
             [taoensso.timbre :as timbre]
-            [clojure.set :as set]))
+            [teller.customer :as customer]
+            [teller.payment :as payment]
+            [toolbelt.datomic :as td]
+            [toolbelt.core :as tb]))
+
 
 ;; ==============================================================================
 ;; fields -----------------------------------------------------------------------
@@ -224,22 +228,51 @@
     (d/entity (d/db conn) (td/id application))))
 
 
+;; submit ===============================
+
+
+(def application-fee
+  "Application fee in dollars."
+  25.0)
+
+
+(defn submit!
+  "Submit an application after payment has been made."
+  [{:keys [conn requester teller]} {:keys [application token]} _]
+  (let [application (d/entity (d/db conn) application)
+        account     (application/account application)]
+    (cond
+      (nil? token)
+      (-> (response/response {:errors ["You must submit payment."]})
+          (response/status 400))
+      :otherwise
+      (do
+        (let [customer (customer/create! teller (account/email account)
+                                         {:account account
+                                          :source  token})]
+          (payment/create! customer application-fee :payment.type/application-fee
+                           {:source (first (customer/sources customer :payment-source.type/card))})
+          @(d/transact conn (application/submit application)))))
+    (d/entity (d/db conn) (td/id application))))
+
+
 ;; ==============================================================================
 ;; resolvers --------------------------------------------------------------------
 ;; ==============================================================================
 
 
 (def resolvers
-  {:application/account          account
-   :application/approved-at      approved-at
-   :application/approved-by      approved-by
-   :application/term             term
-   :application/status           status
-   :application/submitted-at     submitted-at
-   :application/updated          last-updated
-   :application/occupancy        occupancy
-   :application/move-in-range    move-in-range
+  {:application/account       account
+   :application/approved-at   approved-at
+   :application/approved-by   approved-by
+   :application/term          term
+   :application/status        status
+   :application/submitted-at  submitted-at
+   :application/updated       last-updated
+   :application/occupancy     occupancy
+   :application/move-in-range move-in-range
    ;; mutations
-   :application/approve!         approve!
-   :application/create!          create!
-   :application/update!          update!})
+   :application/approve!      approve!
+   :application/create!       create!
+   :application/update!       update!
+   :application/submit!       submit!})

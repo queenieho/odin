@@ -52,6 +52,15 @@
    :resolve     :application/update!}
 
 
+  :application_submit_payment
+  {:type        :application
+   :description "Submit the application after payment is made."
+   :args        {:application {:type        (non-null :Long)
+                               :description "The application to submit"}
+                 :token       {:type (non-null String)}}
+   :resolve     :application/submit!}
+
+
   ;; background check =============================================================
 
 

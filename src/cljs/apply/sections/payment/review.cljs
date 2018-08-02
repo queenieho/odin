@@ -4,12 +4,15 @@
             [apply.events :as events]
             [antizer.reagent :as ant]
             [clojure.string :as s]
-            [re-frame.core :refer [dispatch subscribe reg-sub reg-event-fx]]
+            [re-frame.core :refer [dispatch subscribe reg-sub reg-event-fx reg-fx]]
+            [iface.components.form :as iform]
             [iface.components.ptm.ui.form :as form]
             [iface.components.ptm.ui.card :as card]
             [iface.utils.formatters :as format]
             [iface.utils.log :as log]
-            [iface.utils.time :as time]))
+            [iface.utils.time :as time]
+            [iface.components.ptm.ui.button :as button]
+            [reagent.core :as r]))
 
 
 (def step :payment/review)
@@ -46,16 +49,45 @@
 ;; events =======================================================================
 
 
-(defmethod events/save-step-fx step
-  [db params]
-  {:db       (assoc db step params)
-   :dispatch [:step/advance]})
-
-
 (reg-event-fx
  ::update-terms-and-conditions
  (fn [{db :db} [_ v]]
    {:db (assoc db step v)}))
+
+
+;; next =================================
+
+
+(defmethod events/save-step-fx step
+  [db params]
+  {:stripe-checkout {:on-success [::submit-payment]}})
+
+
+(reg-event-fx
+ ::submit-payment
+ (fn [{db :db} [_ token]]
+   (log/log token (string? (:id token)))
+   {:graphql {:mutation [[:application_submit_payment {:application (:application-id db)
+                                                       :token       (:id token)}
+                          [:id :status]]]
+              :on-success [:step/advance]
+              :on-failure [:graphql/failure ::submit-payment]}}))
+
+
+(reg-fx
+ :stripe-checkout
+ (fn [{:keys [_ on-success]}]
+   (let [checkout (aget js/window "StripeCheckout")
+         conf     {:name            "Starcity"
+                   :description     "Member Application"
+                   :amount          (.-amount js/stripe)
+                   :key             (.-key js/stripe)
+                   :zipCode         true
+                   :allowRememberMe true
+                   :locale          "auto"
+                   :token           (fn [token]
+                                      (dispatch (conj on-success (js->clj token :keywordize-keys true))))}]
+     ((aget checkout "open") (clj->js conf)))))
 
 
 ;; subs =========================================================================
@@ -63,7 +95,7 @@
 
 (defn- move-in [db]
   (let [option (:logistics/move-in-date db)]
-    (if (= option :choose-date)
+    (if (= option :date)
       (format/date-short-num (:logistics.move-in-date/choose-date db))
       (s/capitalize (name option)))))
 
@@ -199,7 +231,6 @@
         communities (subscribe [:review/communities])
         personal    (subscribe [:review/personal])]
     [:div
-     (log/log @communities)
      [:div.w-60-l.w-100
       [:h1 "Let's take a moment to check over all the details."]]
      [:div.w-100-l.w-100
