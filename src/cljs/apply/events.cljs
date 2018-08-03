@@ -4,7 +4,8 @@
             [re-frame.core :refer [reg-event-db reg-event-fx path]]
             [toolbelt.core :as tb]
             [iface.utils.log :as log]
-            [iface.utils.time :as time]))
+            [iface.utils.time :as time]
+            [devtools.defaults :as d]))
 
 
 ;; ==============================================================================
@@ -148,17 +149,95 @@
  :app.init/somehow-figure-out-where-they-left-off
  (fn [{db :db} [_ application]]
    (let [fx-map (if (not= :in-progress (:status application))
-                 {:route (routes/path-for :applications)}
-                 {:dispatch [:app.init/route-to-last-saved]})]
+                  {:route (routes/path-for :applications)}
+                  {:dispatch [:app.init/route-to-last-saved]})]
      (log/log "processing application..." application)
      (assoc fx-map :db (parse-gql-response db application)))))
+
+
+(defn- last-saved-step [db]
+  (cond
+    ;; if theres consent to background check is false
+    (false? (:personal/background-check db))
+    :personal.background-check/declined
+
+    ;; if move-out date is too far
+    (>= (time/days-between (:logistics.move-in-date/choose-date db)) 45)
+    :logistics.move-in-date/outside-application-window
+
+    (not-empty (:personal/about db))
+    :payment/review
+
+    ;; if there's income verification
+    (not-empty (:personal/income db))
+    :personal/about
+
+    ;; if there's background-check information
+    (not (db/step-complete? db :personal.background-check/info))
+    :personal/income
+
+    ;; if there's consent to background check
+    ;; id prefer to make users consent to this until
+    ;; they fill in the information for it...
+    (true? (:personal/background-check db))
+    :personal.background-check/info
+
+    ;; if there's a phone number
+    ;; the phone number sometimes is collected before app
+    ;; so check if a term has been selected too
+    (and (not-empty (:personal/phone-number db)) (some? (:community/term db)))
+    :personal/background-check
+
+    ;; if term has been selected
+    (some? (:community/term db))
+    :personal/phone-number
+
+    ;; if community has been selected
+    (not-empty (:community/select db))
+    :community/term
+
+    ;; if there's no pets, or pets and yes information
+    (false? (:logistics/pets db))
+    :community/select
+
+    ;; if theres pets AND their information has been filled in
+    ;; :community/select
+
+    ;; if there's pets but no info
+    ;; figure out which pet page to go toggle
+    (true? (:logistics/pets db))
+    (if (= :dog (get-in db [:logistics.pets/dog :type]))
+      :logistics.pets/dog
+      :logistics.pets/other)
+
+    ;; if occupancy has been selected
+    (some? (:logistics/occupancy db))
+    :logistics/pets
+
+    ;; if logistics/move in is asap or flexible
+    (or (= :asap (:logistics/move-in-date db))
+        (= :flexible (:logistics/move-in-date db)))
+    :logistics/occupancy
+
+    ;; if move-in/choose-date is filled
+    (and (= :date (:logistics/move-in-date db))
+         (some? (:logistics.move-in-date/choose-date db)))
+    :logistics/occupancy
+
+    ;; if choose date is nil
+    (and (= :date (:logistics/move-in-date db))
+         (nil? (:logistics.move-in-date/choose-date db)))
+    :logistics.move-in-date/choose-date
+
+    :otherwise
+    :logistics/move-in-date))
 
 
 (reg-event-fx
  :app.init/route-to-last-saved
  (fn [{db :db} _]
-   (log/log "last saved step" (-> db db/last-saved db/step->route))
-   {:route (-> db db/last-saved db/step->route) #_(routes/path-for :section/step :section-id :logistics :step-id :move-in-date)}))
+   (log/log "getting last saved " (last-saved-step db))
+   {:route (db/step->route (last-saved-step db)) #_(-> db db/last-saved db/step->route)}))
 
 
 ;;TODO

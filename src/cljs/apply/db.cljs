@@ -99,28 +99,6 @@
     (get db step {})))
 
 
-;;; last saved ===================================================================
-
-
-(defmulti get-last-saved (fn [db step] step))
-
-
-(defmethod get-last-saved :default [db step] first-step)
-
-
-(defn recur-saved
-  [db step]
-  (loop [s step]
-    (if (nil? (s db))
-      s
-      (recur-saved db (get-last-saved db s)))))
-
-
-(defn last-saved
-  [db]
-  (recur-saved db first-step))
-
-
 ;; next =========================================================================
 
 

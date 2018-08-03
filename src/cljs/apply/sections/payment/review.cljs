@@ -21,11 +21,6 @@
 ;; db ===========================================================================
 
 
-(defmethod db/get-last-saved step
-  [db s]
-  :payment/complete)
-
-
 (defmethod db/next-step step
   [db]
   :payment/complete)
@@ -102,7 +97,7 @@
 
 
 (defn- move-in [db]
-  (let [option (:logistics/move-in-date db)]
+  (when-let [option (:logistics/move-in-date db)]
     (if (= option :date)
       (format/date-short-num (:logistics.move-in-date/choose-date db))
       (s/capitalize (name option)))))

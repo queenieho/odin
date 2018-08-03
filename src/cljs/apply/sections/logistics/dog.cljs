@@ -16,11 +16,6 @@
 ;; db ===========================================================================
 
 
-(defmethod db/get-last-saved step
-  [db s]
-  :community/select)
-
-
 (defmethod db/next-step step
   [db]
   :community/select)

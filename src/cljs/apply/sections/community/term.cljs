@@ -15,11 +15,6 @@
 ;; db ===========================================================================
 
 
-(defmethod db/get-last-saved step
-  [db s]
-  :personal/phone-number)
-
-
 (defmethod db/next-step step
   [db]
   :personal/phone-number)

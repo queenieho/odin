@@ -16,11 +16,6 @@
 ;; db ===========================================================================
 
 
-(defmethod db/get-last-saved step
-  [db s]
-  :personal/income)
-
-
 (defmethod db/next-step step
   [db]
   :personal/income)
