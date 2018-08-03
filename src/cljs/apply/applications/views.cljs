@@ -4,14 +4,15 @@
             [apply.db :as db]
             [apply.routes :as routes]
             [apply.sections.payment]
-            ;; [apply.subs]
             [clojure.string :as s]
             [iface.components.ptm.layout :as layout]
+            [iface.components.ptm.ui.label :as label]
+            [iface.components.ptm.ui.tag :as tag]
+            [iface.components.ptm.ui.button :as button]
             [iface.utils.formatters :as format]
             [iface.utils.log :as log]
-            [re-frame.core :refer [subscribe]]
-            [reagent.core :as r]
-            ))
+            [re-frame.core :refer [subscribe dispatch]]
+            [reagent.core :as r]))
 
 
 (defn- summary-item
@@ -68,7 +69,7 @@
        [:h3.w-40.fl.tr.mt1.mb3 price])]))
 
 
-(defn- communities-section [{:keys [community line-items total]}]
+(defn- communities-section [{:keys [community line-items total image]}]
   [:div
    {:style {:overflow   "auto"
             :border-top "1px solid #e6e6e6"}}
@@ -90,26 +91,36 @@
         [:hr.ph4]
         [line-item :total label tooltip price max]])]
     [:div.w-50-l.w-100.fl.pv0
-     {:style {:background-image    "url('https://cdn.tipe.io/5ace8b397ef0da0013ee4947/2733caaa-ec12-4e1d-a726-7bb46d64063e/mission-room.jpg')"
+     {:style {:background-image    (str "url('" image "')")
               :background-size     "cover"
               :background-position "center"
               :min-height          "200px"}}
      ]]])
 
 
-(defn- review-card [title items]
+(defn- review-card []
   (let [logistics   (subscribe [:review/logistics])
         personal    (subscribe [:review/personal])
-        communities (subscribe [:review/communities])]
+        communities (subscribe [:review/communities])
+        status      (subscribe [:application-status])]
     [:div.w-100.pr4-l.pr0
-     (log/log "some")
-     (log/log @logistics)
+     (log/log @status)
      [:div.card.cf
       ;; header
-      [:div
+      [:div.ph4.pv3
        {:style {:overflow "auto"}}
+       (when (= :in_progress @status)
+         [:div.fl
+          [button/text
+           {:on-click #(dispatch [:app.init/route-to-last-saved])}
+           "Continue application"]])
+       [:div.fr
+        [label/label @status]]]
+      [:div
+       {:style {:overflow "auto"
+                :border-top "1px solid #e6e6e6"}}
        [:div.w-25-l.w-100.fl.pv0.card-top
-        [:h2.ma0 title]]
+        [:h2.ma0 "Logistics"]]
        ;; body
        [:div.w-75-l.w-100.fl.pv3
         (map-indexed
@@ -119,8 +130,12 @@
          (partition 2 2 nil @logistics))]]
 
       ;; Communities
-      (log/log "communities" @communities)
-      [communities-section (first @communities)]
+      (when-not (nil? @communities)
+        (map
+         (fn [c]
+           ^{:key (:id c)}
+           [communities-section c])
+         @communities))
 
       [:div
        {:style {:overflow   "auto"
@@ -133,8 +148,7 @@
          (fn [i row-items]
            ^{:key i}
            [summary-row row-items])
-         (partition 2 2 nil @personal))]]
-      ]]))
+         (partition 2 2 nil @personal))]]]]))
 
 
 (defn- applications-layout []
@@ -142,11 +156,11 @@
     [:div
      (log/log "logistics")
      [:div.w-100
-      [:h1 "Good afternoon, " (first (s/split (:name @user) #" "))]]
+      [:h1 "Good afternoon, " (first (s/split (:name @user) #" "))]
+      [:p "Here is your current application."]]
      [:div.w-100
       [:div.page-content
-       [review-card "Logistics" "itemd"]
-       ]]]))
+       [review-card]]]]))
 
 
 (defmethod content/view :applications []

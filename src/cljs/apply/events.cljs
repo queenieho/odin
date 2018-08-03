@@ -18,6 +18,9 @@
 (defmethod gql->rfdb :id [_ v] :application-id)
 
 
+(defmethod gql->rfdb :status [_ v] :application-status)
+
+
 (defmethod gql->rfdb :default [k v]
   (log/log "parsing gql response: you should never reach this method! " k))
 
@@ -31,7 +34,7 @@
 
 
 (def application-attrs
-  [:id :term :move_in_range :move_in :occupancy :has_pet :about
+  [:id :status :term :move_in_range :move_in :occupancy :has_pet :about
    [:pet [:id :name :breed :weight :sterile :vaccines :bitten
           :demeanor :daytime_care :about :type]]
    [:communities [:id :code]]
@@ -124,19 +127,31 @@
    (let [init-db (create-init-db db (:data response))]
      (log/log "application query" init-db)
      (if-let [application (get-in response [:data :account :application])]
-       {:db       (assoc init-db :application-id (:id application))
-        :dispatch [:app.init/somehow-figure-out-where-they-left-off application]}
+       {:db       (assoc init-db
+                         :application-id (:id application)
+                         :application-status (:status application))
+        :dispatch [:app.init/application-dashboard application]#_[:app.init/somehow-figure-out-where-they-left-off application]}
        {:db       init-db
         :dispatch [:app.init/create-application (get-in response [:data :account :id])]}))))
+
+
+(reg-event-fx
+ :app.init/application-dashboard
+ (fn [{db :db} [_ application]]
+   (log/log "going to the dashboard!")
+   {:db    (parse-gql-response db application)
+    :route (routes/path-for :applications)}))
 
 
 ;;TODO
 (reg-event-fx
  :app.init/somehow-figure-out-where-they-left-off
  (fn [{db :db} [_ application]]
-   (log/log "processing application..." application)
-   {:db       (parse-gql-response db application)
-    :dispatch [:app.init/route-to-last-saved]}))
+   (let [fx-map (if (not= :in-progress (:status application))
+                 {:route (routes/path-for :applications)}
+                 {:dispatch [:app.init/route-to-last-saved]})]
+     (log/log "processing application..." application)
+     (assoc fx-map :db (parse-gql-response db application)))))
 
 
 (reg-event-fx

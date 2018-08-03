@@ -70,8 +70,16 @@
    {:graphql {:mutation [[:application_submit_payment {:application (:application-id db)
                                                        :token       (:id token)}
                           [:id :status]]]
-              :on-success [:step/advance]
+              :on-success [:submit-payment-success]
               :on-failure [:graphql/failure ::submit-payment]}}))
+
+
+(reg-event-fx
+ :submit-payment-success
+ (fn [{db :db} [_ response]]
+   {:db       (assoc db
+                     :application-status (get-in response [:data :application_submit_payment :status]))
+    :dispatch [:step/advance]}))
 
 
 (reg-fx
@@ -111,21 +119,22 @@
 (reg-sub
  :review/logistics
  (fn [db _]
-   [{:label    "Move-in Date"
-     :value    (move-in db)
-     :edit     true
-     :on-click #(log/log "edit move-in")}
-    {:label "Occupants"
-     :value (->> (:logistics/occupancy db)
-                 name
-                 s/capitalize)
-     :edit  true}
-    {:label "Term length"
-     :value (str (:community/term db) " months")
-     :edit  true}
-    {:label "Pet"
-     :value (pet db)
-     :edit  true}]))
+   (let [edit (not= :submitted (:application-status db))]
+     [{:label    "Move-in Date"
+       :value    (move-in db)
+       :edit     edit
+       :on-click #(log/log "edit move-in")}
+      {:label "Occupants"
+       :value (when-let [occupants (:logistics/occupancy db)]
+                (->> (name occupants)
+                     s/capitalize))
+       :edit  edit}
+      {:label "Term length"
+       :value (str (:community/term db) " months")
+       :edit  edit}
+      {:label "Pet"
+       :value (pet db)
+       :edit  edit}])))
 
 
 (defn- suite-fee [rates term]
@@ -176,49 +185,52 @@
                           #(some (fn [s] (= (:id %) s)) selections)
                           (:communities-options db))
          line-items-init (fees-init db)]
-     (map
-      (fn [c]
-        (let [sfee (suite-fee (:rates c) (:community/term db))]
-          {:id         (:id c)
-           :community  (:name c)
-           :line-items (conj line-items-init
-                             {:label   "Suite Fee"
-                              :tooltip "Suites in this building vary in price due to size and features."
-                              :price   sfee})
-           :total      (total sfee line-items-init)}))
-      communities))))
+     (when (not-empty communities)
+       (map
+        (fn [c]
+          (let [sfee (suite-fee (:rates c) (:community/term db))]
+            {:id         (:id c)
+             :community  (:name c)
+             :image      (first (get-in c [:application_copy :images]))
+             :line-items (conj line-items-init
+                               {:label   "Suite Fee"
+                                :tooltip "Suites in this building vary in price due to size and features."
+                                :price   sfee})
+             :total      (total sfee line-items-init)}))
+        communities)))))
 
 
 (reg-sub
  :review/personal
  (fn [db _]
    (let [{:keys [first-name last-name middle-name dob current_location]} (:personal.background-check/info db)
-         {:keys [locality region country postal_code]}                   current_location]
+         {:keys [locality region country postal_code]}                   current_location
+         edit                                                            (not= :submitted (:application-status db))]
      [{:label "First Name"
        :value first-name
-       :edit  true}
+       :edit  edit}
       {:label "Last Name"
        :value last-name
-       :edit  true}
+       :edit  edit}
       {:label "Middle Name"
        :value middle-name
-       :edit  true}
+       :edit  edit}
       {:label "Date of Birth"
        :value (-> (time/moment->iso dob)
                   (format/date-short-num))
-       :edit  true}
+       :edit  edit}
       {:label "Country"
        :value country
-       :edit  true}
+       :edit  edit}
       {:label "Region"
        :value region
-       :edit  true}
+       :edit  edit}
       {:label "locality"
        :value locality
-       :edit  true}
+       :edit  edit}
       {:label "Postal Code"
        :value postal_code
-       :edit  true}])))
+       :edit  edit}])))
 
 
 ;; views ========================================================================
