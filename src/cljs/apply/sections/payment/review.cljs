@@ -111,25 +111,32 @@
       :else                    "Other")))
 
 
+(defn- card-summary-item
+  ([label value]
+   (card-summary-item label value false nil))
+  ([label value can-edit on-click]
+   {:label    label
+    :value    value
+    :edit     can-edit
+    :on-click #(on-click)}))
+
+
 (reg-sub
  :review/logistics
  (fn [db _]
-   (let [edit (not= :submitted (:application-status db))]
-     [{:label    "Move-in Date"
-       :value    (move-in db)
-       :edit     edit
-       :on-click #(log/log "edit move-in")}
-      {:label "Occupants"
-       :value (when-let [occupants (:logistics/occupancy db)]
-                (->> (name occupants)
-                     s/capitalize))
-       :edit  edit}
-      {:label "Term length"
-       :value (str (:community/term db) " months")
-       :edit  edit}
-      {:label "Pet"
-       :value (pet db)
-       :edit  edit}])))
+   (let [can-edit  (= :in-progress (:application-status db))
+         on-edit      #(dispatch [:step/edit %])
+         move      (move-in db)
+         occupants (when-let [occupants (:logistics/occupancy db)]
+                     (->> (name occupants)
+                          s/capitalize))
+         term      (when-let [t (:community/term db)]
+                     (str t " months"))
+         pet       (pet db)]
+     [(card-summary-item "Move-in Date" move can-edit #(on-edit :logistics/move-in-date))
+      (card-summary-item "Occupants" occupants can-edit #(on-edit :logistics/occupancy))
+      (card-summary-item "Pet" pet can-edit #(on-edit :logistics/pets))
+      (card-summary-item "Term length" term can-edit #(on-edit :community/term))])))
 
 
 (defn- suite-fee [rates term]
@@ -198,34 +205,21 @@
 (reg-sub
  :review/personal
  (fn [db _]
-   (let [{:keys [first-name last-name middle-name dob current_location]} (:personal.background-check/info db)
-         {:keys [locality region country postal_code]}                   current_location
-         edit                                                            (not= :submitted (:application-status db))]
-     [{:label "First Name"
-       :value first-name
-       :edit  edit}
-      {:label "Last Name"
-       :value last-name
-       :edit  edit}
-      {:label "Middle Name"
-       :value middle-name
-       :edit  edit}
-      {:label "Date of Birth"
-       :value (-> (time/moment->iso dob)
-                  (format/date-short-num))
-       :edit  edit}
-      {:label "Country"
-       :value country
-       :edit  edit}
-      {:label "Region"
-       :value region
-       :edit  edit}
-      {:label "locality"
-       :value locality
-       :edit  edit}
-      {:label "Postal Code"
-       :value postal_code
-       :edit  edit}])))
+   (let [can-edit (= :in-progress (:application-status db))
+         on-edit  (when can-edit
+                    #(dispatch [:step/edit :personal.background-check/info]))
+         info     (:personal.background-check/info db)
+         location (:current_location info)
+         dob      (-> (time/moment->iso (:dob info))
+                      (format/date-short-num))]
+     [(card-summary-item "First Name" (:first-name info) can-edit on-edit)
+      (card-summary-item "Last Name" (:last-name info) can-edit on-edit)
+      (card-summary-item "Middle Name" (:middle-name info) can-edit on-edit)
+      (card-summary-item "Date of Birth" dob can-edit on-edit)
+      (card-summary-item "Country" (:country location) can-edit on-edit)
+      (card-summary-item "Region" (:region location) can-edit on-edit)
+      (card-summary-item "Locality" (:locality location) can-edit on-edit)
+      (card-summary-item "Postal Code" (:postal_code location) can-edit on-edit)])))
 
 
 ;; views ========================================================================

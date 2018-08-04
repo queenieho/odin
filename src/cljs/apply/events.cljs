@@ -391,3 +391,9 @@
  :finish
  (fn [{db :db} _]
    {:route (routes/path-for :applications)}))
+
+
+(reg-event-fx
+ :step/edit
+ (fn [{db :db} [_ step]]
+   {:route (db/step->route step)}))

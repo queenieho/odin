@@ -64,7 +64,7 @@
      {:title    "One"
       :img      "/assets/images/ptm/icons/sketch-one-adult.svg"
       :on-click #(dispatch [:step.current/next :single])}]
-    [card/single
+    #_[card/single
      {:title    "Two"
       :img      "/assets/images/ptm/icons/sketch-two-adults.svg"
       :on-click #(dispatch [:step.current/next :double])}]]]])
