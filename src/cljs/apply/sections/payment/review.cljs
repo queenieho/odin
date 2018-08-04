@@ -206,13 +206,13 @@
 (reg-sub
  :review/personal
  (fn [db _]
-   (let [can-edit (= :in_progress (:application-status db))
-         on-edit  (when can-edit
-                    #(dispatch [:step/edit :personal.background-check/info]))
-         info     (:personal.background-check/info db)
-         location (:current_location info)
-         dob      (-> (time/moment->iso (:dob info))
-                      (format/date-short-num))]
+   (let [can-edit   (= :in_progress (:application-status db))
+         on-edit    (when can-edit
+                      #(dispatch [:step/edit :personal.background-check/info]))
+         info       (:personal.background-check/info db)
+         location   (:current_location info)
+         dob-string (str (:year (:dob info)) " " (:month (:dob info)) " " (:day (:dob info)))
+         dob        (format/date-short-num (time/moment->iso dob-string))]
      [(card-summary-item "First Name" (:first-name info) can-edit on-edit)
       (card-summary-item "Last Name" (:last-name info) can-edit on-edit)
       (card-summary-item "Middle Name" (:middle-name info) can-edit on-edit)

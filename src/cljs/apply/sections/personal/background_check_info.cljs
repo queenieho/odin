@@ -33,7 +33,9 @@
 
 (defn- form-complete
   [{:keys [dob first-name last-name current_location]}]
-  (and (some? dob)
+  (and (not (nil? (:year dob)))
+       (not (nil? (:month dob)))
+       (not (nil? (:day dob)))
        (not (s/blank? first-name))
        (not (s/blank? last-name))
        (not (s/blank? (:country current_location)))
@@ -72,6 +74,31 @@
 ;; views ========================================================================
 
 
+(defn date-input [data]
+  [:div
+   [:div.w-10.fl.pr3
+    [form/number
+     {:placeholder "MM"
+      :value       (get-in @data [:dob :month])
+      :on-change   #(dispatch [::update-background-info [:dob :month] (.. % -target -value)])
+      :max         12
+      :min         1}]]
+   [:div.w-10.fl.pr3
+    [form/number
+     {:placeholder "DD"
+      :value       (get-in @data [:dob :day])
+      :on-change   #(dispatch [::update-background-info [:dob :day] (.. % -target -value)])
+      :max         31
+      :min         1}]]
+   [:div.w-20.fl.pr3
+    [form/number
+     {:placeholder "YYYY"
+      :value       (get-in @data [:dob :year])
+      :on-change   #(dispatch [::update-background-info [:dob :year] (.. % -target -value)])
+      :max         2020
+      :min         1920}]]])
+
+
 (defmethod content/view step
   [_]
   (let [data (subscribe [:db/step step])]
@@ -84,11 +111,7 @@
         [:div.cf.mb4-ns.mb0
          [form/item
           {:label "Date of Birth"}
-          ;; NOTE date picker needs to be styled to match our style...
-          ;; or we need to make a new one
-          [ant/date-picker
-           {:value     (:dob @data)
-            :on-change #(dispatch [::update-background-info [:dob] %])}]]]
+          [date-input data]]]
         [:div.cf.mb3-ns.mb0
          [form/item
           {:label "Full Legal Name"}

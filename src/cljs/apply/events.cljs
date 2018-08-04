@@ -5,7 +5,9 @@
             [toolbelt.core :as tb]
             [iface.utils.log :as log]
             [iface.utils.time :as time]
-            [devtools.defaults :as d]))
+            [devtools.defaults :as d]
+            [iface.utils.formatters :as format]
+            [clojure.string :as s]))
 
 
 ;; ==============================================================================
@@ -59,12 +61,13 @@
 (defn- get-account-params
   "Gets the needed params for updating an account's information"
   [{:keys [first-name last-name middle-name phone dob]}]
-  (tb/assoc-when {}
-                 :first_name first-name
-                 :last_name last-name
-                 :middle_name middle-name
-                 :dob (when-let [d dob] (time/moment->iso d))
-                 :phone phone))
+  (let [date-string (str (:year dob) " " (:month dob) " " (:day dob))]
+    (tb/assoc-when {}
+                   :first_name first-name
+                   :last_name last-name
+                   :middle_name middle-name
+                   :dob (time/moment->iso date-string)
+                   :phone phone)))
 
 
 ;; ==============================================================================
@@ -106,7 +109,9 @@
 
 (defn- create-init-db
   [db {:keys [properties license_terms account account_background_check]}]
-  (let [{:keys [first_name middle_name last_name dob phone]} account]
+  (let [{:keys [first_name middle_name last_name dob phone]} account
+        [month day year]                                     (-> (format/date-short-num dob)
+                                                                 (s/split #"/"))]
     (merge db
            {:communities-options            properties
             :license-options                license_terms
@@ -115,8 +120,9 @@
             :personal.background-check/info {:first-name  first_name
                                              :last-name   last_name
                                              :middle-name middle_name
-                                             :dob         (when-let [d dob]
-                                                            (time/iso->moment d))}})))
+                                             :dob         {:month (js/parseInt month)
+                                                           :day   (js/parseInt day)
+                                                           :year  (js/parseInt year)}}})))
 
 
 ;; At this point, we'll assume that if we received a nil value for the
@@ -131,7 +137,7 @@
        {:db       (assoc init-db
                          :application-id (:id application)
                          :application-status (:status application))
-        :dispatch [:app.init/application-dashboard application]#_[:app.init/somehow-figure-out-where-they-left-off application]}
+        :dispatch [:app.init/application-dashboard application]}
        {:db       init-db
         :dispatch [:app.init/create-application (get-in response [:data :account :id])]}))))
 
