@@ -30,7 +30,7 @@
 
 (defmethod db/step-complete? step
   [db step]
-  (some? (step db)))
+  (not (some? (step db))))
 
 
 ;; subs =========================================================================
@@ -54,21 +54,27 @@
 (defmethod events/gql->rfdb :move_in [k] step)
 
 
+(reg-event-fx
+ :choose-date/update
+ (fn [{db :db} [_ date]]
+   {:db (assoc db step date)}))
+
+
 ;; views ========================================================================
 
 
 (defmethod content/view step
   [_]
   (let [data (subscribe [:step/data])]
-    (log/log @data)
     [:div
      [:div.w-60-l.w-100
       [:h1 "First things first:" [:br] "When do you want to move in?"]
       [:p "We can't guarantee that the day you pick will be when you move in,
 but we'll do our best to make it work."]]
-     [:div.page-content.w-90-l.w-100
+     [:div.w-75-l.w-100
+      [:div.page-content
       [form/inline-date {:value        @data
                          :on-day-click #(when-not (.. %2 -disabled)
-                                          (dispatch [:step.current/next %]))
+                                          (dispatch [:choose-date/update %]))
                          :show-from    (js/Date.)
-                         :disabled     {:before (js/Date.)}}]]]))
+                         :disabled     {:before (js/Date.)}}]]]]))
