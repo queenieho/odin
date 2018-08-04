@@ -55,13 +55,14 @@
 
 (defmethod events/save-step-fx step
   [db params]
-  {:stripe-checkout {:on-success [::submit-payment]}})
+  (if (= :in_progress (:application-status db))
+    {:stripe-checkout {:on-success [:review/submit-payment]}}
+    {:dispatch [:step/advance]}))
 
 
 (reg-event-fx
- ::submit-payment
+ :review/submit-payment
  (fn [{db :db} [_ token]]
-   (log/log token (string? (:id token)))
    {:graphql {:mutation [[:application_submit_payment {:application (:application-id db)
                                                        :token       (:id token)}
                           [:id :status]]]
@@ -124,7 +125,7 @@
 (reg-sub
  :review/logistics
  (fn [db _]
-   (let [can-edit  (= :in-progress (:application-status db))
+   (let [can-edit  (= :in_progress (:application-status db))
          on-edit      #(dispatch [:step/edit %])
          move      (move-in db)
          occupants (when-let [occupants (:logistics/occupancy db)]
@@ -205,7 +206,7 @@
 (reg-sub
  :review/personal
  (fn [db _]
-   (let [can-edit (= :in-progress (:application-status db))
+   (let [can-edit (= :in_progress (:application-status db))
          on-edit  (when can-edit
                     #(dispatch [:step/edit :personal.background-check/info]))
          info     (:personal.background-check/info db)
