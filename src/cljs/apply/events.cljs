@@ -208,6 +208,11 @@
 
     ;; if theres pets AND their information has been filled in
     ;; :community/select
+    (not (db/step-complete? db :logistics.pets/dog))
+    :community/select
+
+    (not (db/step-complete? db :logistics.pets/other))
+    :community/select
 
     ;; if there's pets but no info
     ;; figure out which pet page to go toggle
@@ -307,9 +312,12 @@
  ::application-update-success
  (fn [{db :db} [_ response]]
    (let [application (get-in response [:data :application_update])
-         bg-check    (get-in response [:data :update_background_check])]
+         bg-check    (get-in response [:data :update_background_check])
+         new-db      (if (some? (:has_pet application))
+                       (dissoc db :logistics.pets/dog :logistics.pets/other)
+                       db)]
      {:db       (merge
-                 (parse-gql-response db application)
+                 (parse-gql-response new-db application)
                  {:personal/background-check (:consent bg-check)})
       :dispatch [:step/advance]})))
 
