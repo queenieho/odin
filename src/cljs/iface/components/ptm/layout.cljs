@@ -4,7 +4,8 @@
             [iface.components.ptm.icons :as icons]
             [cljs.spec.alpha :as s]
             [toolbelt.core :as tb]
-            [iface.components.ptm.ui.button :as button]))
+            [iface.components.ptm.ui.button :as button]
+            [iface.utils.log :as log]))
 
 
 (defn- nav-icon

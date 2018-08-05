@@ -179,12 +179,10 @@
     :personal/about
 
     ;; if there's background-check information
-    (not (db/step-complete? db :personal.background-check/info))
+    (db/step-complete? db :personal.background-check/info)
     :personal/income
 
     ;; if there's consent to background check
-    ;; id prefer to make users consent to this until
-    ;; they fill in the information for it...
     (true? (:personal/background-check db))
     :personal.background-check/info
 
@@ -207,11 +205,10 @@
     :community/select
 
     ;; if theres pets AND their information has been filled in
-    ;; :community/select
-    (not (db/step-complete? db :logistics.pets/dog))
+    (db/step-complete? db :logistics.pets/dog)
     :community/select
 
-    (not (db/step-complete? db :logistics.pets/other))
+    (db/step-complete? db :logistics.pets/other)
     :community/select
 
     ;; if there's pets but no info
@@ -247,11 +244,9 @@
 (reg-event-fx
  :app.init/route-to-last-saved
  (fn [{db :db} _]
-   (log/log "getting last saved " (last-saved-step db))
-   {:route (db/step->route (last-saved-step db)) #_(-> db db/last-saved db/step->route)}))
+   {:route (db/step->route (last-saved-step db))}))
 
 
-;;TODO
 (reg-event-fx
  :app.init/create-application
  (fn [_ [_ account-id]]

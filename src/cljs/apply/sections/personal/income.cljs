@@ -38,10 +38,9 @@
 (defmethod db/step-complete? step
   [db step]
   (let [file-count (get-in db [:income-files :count])]
-    (cond
-      (and (some? file-count) (not (zero? file-count))) false
-      (not-empty (step db))                             false
-      :else                                             true)))
+    (or
+      (and (some? file-count) (not (zero? file-count)))
+      (not-empty (step db)))))
 
 
 ;; events =======================================================================

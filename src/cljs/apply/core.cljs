@@ -90,12 +90,18 @@
         is-complete (subscribe [:nav.item/complete? nav-item])
         route       (subscribe [:route/current])
         progress    (cond
-                      @is-complete                                        :complete
-                      (= section (-> @route :params :section-id keyword)) :active
-                      :otherwise                                          nil)]
+                      (and (not= section :payment) @is-complete)                :complete
+                      (and (not= section :payment)
+                           (= section (-> @route :params :section-id keyword))) :active
+                      (and (= section :payment)
+                           (= section (-> @route :params :section-id keyword))) true
+                      :otherwise                                                nil)]
+
     [layout/nav-item {:progress progress
                       :label    label
-                      :icon     icon
+                      :icon     (if @is-complete
+                                  "check"
+                                  icon)
                       :disabled (not @is-enabled)
                       :action   (fn [] (dispatch [:nav.item/select nav-item]))}]))
 
@@ -115,19 +121,19 @@
 
 
 (defn footer []
-  (let [has-next      (subscribe [:ui.step.current/has-next?])
-        has-prev      (subscribe [:ui.step.current/has-back?])
-        next          (subscribe [:step.current/next])
-        prev          (subscribe [:step.current/previous])
-        next-loading  (subscribe [:ui/loading? :step.current/save])
-        next-label    (subscribe [:step.current.next/label])
-        next-disabled (subscribe [:step/complete?])]
+  (let [has-next     (subscribe [:ui.step.current/has-next?])
+        has-prev     (subscribe [:ui.step.current/has-back?])
+        next         (subscribe [:step.current/next])
+        prev         (subscribe [:step.current/previous])
+        next-loading (subscribe [:ui/loading? :step.current/save])
+        next-label   (subscribe [:step.current.next/label])
+        next-enabled (subscribe [:step/complete?])]
     [layout/footer
      (tb/assoc-when
       {}
       :primary (when @has-next
                  {:label    @next-label
-                  :disabled @next-disabled
+                  :disabled (not @next-enabled)
                   :loading  @next-loading
                   :action   #(dispatch [:step.current/next])})
       :destructive (when @has-prev

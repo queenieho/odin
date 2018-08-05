@@ -34,7 +34,7 @@
 
 (defmethod db/step-complete? step
   [db step]
-  (not (and (some? (step db)) (not (s/blank? (step db))))))
+  (not (s/blank? (step db))))
 
 
 ;; events =======================================================================

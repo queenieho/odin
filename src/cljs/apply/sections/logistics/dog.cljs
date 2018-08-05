@@ -35,11 +35,11 @@
 (defmethod db/step-complete? step
   [db step]
   (let [dog (step db)]
-    (not (and (not (s/blank? (:name dog)))
-              (not (s/blank? (:breed dog)))
-              (not (s/blank? (:demeanor dog)))
-              (not (s/blank? (:daytime_care dog)))
-              (some? (:weight dog))))))
+    (and (not (s/blank? (:name dog)))
+         (not (s/blank? (:breed dog)))
+         (not (s/blank? (:demeanor dog)))
+         (not (s/blank? (:daytime_care dog)))
+         (some? (:weight dog)))))
 
 
 ;; events =======================================================================

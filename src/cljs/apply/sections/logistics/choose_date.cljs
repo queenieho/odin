@@ -30,7 +30,7 @@
 
 (defmethod db/step-complete? step
   [db step]
-  (not (some? (step db))))
+  (some? (step db)))
 
 
 ;; subs =========================================================================

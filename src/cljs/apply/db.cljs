@@ -154,13 +154,6 @@
 
 (defmulti section-complete? (fn [db section] section))
 
-
-;; (defmethod section-complete? :logistics [_ _] true)
-
-
-;; (defmethod section-complete? :community [_ _] true)
-
-
 ;; NOTE: Changing this to `true` will toggle complete state on all sections
 (defmethod section-complete? :default [_ _] false)
 

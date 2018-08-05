@@ -32,7 +32,7 @@
 
 (defmethod db/step-complete? step
   [db step]
-  false)
+  (some? (step db)))
 
 
 ;; events =======================================================================

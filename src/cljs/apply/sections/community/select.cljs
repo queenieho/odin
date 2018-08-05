@@ -40,9 +40,7 @@
 
 (defmethod db/step-complete? step
   [db step]
-  (if (empty? (step db))
-    true
-    false))
+  (not-empty (step db)))
 
 
 ;; events =======================================================================

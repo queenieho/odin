@@ -45,7 +45,7 @@
 
 (defmethod db/step-complete? step
   [db step]
-  (not (form-complete (step db))))
+  (form-complete (step db)))
 
 
 ;; events =======================================================================

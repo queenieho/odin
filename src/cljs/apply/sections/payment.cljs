@@ -3,4 +3,7 @@
             [apply.sections.payment.review]
             [apply.sections.payment.complete]))
 
-(defmethod db/section-complete? :payment [_ _] false)
+
+(defmethod db/section-complete? :payment
+  [db _]
+  (= :submitted (:application-status db)))

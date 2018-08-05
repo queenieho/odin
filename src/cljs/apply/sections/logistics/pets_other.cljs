@@ -32,7 +32,7 @@
 
 (defmethod db/step-complete? step
   [db step]
-  (s/blank? (:about (step db))))
+  (not (s/blank? (:about (step db)))))
 
 
 ;; events =======================================================================

@@ -38,7 +38,7 @@
 
 (defmethod db/step-complete? step
   [db step]
-  (not (step db)))
+  (step db))
 
 
 ;; events =======================================================================
