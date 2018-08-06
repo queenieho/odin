@@ -28,7 +28,9 @@
             [iface.components.ptm.ui.button :as button]
             [reagent.core :as r]
             [re-frame.core :as rf :refer [dispatch subscribe]]
-            [toolbelt.core :as tb]))
+            [toolbelt.core :as tb]
+            [iface.utils.log :as log]
+            [iface.loading :as loading]))
 
 
 (defn- welcome-1 [{name :name} toggle]
