@@ -28,7 +28,8 @@
             [iface.components.ptm.ui.form :as form]
             [iface.components.ptm.ui.button :as button]
             [toolbelt.core :as tb]
-            [iface.utils.log :as log]))
+            [iface.utils.log :as log]
+            [iface.loading :as loading]))
 
 
 (defn- welcome-1 [{name :name} toggle]
@@ -78,10 +79,6 @@
     [:button.button.mt5
      {:on-click #(dispatch [:ptm/start])}
      "Got it"]]])
-
-
-(defmethod content/view :logout []
-  [:h1 "Logging out"])
 
 
 (defn- nav-item
@@ -163,11 +160,6 @@
       :logout       [content/view @route]
       [layout/layout
        {:nav [nav] :footer [footer]}
-       [content/view @route]])
-    #_(if (= (:page @route) :welcome)
-      [welcome-layout]
-      [layout/layout
-       {:nav [nav] :footer [footer]}
        [content/view @route]])))
 
 
@@ -196,8 +188,6 @@
                             {:route "/logout"})
       :on-error-fx        (fn [[k _]]
                             {:dispatch [:ui/loading k false]})})
-
-
     (rf/dispatch-sync [:app/init account])
     (iroutes/hook-browser-navigation! routes/app-routes)
     (render)))

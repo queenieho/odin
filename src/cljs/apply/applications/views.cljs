@@ -170,5 +170,6 @@
                                                  :link  (routes/path-for :logout)
                                                  :icon  "logout"}]]}
           [layout/nav-item {:label    "Application"
-                            :disabled false}]]}
+                            :disabled false
+                            :progress true}]]}
    [applications-layout]])

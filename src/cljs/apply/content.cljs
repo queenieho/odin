@@ -5,6 +5,7 @@
             [reagent.core :as r]
             [apply.db :as db]))
 
+
 (defmulti view db/route->step)
 
 
@@ -20,6 +21,7 @@
 ;; Because we need a catch-all route in `apply.routes` to prevent from hitting
 ;; the server on un-implemented routes, this component is rendered and
 ;; /immediately/ reloads the window, causing a forced server request.
+;; TODO need to make this component look like it belongs in application...
 (defn- logout! []
   (r/create-class
    {:component-will-mount
