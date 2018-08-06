@@ -1,13 +1,14 @@
 (ns apply.events
   (:require [apply.db :as db]
             [apply.routes :as routes]
-            [re-frame.core :refer [reg-event-db reg-event-fx path]]
             [toolbelt.core :as tb]
             [iface.utils.log :as log]
             [iface.utils.time :as time]
             [devtools.defaults :as d]
             [iface.utils.formatters :as format]
-            [clojure.string :as s]))
+            [clojure.string :as s]
+            [apply.chatlio]
+            [re-frame.core :refer [reg-event-db reg-event-fx path]]))
 
 
 ;; ==============================================================================
@@ -154,18 +155,8 @@
    (log/log "going to the dashboard!")
    {:db       (parse-gql-response db application)
     :dispatch [:ui/loading :app/init false]
+    :chatlio/ready [:init-chatlio]
     :route    (routes/path-for :applications)}))
-
-
-;;TODO
-(reg-event-fx
- :app.init/somehow-figure-out-where-they-left-off
- (fn [{db :db} [_ application]]
-   (let [fx-map (if (not= :in-progress (:status application))
-                  {:route (routes/path-for :applications)}
-                  {:dispatch [:app.init/route-to-last-saved]})]
-     (log/log "processing application..." application)
-     (assoc fx-map :db (parse-gql-response db application)))))
 
 
 (defn- last-saved-step [db]
@@ -272,9 +263,27 @@
  (fn [{db :db} [_ response]]
    (let [application-id (get-in response [:data :application_create :id])
          bg-check-id    (get-in response [:data :create_background_check :id])]
-     {:db       (assoc db :application-id application-id
-                       :background-check-id bg-check-id)
-      :dispatch [:ui/loading :app/init false]})))
+     {:db            (assoc db :application-id application-id
+                            :background-check-id bg-check-id)
+      :dispatch      [:ui/loading :app/init false]
+      :chatlio/ready [:init-chatlio]})))
+
+
+(reg-event-fx
+ :init-chatlio
+ (fn [_ _]
+   (let [email (aget js/window "account" "email")
+         name  (aget js/window "account" "name")]
+     {:chatlio/show     false
+      :chatlio/identify [email {:name name}]})))
+
+
+(reg-event-fx
+ :help/toggle
+ (fn [{db :db} _]
+   (let [is-open (:chatlio/show db)]
+     {:db           (assoc db :chatlio/show (not is-open))
+      :chatlio/show (not is-open)})))
 
 
 ;; ==============================================================================
