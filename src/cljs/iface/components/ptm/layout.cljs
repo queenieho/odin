@@ -9,12 +9,15 @@
 
 
 (defn- nav-icon
-  [{:keys [type active disabled]}]
-  (icons/icon {:type  type
-               :class (str (if active
-                             "nav-icon active"
-                             "nav-icon")
-                           (when disabled " disabled"))}))
+  [{:keys [type active disabled link action]}]
+  [:a
+   {:href     (when-not disabled link)
+    :on-click (when-not disabled action)}
+   (icons/icon {:type type
+                :class (str (if active
+                              "nav-icon active"
+                              "nav-icon")
+                            (when disabled " disabled"))})])
 
 
 (defn- nav-item-class
@@ -42,7 +45,9 @@
    (when (some? icon)
      (nav-icon {:type     icon
                 :disabled disabled
-                :active   (some? progress)}))
+                :active   (some? progress)
+                :link     (when-let [l link] l)
+                :action   (when-let [a action] a)}))
    [:a.nav-link
     (tb/assoc-when
      {:class (str
