@@ -54,10 +54,10 @@
     (r/as-element label)]])
 
 (s/fdef nav-item
-        :args (s/cat :props (s/keys :req-un [::label]
-                                    :opt-un [::progress
-                                             ::link
-                                             ::icon])))
+  :args (s/cat :props (s/keys :req-un [::label]
+                              :opt-un [::progress
+                                       ::link
+                                       ::icon])))
 
 (defn nav-footer
   "An optional extra component, rendered at the bottom of the nav component."
@@ -167,3 +167,18 @@
      (into [:section.main {:class (when-not (some? nav) "main-no-nav center")}]
            (r/children (r/current-component)))
      (when (some? footer) (r/as-element footer))]))
+
+
+(defn loading-fullpage
+  "Loading page component"
+  [& {:keys [text loading]
+      :or   {text    "Loading..."
+             loading false}}]
+  [layout
+   [:div.w-100.pa7
+    {:style {:text-align "center"}}
+    (when loading
+      [:img.mb3
+       {:style {:height "50px"}
+        :src   "/assets/images/ptm/loading.gif"}])
+    [:h1 text]]])
