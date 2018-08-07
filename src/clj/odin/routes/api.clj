@@ -177,10 +177,9 @@
 (defn- create-income-file-tx
   "Create transaction information to add income file to application"
   [filename uri]
-  (tb/assoc-when
-   {:db/id (d/tempid :db.part/starcity)}
+  {:db/id     (d/tempid :db.part/starcity)
    :file/name filename
-   :file/uri uri))
+   :file/uri  uri})
 
 
 (defn- upload-income-file [conn application-id {:keys [filename tempfile]}]
