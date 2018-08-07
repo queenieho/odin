@@ -19,13 +19,14 @@
 
 (defn button [{:keys [disabled type loading on-click class] :as props}]
   (let [props' (r/merge-props {:on-click on-click
-                               :class class}
+                               :class    class
+                               :disabled disabled}
                               {:class (str (when (some? type) (get-button-class type))
                                            (when disabled " button-disabled"))})]
     (into [:button.button props'
            (when loading
              [ant/icon {:class "mr2"
-                        :type "loading"}])]
+                        :type  "loading"}])]
             (r/children (r/current-component)))))
 
 (s/fdef button

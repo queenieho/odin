@@ -48,7 +48,8 @@
 
 (defmethod events/save-step-fx step
   [db params]
-  {:dispatch [::upload-income-verification!]})
+  {:dispatch-n [[:ui/loading :step.current/save true]
+                [::upload-income-verification!]]})
 
 
 (defmethod events/gql->rfdb :income [k v] step)

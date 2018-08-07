@@ -94,17 +94,16 @@
      {:style {:background-image    (str "url('" image "')")
               :background-size     "cover"
               :background-position "center"
-              :min-height          "200px"}}
-     ]]])
+              :min-height          "200px"}}]]])
 
 
 (defn- review-card []
-  (let [logistics   (subscribe [:review/logistics])
+  (let [db          (subscribe [:db])
+        logistics   (subscribe [:review/logistics])
         personal    (subscribe [:review/personal])
         communities (subscribe [:review/communities])
         status      (subscribe [:application-status])]
     [:div.w-100.pr4-l.pr0
-     (log/log @status)
      [:div.card.cf
       ;; header
       [:div.ph4.pv3
@@ -115,9 +114,11 @@
            {:on-click #(dispatch [:app.init/route-to-last-saved])}
            "Continue application"]])
        [:div.fr
-        [label/label @status]]]
+        [label/label (if (= :in_progress @status)
+                       "In Progress"
+                       @status)]]]
       [:div
-       {:style {:overflow "auto"
+       {:style {:overflow   "auto"
                 :border-top "1px solid #e6e6e6"}}
        [:div.w-25-l.w-100.fl.pv0.card-top
         [:h2.ma0 "Logistics"]]
@@ -128,7 +129,6 @@
            ^{:key i}
            [summary-row row-items])
          (partition 2 2 nil @logistics))]]
-
       ;; Communities
       (when-not (nil? @communities)
         (map
@@ -136,25 +136,24 @@
            ^{:key (:id c)}
            [communities-section c])
          @communities))
-
-      [:div
-       {:style {:overflow   "auto"
-                :border-top "1px solid #e6e6e6"}}
-       [:div.w-25-l.w-100.fl.pv0.card-top
-        [:h2.ma0 "Personal Information"]]
-       ;; body
-       [:div.w-75-l.w-100.fl.pv3
-        (map-indexed
-         (fn [i row-items]
-           ^{:key i}
-           [summary-row row-items])
-         (partition 2 2 nil @personal))]]]]))
+      (when (db/step-complete? @db :personal.background-check/info)
+        [:div
+         {:style {:overflow   "auto"
+                  :border-top "1px solid #e6e6e6"}}
+         [:div.w-25-l.w-100.fl.pv0.card-top
+          [:h2.ma0 "Personal Information"]]
+         ;; body
+         [:div.w-75-l.w-100.fl.pv3
+          (map-indexed
+           (fn [i row-items]
+             ^{:key i}
+             [summary-row row-items])
+           (partition 2 2 nil @personal))]])]]))
 
 
 (defn- applications-layout []
   (let [user      (subscribe [:user])]
     [:div
-     (log/log "logistics")
      [:div.w-100
       [:h1 "Good afternoon, " (first (s/split (:name @user) #" "))]
       [:p "Here is your current application."]]

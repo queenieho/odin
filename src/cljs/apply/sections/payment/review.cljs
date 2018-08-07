@@ -55,9 +55,10 @@
 
 (defmethod events/save-step-fx step
   [db params]
-  (if (= :in_progress (:application-status db))
-    {:stripe-checkout {:on-success [:review/submit-payment]}}
-    {:dispatch [:step/advance]}))
+  (when (step db)
+    (if (= :in_progress (:application-status db))
+      {:stripe-checkout {:on-success [:review/submit-payment]}}
+      {:dispatch [:step/advance]})))
 
 
 (reg-event-fx
