@@ -54,6 +54,7 @@
                   :exclusions [com.google.guava/guava
                                org.apache.httpcomponents/httpclient
                                org.clojure/clojurescript]]
+                 [starcity.re-frame/chatlio-fx "0.1.0"]
                  [starcity.re-frame/stripe-fx "0.1.0"
                   :exclusions [org.clojure/clojurescript]]
                  [cljsjs/moment "2.17.1-1"]

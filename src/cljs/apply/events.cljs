@@ -7,7 +7,7 @@
             [devtools.defaults :as d]
             [iface.utils.formatters :as format]
             [clojure.string :as s]
-            [apply.chatlio]
+            [starcity.re-frame.chatlio-fx]
             [re-frame.core :refer [reg-event-db reg-event-fx path]]))
 
 
