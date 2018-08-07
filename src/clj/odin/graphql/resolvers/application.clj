@@ -226,9 +226,7 @@
                            (when (and (application/has-pet? application)
                                       (false? (:has_pet params)))
                              (let [pet (application/pet application)]
-                               [[:db/retract (td/id application) :application/pet (td/id pet)]])
-                             )))
-
+                               [[:db/retract (td/id application) :application/pet (td/id pet)]]))))
         (clojure.pprint/pprint (d/entity (d/db conn) (td/id application)))))
     (d/entity (d/db conn) (td/id application))))
 

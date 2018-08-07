@@ -110,8 +110,10 @@
 (defn- create-init-db
   [db {:keys [properties license_terms account account_background_check]}]
   (let [{:keys [first_name middle_name last_name dob phone]} account
-        [month day year]                                     (-> (format/date-short-num dob)
-                                                                 (s/split #"/"))]
+        [month day year]                                     (when dob
+                                                               (-> dob
+                                                                   format/date-short-num
+                                                                   (s/split #"/")))]
     (merge db
            {:communities-options            properties
             :license-options                license_terms
@@ -120,9 +122,12 @@
             :personal.background-check/info {:first-name  first_name
                                              :last-name   last_name
                                              :middle-name middle_name
-                                             :dob         {:month (js/parseInt month)
-                                                           :day   (js/parseInt day)
-                                                           :year  (js/parseInt year)}}})))
+                                             :dob         {:month (when-let [m month]
+                                                                    (js/parseInt m))
+                                                           :day   (when-let [d day]
+                                                                    (js/parseInt d))
+                                                           :year  (when-let [y year]
+                                                                    (js/parseInt y))}}})))
 
 
 ;; At this point, we'll assume that if we received a nil value for the

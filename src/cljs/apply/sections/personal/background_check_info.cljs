@@ -74,29 +74,56 @@
 ;; views ========================================================================
 
 
+(defn- is-leap?
+  [year]
+  (cond (zero? (mod year 400)) true
+        (zero? (mod year 100)) false
+        (zero? (mod year 4))   true
+        :default               false))
+
+
+(defn- days-in-month
+  [month year]
+  (cond
+    (and (is-leap? year) (= month 2)) (range 1 30)
+    (= month 2)                       (range 1 29)
+    (and (< month 8)
+         (not (zero? (mod month 2)))) (range 1 32)
+    (and (> month 7)
+         (zero? (mod month 2)))       (range 1 32)
+    :else                             (range 1 31)))
+
+
+(defn- date-select
+  [data {:keys [placeholder key options]}]
+  [form/select
+   {:placeholder placeholder
+    :value       (get-in @data [:dob key])
+    :on-change   #(dispatch [::update-background-info [:dob key] (.. % -target -value)])}
+   (map
+    (fn [item]
+      ^{:key item}
+      [form/select-option {:value item} item])
+    options)])
+
+
 (defn date-input [data]
   [:div
    [:div.w-10.fl.pr3
-    [form/number
-     {:placeholder "MM"
-      :value       (get-in @data [:dob :month])
-      :on-change   #(dispatch [::update-background-info [:dob :month] (.. % -target -value)])
-      :max         12
-      :min         1}]]
+    [date-select data {:placeholder "MM"
+                       :key         :month
+                       :options     (range 1 13)}]]
    [:div.w-10.fl.pr3
-    [form/number
-     {:placeholder "DD"
-      :value       (get-in @data [:dob :day])
-      :on-change   #(dispatch [::update-background-info [:dob :day] (.. % -target -value)])
-      :max         31
-      :min         1}]]
+    (let [month (js/parseInt (get-in @data [:dob :month]))
+          year  (js/parseInt (get-in @data [:dob :year]))
+          days  (days-in-month month year)]
+      [date-select data {:placeholder "DD"
+                         :key         :day
+                         :options     days}])]
    [:div.w-20.fl.pr3
-    [form/number
-     {:placeholder "YYYY"
-      :value       (get-in @data [:dob :year])
-      :on-change   #(dispatch [::update-background-info [:dob :year] (.. % -target -value)])
-      :max         2020
-      :min         1920}]]])
+    [date-select data {:placeholder "YYYY"
+                       :key         :year
+                       :options     (range 1900 2020)}]]])
 
 
 (defmethod content/view step
