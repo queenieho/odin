@@ -102,6 +102,7 @@
     (facade/app req "apply"
                 :title "Application Dashboard"
                 :fonts ["https://fonts.googleapis.com/css?family=Caveat|Eczar:700|Work+Sans:400,600"]
+                :scripts ["https://checkout.stripe.com/checkout.js"]
                 :json [["stripe"  {:key (config/stripe-public-key (->config req))}]
                        ["account" {:id    (td/id account)
                                    :name  (account/short-name account)

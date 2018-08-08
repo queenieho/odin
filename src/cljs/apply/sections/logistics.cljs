@@ -14,4 +14,13 @@
 
 (defmethod db/section-complete? :logistics
     [db section]
-    false)
+  (let [move-in (:logistics/move-in-date db)]
+    (and (or (some #(= % move-in) [:asap :flexible])
+             (and (= :date move-in) (some? (:logistics.move-in-date/choose-date db))))
+
+         (some? (:logistics/occupancy db))
+
+         (or (false? (:logistics/pets db))
+             (and (true? (:logistics/pets db))
+                  (or (db/step-complete? :logistics.pets/dog)
+                      (db/step-complete? :logistics.pets/other)))))))

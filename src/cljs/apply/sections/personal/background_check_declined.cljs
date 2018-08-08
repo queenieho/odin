@@ -14,11 +14,6 @@
 ;; db ===========================================================================
 
 
-(defmethod db/get-last-saved step
-  [db s]
-  nil)
-
-
 (defmethod db/next-step step
   [db]
   nil)

@@ -15,11 +15,6 @@
 ;; db ===========================================================================
 
 
-(defmethod db/get-last-saved step
-  [db s]
-  :payment/review)
-
-
 (defmethod db/next-step step
   [db]
   :payment/review)
@@ -39,7 +34,7 @@
 
 (defmethod db/step-complete? step
   [db step]
-  (not (and (some? (step db)) (not (s/blank? (step db))))))
+  (not (s/blank? (step db))))
 
 
 ;; events =======================================================================

@@ -13,11 +13,6 @@
 ;; db ===========================================================================
 
 
-(defmethod db/get-last-saved step
-  [db s]
-  :logistics/pets)
-
-
 (defmethod db/next-step step
   [db]
   :logistics/pets)

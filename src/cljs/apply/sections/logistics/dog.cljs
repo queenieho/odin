@@ -7,18 +7,14 @@
             [iface.components.ptm.ui.form :as form]
             [iface.utils.log :as log]
             [toolbelt.core :as tb]
-            [iface.utils.formatters :as format]))
+            [iface.utils.formatters :as format]
+            [clojure.string :as s]))
 
 
 (def step :logistics.pets/dog)
 
 
 ;; db ===========================================================================
-
-
-(defmethod db/get-last-saved step
-  [db s]
-  :community/select)
 
 
 (defmethod db/next-step step
@@ -38,7 +34,12 @@
 
 (defmethod db/step-complete? step
   [db step]
-  false)
+  (let [dog (step db)]
+    (and (not (s/blank? (:name dog)))
+         (not (s/blank? (:breed dog)))
+         (not (s/blank? (:demeanor dog)))
+         (not (s/blank? (:daytime_care dog)))
+         (some? (:weight dog)))))
 
 
 ;; events =======================================================================
@@ -47,7 +48,6 @@
 (reg-event-fx
  ::update-dog
  (fn [{db :db} [_ k v]]
-   (log/log "what's updatedog?" k v)
    {:db (assoc-in db [step k] v)}))
 
 

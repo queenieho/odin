@@ -4,18 +4,14 @@
             [re-frame.core :refer [dispatch subscribe]]
             [apply.events :as events]
             [apply.db :as db]
-            [iface.utils.log :as log]))
+            [iface.utils.log :as log]
+            [iface.components.ptm.ui.button :as button]))
 
 
 (def step :payment/complete)
 
 
 ;; db ===========================================================================
-
-
-(defmethod db/get-last-saved step
-  [db s]
-  nil)
 
 
 (defmethod db/next-step step
@@ -54,9 +50,12 @@
   [_]
   [:div
    [:div.w-60-l.w-100
-    [:h1 "Thanks for applying live in Starcity! What’s next?"]
-    [:p "We’ll review your application soon and let you know if you’re qualified."]]
-   [:div.page-content.w-90-l.w-100
-    [:p "In the meantime, you can check out your application status here:"]
-    [ant/button {:on-click #(log/log "application status!")}
-     "application status"]]])
+    [:h1 "Thanks for applying to live in Starcity! What’s next?"]
+    [:p "We’ll review your application soon and let you know if you’re qualified."]
+    [:br]
+    [:p "In the meantime, you can check out your application status here:"]]
+   [:div.w-80-l.w-100
+    [:div.page-content
+     [button/primary
+      {:on-click #(dispatch [:finish])}
+      "application status"]]]])

@@ -14,13 +14,6 @@
 ;; db ===========================================================================
 
 
-(defmethod db/get-last-saved step
-  [db s]
-  (if (= :date (s db))
-    :logistics.move-in-date/choose-date
-    :logistics/occupancy))
-
-
 (defmethod db/next-step step
   [db]
   (if (= :date (step db))

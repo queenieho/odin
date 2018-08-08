@@ -10,6 +10,8 @@
     [["/" :section-id] [[["/" :step-id] [["" :section/step]
                                          [["/" :substep-id] :section.step/substep]]]]]
 
+    ["/applications" :applications]
+
     ["/logout" :logout]
 
     [true :home]]])

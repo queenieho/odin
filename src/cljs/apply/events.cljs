@@ -4,7 +4,10 @@
             [re-frame.core :refer [reg-event-db reg-event-fx path]]
             [toolbelt.core :as tb]
             [iface.utils.log :as log]
-            [iface.utils.time :as time]))
+            [iface.utils.time :as time]
+            [devtools.defaults :as d]
+            [iface.utils.formatters :as format]
+            [clojure.string :as s]))
 
 
 ;; ==============================================================================
@@ -16,6 +19,9 @@
 
 
 (defmethod gql->rfdb :id [_ v] :application-id)
+
+
+(defmethod gql->rfdb :status [_ v] :application-status)
 
 
 (defmethod gql->rfdb :default [k v]
@@ -31,7 +37,7 @@
 
 
 (def application-attrs
-  [:id :term :move_in_range :move_in :occupancy :has_pet :about
+  [:id :status :term :move_in_range :move_in :occupancy :has_pet :about
    [:pet [:id :name :breed :weight :sterile :vaccines :bitten
           :demeanor :daytime_care :about :type]]
    [:communities [:id :code]]
@@ -55,12 +61,13 @@
 (defn- get-account-params
   "Gets the needed params for updating an account's information"
   [{:keys [first-name last-name middle-name phone dob]}]
-  (tb/assoc-when {}
-                 :first_name first-name
-                 :last_name last-name
-                 :middle_name middle-name
-                 :dob (when-let [d dob] (time/moment->iso d))
-                 :phone phone))
+  (let [date-string (str (:year dob) " " (:month dob) " " (:day dob))]
+    (tb/assoc-when {}
+                   :first_name first-name
+                   :last_name last-name
+                   :middle_name middle-name
+                   :dob (time/moment->iso date-string)
+                   :phone phone)))
 
 
 ;; ==============================================================================
@@ -84,13 +91,13 @@
  (fn [_ [_ {:keys [id] :as account}]]
    (log/log "fetching account:" id)
    {:graphql {:query      [[:account {:id id}
-                            [:name :id :first_name :middle_name :last_name :dob
+                            [:name :id :first_name :phone :middle_name :last_name :dob
                              [:application application-attrs]]]
                            [:properties [:id :name :code :cover_image_url :copy_id
                                          [:application_copy [:name :images :introduction :building
                                                              :neighborhood :community
                                                              [:amenities [:label :icon]]]]
-                                         [:rates [:rate]]
+                                         [:rates [:rate :term]]
                                          [:units [[:occupant [:id]]]]]]
                            [:account_background_check {:id id}
                             [:id :consent :created]]
@@ -102,16 +109,25 @@
 
 (defn- create-init-db
   [db {:keys [properties license_terms account account_background_check]}]
-  (let [{:keys [first_name middle_name last_name dob]} account]
+  (let [{:keys [first_name middle_name last_name dob phone]} account
+        [month day year]                                     (when dob
+                                                               (-> dob
+                                                                   format/date-short-num
+                                                                   (s/split #"/")))]
     (merge db
            {:communities-options            properties
             :license-options                license_terms
             :background-check-id            (:id account_background_check)
+            :personal/phone-number          phone
             :personal.background-check/info {:first-name  first_name
                                              :last-name   last_name
                                              :middle-name middle_name
-                                             :dob         (when-let [d dob]
-                                                            (time/iso->moment d))}})))
+                                             :dob         {:month (when-let [m month]
+                                                                    (js/parseInt m))
+                                                           :day   (when-let [d day]
+                                                                    (js/parseInt d))
+                                                           :year  (when-let [y year]
+                                                                    (js/parseInt y))}}})))
 
 
 ;; At this point, we'll assume that if we received a nil value for the
@@ -123,29 +139,119 @@
    (let [init-db (create-init-db db (:data response))]
      (log/log "application query" init-db)
      (if-let [application (get-in response [:data :account :application])]
-       {:db       (assoc init-db :application-id (:id application))
-        :dispatch [:app.init/somehow-figure-out-where-they-left-off application]}
+       {:db       (assoc init-db
+                         :application-id (:id application)
+                         :application-status (:status application))
+        :dispatch [:app.init/application-dashboard application]}
        {:db       init-db
         :dispatch [:app.init/create-application (get-in response [:data :account :id])]}))))
+
+
+(reg-event-fx
+ :app.init/application-dashboard
+ (fn [{db :db} [_ application]]
+   (log/log "going to the dashboard!")
+   {:db    (parse-gql-response db application)
+    :route (routes/path-for :applications)}))
 
 
 ;;TODO
 (reg-event-fx
  :app.init/somehow-figure-out-where-they-left-off
  (fn [{db :db} [_ application]]
-   (log/log "processing application..." application)
-   {:db       (parse-gql-response db application)
-    :dispatch [:app.init/route-to-last-saved]}))
+   (let [fx-map (if (not= :in-progress (:status application))
+                  {:route (routes/path-for :applications)}
+                  {:dispatch [:app.init/route-to-last-saved]})]
+     (log/log "processing application..." application)
+     (assoc fx-map :db (parse-gql-response db application)))))
+
+
+(defn- last-saved-step [db]
+  (cond
+    ;; if theres consent to background check is false
+    (false? (:personal/background-check db))
+    :personal.background-check/declined
+
+    ;; if move-out date is too far
+    (>= (time/days-between (:logistics.move-in-date/choose-date db)) 45)
+    :logistics.move-in-date/outside-application-window
+
+    (not-empty (:personal/about db))
+    :payment/review
+
+    ;; if there's income verification
+    (not-empty (:personal/income db))
+    :personal/about
+
+    ;; if there's background-check information
+    (db/step-complete? db :personal.background-check/info)
+    :personal/income
+
+    ;; if there's consent to background check
+    (true? (:personal/background-check db))
+    :personal.background-check/info
+
+    ;; if there's a phone number
+    ;; the phone number sometimes is collected before app
+    ;; so check if a term has been selected too
+    (and (not-empty (:personal/phone-number db)) (some? (:community/term db)))
+    :personal/background-check
+
+    ;; if term has been selected
+    (some? (:community/term db))
+    :personal/phone-number
+
+    ;; if community has been selected
+    (not-empty (:community/select db))
+    :community/term
+
+    ;; if there's no pets, or pets and yes information
+    (false? (:logistics/pets db))
+    :community/select
+
+    ;; if theres pets AND their information has been filled in
+    (db/step-complete? db :logistics.pets/dog)
+    :community/select
+
+    (db/step-complete? db :logistics.pets/other)
+    :community/select
+
+    ;; if there's pets but no info
+    ;; figure out which pet page to go toggle
+    (true? (:logistics/pets db))
+    (if (= :dog (get-in db [:logistics.pets/dog :type]))
+      :logistics.pets/dog
+      :logistics.pets/other)
+
+    ;; if occupancy has been selected
+    (some? (:logistics/occupancy db))
+    :logistics/pets
+
+    ;; if logistics/move in is asap or flexible
+    (or (= :asap (:logistics/move-in-date db))
+        (= :flexible (:logistics/move-in-date db)))
+    :logistics/occupancy
+
+    ;; if move-in/choose-date is filled
+    (and (= :date (:logistics/move-in-date db))
+         (some? (:logistics.move-in-date/choose-date db)))
+    :logistics/occupancy
+
+    ;; if choose date is nil
+    (and (= :date (:logistics/move-in-date db))
+         (nil? (:logistics.move-in-date/choose-date db)))
+    :logistics.move-in-date/choose-date
+
+    :otherwise
+    :logistics/move-in-date))
 
 
 (reg-event-fx
  :app.init/route-to-last-saved
  (fn [{db :db} _]
-   (log/log "last saved step" (-> db db/last-saved db/step->route))
-   {:route (-> db db/last-saved db/step->route) #_(routes/path-for :section/step :section-id :logistics :step-id :move-in-date)}))
+   {:route (db/step->route (last-saved-step db))}))
 
 
-;;TODO
 (reg-event-fx
  :app.init/create-application
  (fn [_ [_ account-id]]
@@ -206,9 +312,12 @@
  ::application-update-success
  (fn [{db :db} [_ response]]
    (let [application (get-in response [:data :application_update])
-         bg-check    (get-in response [:data :update_background_check])]
+         bg-check    (get-in response [:data :update_background_check])
+         new-db      (if (some? (:has_pet application))
+                       (dissoc db :logistics.pets/dog :logistics.pets/other)
+                       db)]
      {:db       (merge
-                 (parse-gql-response db application)
+                 (parse-gql-response new-db application)
                  {:personal/background-check (:consent bg-check)})
       :dispatch [:step/advance]})))
 
@@ -290,3 +399,15 @@
  :step.current/next
  (fn [{db :db} [_ params]]
    {:dispatch [:step.current/save params]}))
+
+
+(reg-event-fx
+ :finish
+ (fn [{db :db} _]
+   {:route (routes/path-for :applications)}))
+
+
+(reg-event-fx
+ :step/edit
+ (fn [{db :db} [_ step]]
+   {:route (db/step->route step)}))

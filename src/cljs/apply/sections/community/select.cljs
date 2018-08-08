@@ -20,11 +20,6 @@
 ;; db ===========================================================================
 
 
-(defmethod db/get-last-saved step
-  [db s]
-  :community/term)
-
-
 (defmethod db/next-step step
   [db]
   :community/term)
@@ -45,9 +40,7 @@
 
 (defmethod db/step-complete? step
   [db step]
-  (if (empty? (step db))
-    true
-    false))
+  (not-empty (step db)))
 
 
 ;; events =======================================================================
@@ -117,6 +110,7 @@
  ::communities
  (fn [db _]
    (->> (:communities-options db)
+        (sort-by #(count-available-units (:units %)))
         (map-indexed
          (fn [idx {:keys [id code name rates units cover_image_url application_copy]}]
            (let [rate   (get-lowest-rate rates)
@@ -130,11 +124,8 @@
               :title       name
               :value       id
               :description [community-content rate ucount]
-              :ucount      ucount
               :images      (:images application_copy)
-              :modal-copy  mcopy})))
-        (sort-by :ucount)
-        (map #(dissoc % :ucount)))))
+              :modal-copy  mcopy}))))))
 
 
 (reg-sub

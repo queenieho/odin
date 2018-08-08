@@ -14,15 +14,6 @@
 ;; db ===========================================================================
 
 
-(defmethod db/get-last-saved step
-  [db s]
-  (if (false? (s db))
-    :community/select
-    (if (= :dog (get-in db [:logistics.pets/dog :type]))
-      :logistics.pets/dog
-      :logistics.pets/other)))
-
-
 (defmethod db/next-step step
   [db]
   (if (false? (step db))
@@ -44,7 +35,7 @@
 
 (defmethod db/step-complete? step
   [db step]
-  false)
+  (some? (step db)))
 
 
 ;; events =======================================================================

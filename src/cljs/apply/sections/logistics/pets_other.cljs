@@ -5,18 +5,14 @@
             [apply.events :as events]
             [apply.db :as db]
             [iface.components.ptm.ui.form :as form]
-            [iface.utils.log :as log]))
+            [iface.utils.log :as log]
+            [clojure.string :as s]))
 
 
 (def step :logistics.pets/other)
 
 
 ;; db ===========================================================================
-
-
-(defmethod db/get-last-saved step
-  [db s]
-  :community/select)
 
 
 (defmethod db/next-step step
@@ -36,7 +32,7 @@
 
 (defmethod db/step-complete? step
   [db step]
-  false)
+  (not (s/blank? (:about (step db)))))
 
 
 ;; events =======================================================================

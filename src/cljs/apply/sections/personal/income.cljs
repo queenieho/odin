@@ -18,13 +18,6 @@
 
 
 (defmethod db/next-step step
-  [db s]
-  (if (= :cosigner (db s))
-    :personal.income/cosigner
-    :personal/about))
-
-
-(defmethod db/next-step step
   [db]
   (if (= :cosigner (db step))
     :personal.income/cosigner
@@ -45,8 +38,9 @@
 (defmethod db/step-complete? step
   [db step]
   (let [file-count (get-in db [:income-files :count])]
-    (not (or (and (some? file-count) (not (zero? file-count)))
-             (step db)))))
+    (or
+      (and (some? file-count) (not (zero? file-count)))
+      (not-empty (step db)))))
 
 
 ;; events =======================================================================
@@ -54,7 +48,8 @@
 
 (defmethod events/save-step-fx step
   [db params]
-  {:dispatch [::upload-income-verification!]})
+  {:dispatch-n [[:ui/loading :step.current/save true]
+                [::upload-income-verification!]]})
 
 
 (defmethod events/gql->rfdb :income [k v] step)

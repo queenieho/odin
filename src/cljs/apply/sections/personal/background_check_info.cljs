@@ -16,11 +16,6 @@
 ;; db ===========================================================================
 
 
-(defmethod db/get-last-saved step
-  [db s]
-  :personal/income)
-
-
 (defmethod db/next-step step
   [db]
   :personal/income)
@@ -38,7 +33,9 @@
 
 (defn- form-complete
   [{:keys [dob first-name last-name current_location]}]
-  (and (some? dob)
+  (and (not (nil? (:year dob)))
+       (not (nil? (:month dob)))
+       (not (nil? (:day dob)))
        (not (s/blank? first-name))
        (not (s/blank? last-name))
        (not (s/blank? (:country current_location)))
@@ -48,7 +45,7 @@
 
 (defmethod db/step-complete? step
   [db step]
-  (not (form-complete (step db))))
+  (form-complete (step db)))
 
 
 ;; events =======================================================================
@@ -77,6 +74,58 @@
 ;; views ========================================================================
 
 
+(defn- is-leap?
+  [year]
+  (cond (zero? (rem year 400)) true
+        (zero? (rem year 100)) false
+        (zero? (rem year 4))   true
+        :else                  false))
+
+
+(defn- days-in-month
+  [month year]
+  (cond
+    (and (is-leap? year) (= month 2)) (range 1 30)
+    (= month 2)                       (range 1 29)
+    (and (< month 8)
+         (not (zero? (mod month 2)))) (range 1 32)
+    (and (> month 7)
+         (zero? (mod month 2)))       (range 1 32)
+    :else                             (range 1 31)))
+
+
+(defn- date-select
+  [data {:keys [placeholder key options]}]
+  [form/select
+   {:placeholder placeholder
+    :value       (get-in @data [:dob key])
+    :on-change   #(dispatch [::update-background-info [:dob key] (.. % -target -value)])}
+   (map
+    (fn [item]
+      ^{:key item}
+      [form/select-option {:value item} item])
+    options)])
+
+
+(defn date-input [data]
+  [:div
+   [:div.w-10.fl.pr3
+    [date-select data {:placeholder "MM"
+                       :key         :month
+                       :options     (range 1 13)}]]
+   [:div.w-10.fl.pr3
+    (let [month (js/parseInt (get-in @data [:dob :month]))
+          year  (js/parseInt (get-in @data [:dob :year]))
+          days  (days-in-month month year)]
+      [date-select data {:placeholder "DD"
+                         :key         :day
+                         :options     days}])]
+   [:div.w-20.fl.pr3
+    [date-select data {:placeholder "YYYY"
+                       :key         :year
+                       :options     (range 1900 2020)}]]])
+
+
 (defmethod content/view step
   [_]
   (let [data (subscribe [:db/step step])]
@@ -89,11 +138,7 @@
         [:div.cf.mb4-ns.mb0
          [form/item
           {:label "Date of Birth"}
-          ;; NOTE date picker needs to be styled to match our style...
-          ;; or we need to make a new one
-          [ant/date-picker
-           {:value     (:dob @data)
-            :on-change #(dispatch [::update-background-info [:dob] %])}]]]
+          [date-input data]]]
         [:div.cf.mb3-ns.mb0
          [form/item
           {:label "Full Legal Name"}
