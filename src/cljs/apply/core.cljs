@@ -39,8 +39,8 @@
    [:div.page-content.w-90-l.w-100.center.tc
     [:p.tc "We'd love to have you join our community."]
     [:br]
-    ;; [:p.tc "I'm here to help with your application. If you have a question,"]
-    ;; [:p.tc "just click on the " (icons/icon {:type "help" :class "icon-small"}) " icon to send me a message."]
+    [:p.tc "I'm here to help with your application. If you have a question,"]
+    [:p.tc "just click on the " (icons/icon {:type "help" :class "icon-small"}) " icon to send me a message."]
     [:br]
     [:div
      [:img.br-100.h3.w3.dib
@@ -107,8 +107,9 @@
     [layout/nav
      {:is-progress? true
       :footer       [layout/nav-footer
-                     [layout/nav-item {:label "Help"
-                                       :icon  "help"}]
+                     [layout/nav-item {:label  "Help"
+                                       :icon   "help"
+                                       :action #(dispatch [:help/toggle])}]
                      [layout/nav-item {:label "Log Out"
                                        :link  (routes/path-for :logout)
                                        :icon  "logout"}]]}
