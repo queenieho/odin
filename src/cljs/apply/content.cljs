@@ -1,9 +1,9 @@
 (ns apply.content
   (:require [antizer.reagent :as ant]
-            [iface.loading :as loading]
+            [apply.db :as db]
+            [iface.components.ptm.layout :as layout]
             [iface.utils.routes :as iur]
-            [reagent.core :as r]
-            [apply.db :as db]))
+            [reagent.core :as r]))
 
 
 (defmulti view db/route->step)
@@ -29,7 +29,7 @@
       (.reload js/window.location))
     :reagent-render
     (fn []
-      (loading/fullpage :text "Logging out..."))}))
+      (layout/loading-fullpage :text "Logging out..."))}))
 
 
 (defmethod view :logout [_] [logout!])

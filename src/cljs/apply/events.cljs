@@ -79,7 +79,8 @@
  :app/init
  (fn [_ [_ account]]
    {:db       (db/bootstrap account)
-    :dispatch [:app.init/fetch-application account]}))
+    :dispatch-n [[:ui/loading :app/init true]
+                 [:app.init/fetch-application account]]}))
 
 
 ;; We need to fetch the application when the app is first bootstrapped, so we
@@ -151,8 +152,9 @@
  :app.init/application-dashboard
  (fn [{db :db} [_ application]]
    (log/log "going to the dashboard!")
-   {:db    (parse-gql-response db application)
-    :route (routes/path-for :applications)}))
+   {:db       (parse-gql-response db application)
+    :dispatch [:ui/loading :app/init false]
+    :route    (routes/path-for :applications)}))
 
 
 ;;TODO
@@ -270,8 +272,9 @@
  (fn [{db :db} [_ response]]
    (let [application-id (get-in response [:data :application_create :id])
          bg-check-id    (get-in response [:data :create_background_check :id])]
-     {:db (assoc db :application-id application-id
-                 :background-check-id bg-check-id)})))
+     {:db       (assoc db :application-id application-id
+                       :background-check-id bg-check-id)
+      :dispatch [:ui/loading :app/init false]})))
 
 
 ;; ==============================================================================

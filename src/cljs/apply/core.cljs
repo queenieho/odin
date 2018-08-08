@@ -19,17 +19,16 @@
             [iface.components.ptm.layout :as layout]
             [iface.modules.graphql :as graphql]
             [iface.modules.modal]
+            [iface.utils.log :as log]
             [iface.utils.routes :as iroutes]
-            [reagent.core :as r]
-            [re-frame.core :as rf :refer [dispatch subscribe]]
             [iface.components.ptm.icons :as icons]
             [iface.components.ptm.ui :as ui]
             [iface.components.ptm.ui.button :as button]
             [iface.components.ptm.ui.form :as form]
             [iface.components.ptm.ui.button :as button]
-            [toolbelt.core :as tb]
-            [iface.utils.log :as log]
-            [iface.loading :as loading]))
+            [reagent.core :as r]
+            [re-frame.core :as rf :refer [dispatch subscribe]]
+            [toolbelt.core :as tb]))
 
 
 (defn- welcome-1 [{name :name} toggle]
@@ -139,16 +138,19 @@
 
 
 (defn welcome-layout []
-  (let [screen-two (r/atom false)]
+  (let [screen-two (r/atom false)
+        is-loading (subscribe [:ui/loading? :app/init])]
     (fn []
-      (let [applicant (subscribe [:user])]
-        [layout/layout
-         {:pre (list [:div.bg-top {:key 1}]
-                     [:div.welcome-logo.pt6
-                      [:img {:src "/assets/images/ptm/blue-logomark.svg"}]])}
-         (if-not @screen-two
-           [welcome-1 @applicant screen-two]
-           [welcome-2])]))))
+      (if @is-loading
+        (layout/loading-fullpage :loading true :text "Loading application...")
+        (let [applicant (subscribe [:user])]
+         [layout/layout
+          {:pre (list [:div.bg-top {:key 1}]
+                      [:div.welcome-logo.pt6
+                       [:img {:src "/assets/images/ptm/blue-logomark.svg"}]])}
+          (if-not @screen-two
+            [welcome-1 @applicant screen-two]
+            [welcome-2])])))))
 
 
 (defn layout []
