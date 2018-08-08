@@ -48,7 +48,7 @@
 (defmethod events/save-step-fx step
   [db params]
   (let [date (or params (step db))]
-   {:dispatch [:application/update {:move_in (.toISOString date)}]}))
+    {:dispatch [:application/update {:move_in (.toISOString date)}]}))
 
 
 (defmethod events/gql->rfdb :move_in [k] step)
@@ -73,8 +73,8 @@
 but we'll do our best to make it work."]]
      [:div.w-75-l.w-100
       [:div.page-content
-      [form/inline-date {:value        @data
-                         :on-day-click #(when-not (.. %2 -disabled)
-                                          (dispatch [:choose-date/update %]))
-                         :show-from    (js/Date.)
-                         :disabled     {:before (js/Date.)}}]]]]))
+       [form/inline-date {:value        @data
+                          :on-day-click #(when-not (.. %2 -disabled)
+                                           (dispatch [:choose-date/update %]))
+                          :show-from    (js/Date.)
+                          :disabled     {:before (js/Date.)}}]]]]))
