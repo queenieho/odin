@@ -265,6 +265,11 @@
 ;; ==============================================================================
 
 
+(defn- is-owner?
+  [account application]
+  (= (:db/id account) (:db/id (application/account application))))
+
+
 (defmethod authorization/authorized? :appication/approve!
   [_ account _]
   (account/admin? account))
@@ -277,12 +282,16 @@
 
 
 (defmethod authorization/authorized? :application/update!
-  ;; you must be the owner of the application being updated
-  nil)
+  [{conn :conn} account {:keys [application]}]
+  (let [application (d/entity (d/db conn) application)]
+    (and (is-owner? account application)
+         (= (application/status application) :application.status/in-progress))))
 
 
 (defmethod authorization/authorized? :application/submit!
+  [_ account _]
   ;; you must be the owner of the application being updated
+  ;; and the application is "in progress"
   nil)
 
 (def resolvers
