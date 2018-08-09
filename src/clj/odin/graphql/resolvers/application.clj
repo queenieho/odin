@@ -15,7 +15,8 @@
             [teller.customer :as customer]
             [teller.payment :as payment]
             [toolbelt.datomic :as td]
-            [toolbelt.core :as tb]))
+            [toolbelt.core :as tb]
+            [odin.graphql.authorization :as authorization]))
 
 
 ;; ==============================================================================
@@ -263,6 +264,26 @@
 ;; resolvers --------------------------------------------------------------------
 ;; ==============================================================================
 
+
+(defmethod authorization/authorized? :appication/approve!
+  [_ account _]
+  (account/admin? account))
+
+
+(defmethod authorization/authorized? :appication/create!
+  [_ account _]
+  (and (account/applicant? account)
+       (nil? (account/member-application account))))
+
+
+(defmethod authorization/authorized? :application/update!
+  ;; you must be the owner of the application being updated
+  nil)
+
+
+(defmethod authorization/authorized? :application/submit!
+  ;; you must be the owner of the application being updated
+  nil)
 
 (def resolvers
   {:application/account       account
