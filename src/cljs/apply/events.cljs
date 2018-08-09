@@ -25,8 +25,7 @@
 (defmethod gql->rfdb :status [_ v] :application-status)
 
 
-(defmethod gql->rfdb :default [k v]
-  (log/log "parsing gql response: you should never reach this method! " k))
+(defmethod gql->rfdb :default [k v] nil)
 
 
 (defmulti gql->value
@@ -51,7 +50,6 @@
   multimethod that will send each datum from the graphql response to the correct
   place within the app-db"
   [db application]
-  (js/console.log "parsing graphql response... " application)
   (reduce-kv
    (fn [d k v]
      (assoc d (gql->rfdb k v) (gql->value k v)))
@@ -91,7 +89,6 @@
 (reg-event-fx
  :app.init/fetch-application
  (fn [_ [_ {:keys [id] :as account}]]
-   (log/log "fetching account:" id)
    {:graphql {:query      [[:account {:id id}
                             [:name :id :first_name :phone :middle_name :last_name :dob
                              [:application application-attrs]]]
@@ -139,7 +136,6 @@
  ::init-fetch-application-success
  (fn [{db :db} [_ response]]
    (let [init-db (create-init-db db (:data response))]
-     (log/log "application query" init-db)
      (if-let [application (get-in response [:data :account :application])]
        {:db       (assoc init-db
                          :application-id (:id application)
@@ -152,7 +148,6 @@
 (reg-event-fx
  :app.init/application-dashboard
  (fn [{db :db} [_ application]]
-   (log/log "going to the dashboard!")
    {:db       (parse-gql-response db application)
     :dispatch [:ui/loading :app/init false]
     :chatlio/ready [:init-chatlio]
@@ -248,7 +243,6 @@
 (reg-event-fx
  :app.init/create-application
  (fn [_ [_ account-id]]
-   (log/log  "no application found for %s, creating new one..." account-id)
    {:graphql {:mutation   [[:application_create {:account account-id}
                             [:id]]
                            [:create_background_check {:account account-id}
@@ -303,8 +297,6 @@
          account-params     (get-account-params params)
          bg-check-params    (tb/assoc-some {}
                                            :consent (:background-check-consent params))]
-     (log/log "updating application " application-params)
-     (log/log "updating application " bg-check-params)
      {:dispatch [:ui/loading :step.current/save true]
       :graphql  {:mutation   [[:application_update {:application (:application-id db)
                                                     :params      application-params}
