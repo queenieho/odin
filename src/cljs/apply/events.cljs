@@ -4,7 +4,6 @@
             [toolbelt.core :as tb]
             [iface.utils.log :as log]
             [iface.utils.time :as time]
-            [devtools.defaults :as d]
             [iface.utils.formatters :as format]
             [clojure.string :as s]
             [starcity.re-frame.chatlio-fx]

@@ -3,7 +3,6 @@
             [cljs.spec.alpha :as s]
             [iface.components.ptm.ui.carousel :as carousel]
             [reagent.core :as r]
-            [devtools.defaults :as d]
             [iface.utils.log :as log]))
 
 

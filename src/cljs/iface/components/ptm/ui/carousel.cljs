@@ -1,7 +1,6 @@
 (ns iface.components.ptm.ui.carousel
   (:require [cljs.spec.alpha :as s]
-            [reagent.core :as r]
-            [devtools.defaults :as d]))
+            [reagent.core :as r]))
 
 
 (defn- carousel-next [{on-click :on-click}]

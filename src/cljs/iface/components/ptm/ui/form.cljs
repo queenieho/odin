@@ -2,7 +2,6 @@
   (:require [cljs.spec.alpha :as s]
             [cljsjs.react-day-picker]
             [reagent.core :as r]
-            [devtools.defaults :as d]
             [toolbelt.core :as tb]
             [antizer.reagent :as ant]
             [iface.utils.formatters :as format]))

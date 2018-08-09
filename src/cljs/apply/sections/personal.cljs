@@ -7,7 +7,6 @@
             [apply.sections.personal.income]
             [apply.sections.personal.income-cosigner]
             [apply.sections.personal.about]
-            [devtools.defaults :as d]
             [iface.utils.log :as log]
             [re-frame.core :refer [subscribe]]))
 
