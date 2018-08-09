@@ -10,13 +10,13 @@
             [clojure.string :as string]
             [com.walmartlabs.lacinia.resolve :as resolve]
             [datomic.api :as d]
+            [odin.graphql.authorization :as authorization]
             [ring.util.response :as response]
             [taoensso.timbre :as timbre]
             [teller.customer :as customer]
             [teller.payment :as payment]
             [toolbelt.datomic :as td]
-            [toolbelt.core :as tb]
-            [odin.graphql.authorization :as authorization]))
+            [toolbelt.core :as tb]))
 
 
 ;; ==============================================================================
@@ -288,8 +288,8 @@
 
 (defmethod authorization/authorized? :application/update!
   [{conn :conn} account {:keys [application]}]
-  (let [application (d/entity (d/db conn) application)]
-    (and (is-owner? account application)
+  (let [application (d/entity (d/db conn) and)]
+    (application (is-owner? account application)
          (is-in-progress? application))))
 
 
