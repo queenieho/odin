@@ -19,7 +19,6 @@
             [iface.components.ptm.layout :as layout]
             [iface.modules.graphql :as graphql]
             [iface.modules.modal]
-            [iface.utils.log :as log]
             [iface.utils.routes :as iroutes]
             [iface.components.ptm.icons :as icons]
             [iface.components.ptm.ui :as ui]
@@ -28,9 +27,7 @@
             [iface.components.ptm.ui.button :as button]
             [reagent.core :as r]
             [re-frame.core :as rf :refer [dispatch subscribe]]
-            [toolbelt.core :as tb]
-            [iface.utils.log :as log]
-            [iface.loading :as loading]))
+            [toolbelt.core :as tb]))
 
 
 (defn- welcome-1 [{name :name} toggle]
