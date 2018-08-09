@@ -270,6 +270,11 @@
   (= (:db/id account) (:db/id (application/account application))))
 
 
+(defn- is-in-progress?
+  [application]
+  (= (application/status application) :application.status/in-progress))
+
+
 (defmethod authorization/authorized? :appication/approve!
   [_ account _]
   (account/admin? account))
@@ -285,14 +290,15 @@
   [{conn :conn} account {:keys [application]}]
   (let [application (d/entity (d/db conn) application)]
     (and (is-owner? account application)
-         (= (application/status application) :application.status/in-progress))))
+         (is-in-progress? application))))
 
 
 (defmethod authorization/authorized? :application/submit!
-  [_ account _]
-  ;; you must be the owner of the application being updated
-  ;; and the application is "in progress"
-  nil)
+  [{conn :conn} account {:keys [application]}]
+  (let [application (d/entity (d/db conn) application)]
+    (and (is-owner? account application)
+         (is-in-progress? application))))
+
 
 (def resolvers
   {:application/account       account
