@@ -1,7 +1,6 @@
 (ns iface.components.ptm.ui.card
   (:require [cljs.spec.alpha :as s]
             [reagent.core :as r]
-            [devtools.defaults :as d]
             [toolbelt.core :as tb]
             [antizer.reagent :as ant]
             [iface.utils.formatters :as format]))
@@ -263,8 +262,7 @@
    {:style {:background-image (str "url('" img "')")}
     :class (when selected
              "active")
-    :key   key}
-   #_[:img {:src img}]])
+    :key   key}])
 
 
 (defn- idx-next [idx total]
