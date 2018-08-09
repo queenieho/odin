@@ -26,15 +26,37 @@
    :sort-by       :unit})
 
 
+(def default-validation
+  {:desc  true
+   :types true
+   :price true})
+
+
+(def default-key-value
+  nil)
+
+
+(def default-line-item
+  {:desc  default-key-value
+   :types default-key-value
+   :price default-key-value})
+
+
 (def default-value
   {path {;; list
-         :params default-params
+         :params                  default-params
          ;; entry
-         :units            []
-         :tab              nil
-         :create-form      {}
-         :reassign-form    {}
-         :transition-form  {}}})
+         :units                   []
+         :tab                     nil
+         :create-form             {}
+         :reassign-form           {}
+         :transition-form         {}
+         ;; security deposit refund
+         :types                   [:rent :ffe :cleaning :repairs :interest]
+         :charges-form-validation []
+         :credits-form-validation []
+         :form                    {:charges []
+                                   :credits []}}})
 
 
 ;; entry ========================================================================

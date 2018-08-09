@@ -75,6 +75,13 @@
   (if (some? str) (-> (js/moment str) (.unix) (* 1000))))
 
 
+;; TODO: cljc in `toolbelt.date`?
+(defn beginning-of-day
+  "Given a moment, produce the beginning of the day."
+  [m]
+  (.startOf m "day"))
+
+
 (defn phone-number
   "Uses Google's libphonenumber to format the provided phone number."
   [number]
@@ -118,19 +125,20 @@
   (->> (string/split name #" ") (map first) (apply str)))
 
 
-(defn make-possessive
+(defn possessive
   "Given a `name`, produce that name in the possessive form."
   [name]
   (if (not= \s (last name))
     (str name "'s ")
     (str name "' ")))
 
-(defn make-first-name-possessive
+
+(defn first-name-possessive
   "Given a full `name`, produce the given name in the possessive form."
   [name]
   (->> (string/split name #" ")
        (first)
-       (make-possessive)))
+       (possessive)))
 
 
 (defn sstr [args]

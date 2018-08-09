@@ -50,7 +50,6 @@
         ^{:key t} [ant/select-option {:value t} t]))]))
 
 
-
 ;; ==============================================================================
 ;; date picker component ========================================================
 ;; ==============================================================================
@@ -62,20 +61,24 @@
       (js/moment)
       (.day)))
 
+
 (defn date-picker
   "Wraps the `ant/date-picker` component, overwriting the `disabled-date` prop with
   a function that excludes any dates in the past, as well as any days provided in a
   `disabled-days` prop (a vector of numbers, 0 - 6, which correspond to days of the week.)"
-  [{:keys [disabled-days] :as opts}]
-  [ant/date-picker
-   (assoc
-    opts
-    :disabled-date (fn [current]
-                     (let [day  (.day (js/moment current))]
-                       (or (when (some #(= day %) disabled-days)
-                             current)
-                           (and current
-                                (< (.valueOf current) (.valueOf (js/moment.))))))))])
+  [{:keys [disabled-days disabled-date] :as opts}]
+  (let []
+    [ant/date-picker
+    (assoc
+     opts
+     :disabled-date (or
+                     disabled-date
+                     (fn [current]
+                       (let [day (.day (js/moment current))]
+                         (or (when (some #(= day %) disabled-days)
+                               current)
+                             (and current
+                                  (< (.valueOf current) (.valueOf (js/moment.)))))))))]))
 
 
 ;; ==============================================================================

@@ -17,7 +17,29 @@
             [re-frame.core :refer [subscribe dispatch]]
             [reagent.core :as r]
             [toolbelt.core :as tb]
-            [iface.components.form :as form]))
+            [iface.components.form :as form]
+            [clojure.string :as str]))
+
+
+;; ==============================================================================
+;; helpers ======================================================================
+;; ==============================================================================
+
+
+(defn- term-select
+  [{:keys [disabled value on-change]}]
+  (let [terms (subscribe [:license-terms/list])]
+    [ant/select
+     {:style         {:width "50%"}
+      :value         (str value)
+      :default-value (str (:term (first @terms)))
+      :disabled      disabled
+      :on-change     (comp on-change int)}
+     (doall
+      (map
+       (fn [{:keys [id term]}]
+         ^{:key id} [ant/select-option {:value (str term)} (str term " month(s)")])
+       @terms))]))
 
 
 ;; ==============================================================================
@@ -67,6 +89,7 @@
      [ant/tooltip {:title (str (format/date-short starts) "-"
                                (format/date-short ends))}
       [:div.has-text-centered term]])))
+
 
 (def render-rent-status
   (table/wrap-cljs
@@ -238,7 +261,9 @@
   (let [{:keys [status property unit]} (most-current-license account)]
     [:span
      (if (= status :active) "Lives" [:i "Lived"])
-     " in " [:a {:href (routes/path-for :properties/entry :property-id (:id property))} (:name property)]
+     " in " [:a {:href (when-let [pid (:id property)]
+                         (routes/path-for :properties/entry :property-id pid))}
+             (:name property)]
      " in room #"
      [:b (:number unit)]]))
 
@@ -398,9 +423,9 @@
     [:div.columns
      [:div.column
       (doall
-         (map
-          #(with-meta [notes/note-card %] {:key (:id %)})
-          @notes))
+       (map
+        #(with-meta [notes/note-card %] {:key (:id %)})
+        @notes))
       (when-not (empty? @notes)
         [notes/pagination])]]))
 
@@ -471,122 +496,138 @@
   (let [is-visible          (subscribe [:modal/visible? db/reassign-modal-key])
         communities-loading (subscribe [:ui/loading? :properties/query])
         units-loading       (subscribe [:ui/loading? :property/fetch])
-        rate-loading        (subscribe [:ui/loading? :accounts.entry.reassign/fetch-rate])
+        rate-loading        (subscribe [:ui/loading? :accounts.entry.transition/fetch-rate])
         form                (subscribe [:accounts.entry.reassign/form-data])
         communities         (subscribe [:properties/list])
         units               (subscribe [:property/units (:community @form)])
         license             (:active_license account)]
     [ant/modal
-     {:title     (str "Transfer: " (:name account))
-      :visible   @is-visible
+     {:title       (str "Transfer: " (:name account))
+      :visible     @is-visible
       :after-close #(dispatch [:accounts.entry.reassign/clear])
-      :on-cancel #(dispatch [:accounts.entry.reassign/hide])
-      :footer    (r/as-element [reassign-modal-footer account @form])}
+      :on-cancel   #(dispatch [:accounts.entry.reassign/hide])
+      :footer      (r/as-element [reassign-modal-footer account @form])}
 
      (when-not (:editing @form)
        [:div
-       ;; community selection
+        ;; community selection
         [ant/form-item {:label "Which community?"}
-        (if @communities-loading
-          [:div.has-text-centered
-           [ant/spin {:tip "Fetching communities..."}]]
-          [ant/select
-           {:style                       {:width "100%"}
-            :dropdown-match-select-width false
-            :value                       (str (:community @form))
-            :on-change                   #(dispatch [:accounts.entry.reassign/select-community % license])}
-           (doall
-            (map
-             #(with-meta (reassign-community-option %) {:key (:id %)})
-             @communities))])]
+         (if @communities-loading
+           [:div.has-text-centered
+            [ant/spin {:tip "Fetching communities..."}]]
+           [ant/select
+            {:style                       {:width "100%"}
+             :dropdown-match-select-width false
+             :value                       (str (:community @form))
+             :on-change                   #(dispatch [:accounts.entry.reassign/select-community % license])}
+            (doall
+             (map
+              #(with-meta (reassign-community-option %) {:key (:id %)})
+              @communities))])]
 
-       ;; unit selection
+        ;; unit selection
         [ant/form-item {:label "Which unit?"}
-        (if @units-loading
-          [:div.has-text-centered
-           [ant/spin {:tip "Fetching units..."}]]
-          [ant/select
-           {:style                       {:width "50%"}
-            :dropdown-match-select-width false
-            :value                       (str (:unit @form))
-            :on-change                   #(dispatch [:accounts.entry.reassign/select-unit % (:term license) :accounts.entry.reassign/update])}
-           (doall
-            (map-indexed
-             #(with-meta (reassign-unit-option %2 (get-in license [:unit :id])) {:key %1})
-             @units))])]
+         (if @units-loading
+           [:div.has-text-centered
+            [ant/spin {:tip "Fetching units..."}]]
+           [ant/select
+            {:style                       {:width "50%"}
+             :dropdown-match-select-width false
+             :value                       (str (:unit @form))
+             :on-change                   #(dispatch [:accounts.entry.reassign/select-unit
+                                                      %
+                                                      (or (:term @form) (:term license))])}
+            (doall
+             (map-indexed
+              #(with-meta (reassign-unit-option %2 (get-in license [:unit :id])) {:key %1})
+              @units))])]
 
-       ;; rate selection
-       [ant/form-item
-        {:label "What should their rate change to?"}
-        (if @rate-loading
-          [:div.has-text-centered
-           [ant/spin {:tip "Fetching current rate..."}]]
-          [ant/input-number
-           {:style     {:width "100%"}
-            :value     (:rate @form)
-            :disabled  (nil? (:unit @form))
-            :on-change #(dispatch [:accounts.entry.reassign/update :rate %])}])]
+        [ant/form-item {:label "What will the member's new license term be?"}
+         (if @rate-loading
+           [:div.has-text-centered
+            [ant/spin {:tip "Fetching default rate..."}]]
+           [term-select
+            {:value     (or (:term @form) (:term license))
+             :disabled  (nil? (:unit @form))
+             :on-change #(dispatch [:accounts.entry.reassign/update-term (:unit @form) %])}])]
 
-
-       [ant/form-item
-        {:label "What date will the member move out of their old unit?"}
-        [form/date-picker
-         {:style     {:width "50%"}
-          :value     (:move-out-date @form)
-          :disabled  (:editing @form)
-          :on-change #(dispatch [:accounts.entry.reassign/update :move-out-date %])}]]
-
-
-       [ant/form-item
-        {:label "What date will the member move in to their new unit?"}
-        [form/date-picker
-         {:style     {:width "50%"}
-          :value     (:move-in-date @form)
-          :disabled  (:editing @form)
-          :on-change #(dispatch [:accounts.entry.reassign/update :move-in-date %])}]]])
-
-
-     [ant/form-item
-      {:label (r/as-element
-               [:span [:span.bold "Asana Transfer Task"]
-                [ant/tooltip
-                 {:placement "topLeft"
-                  :title     (r/as-element
-                              [:div "Make a copy of the "
-                               [:a {:href (:intra-xfer asana-transition-templates) :target "_blank"} "Member Transfer Template"]
-                               " Asana task. Paste the link to your copy of that task in this input."])}
-                 [ant/icon {:type "question-circle-o"}]]])}
-      [ant/input
-       {:placeholder "paste the asana link here..."
-        :value       (:asana-task @form)
-        :size        "default"
-        :on-change   #(dispatch [:accounts.entry.reassign/update :asana-task (.. % -target -value)])}]]
-
-     (when (:editing @form)
-       [:div
+        ;; rate selection
         [ant/form-item
-         {:label (r/as-element
-                  [ant/tooltip
-                   {:title "Link to Google Drive Doc"}
-                   [:span.bold "Final Walkthrough Notes"]])}
-         [ant/input
-          {:placeholder "paste the google drive link here..."
-           :value       (:room-walkthrough-doc @form)
-           :size        "default"
-           :on-change   #(dispatch [:accounts.entry.reassign/update :room-walkthrough-doc (.. % -target -value)])}]]
+         {:label (format/format "What should their rate change to (currently $%.0f)?" (:rate license))}
+         (if @rate-loading
+           [:div.has-text-centered
+            [ant/spin {:tip "Fetching current rate..."}]]
+           [ant/input-number
+            {:style     {:width "100%"}
+             :value     (:rate @form)
+             :disabled  (nil? (:unit @form))
+             :on-change #(dispatch [:accounts.entry.reassign/update :rate %])}])]
+
 
         [ant/form-item
-         {:label (r/as-element
-                  [ant/tooltip
-                   {:title     "To be added after Ops has reviewed the final walkthrough details"
-                    :placement "topLeft"}
-                   [:span.bold "Security Desposit Refund Amount"]] )}
-         [ant/input-number
+         {:label "What date will the member move out of their old unit?"}
+         [form/date-picker
           {:style     {:width "50%"}
-           :value     (:deposit-refund @form)
-           :size      "default"
-           :on-change #(dispatch [:accounts.entry.reassign/update :deposit-refund %])}]]])
-     ]))
+           :value     (:move-out-date @form)
+           :disabled  (:editing @form)
+           :on-change #(dispatch [:accounts.entry.reassign/update :move-out-date %])}]]
+
+
+        [ant/form-item
+         {:label "What date will the member move in to their new unit?"}
+         [form/date-picker
+          {:style     {:width "50%"}
+           :value     (:move-in-date @form)
+           :disabled  (:editing @form)
+           :on-change #(dispatch [:accounts.entry.reassign/update :move-in-date %])}]]
+
+        [ant/form-item
+         {:label (r/as-element
+                  [:span [:span.bold "Asana Transfer Task"]
+                   [ant/tooltip
+                    {:placement "topLeft"
+                     :title     (r/as-element
+                                 [:div "Make a copy of the "
+                                  [:a {:href (:intra-xfer asana-transition-templates) :target "_blank"} "Member Transfer Template"]
+                                  " Asana task. Paste the link to your copy of that task in this input."])}
+                    [ant/icon {:type "question-circle-o"}]]])}
+
+         [ant/input
+          {:placeholder "paste the asana link here..."
+           :value       (:asana-task @form)
+           :size        "default"
+           :on-change   #(dispatch [:accounts.entry.reassign/update :asana-task (.. % -target -value)])}]]
+
+        (when-not (:editing @form)
+          [ant/form-item
+           [ant/checkbox {:checked   (:fee @form)
+                          :on-change #(dispatch [:accounts.entry.reassign/update :fee (.. % -target -checked)])}
+            "Should the member be assessed a room transfer fee?"]])
+
+        (when (:editing @form)
+          [:div
+           [ant/form-item
+            {:label (r/as-element
+                     [ant/tooltip
+                      {:title "Link to Google Drive Doc"}
+                      [:span.bold "Final Walkthrough Notes"]])}
+            [ant/input
+             {:placeholder "paste the google drive link here..."
+              :value       (:room-walkthrough-doc @form)
+              :size        "default"
+              :on-change   #(dispatch [:accounts.entry.reassign/update :room-walkthrough-doc (.. % -target -value)])}]]
+
+           [ant/form-item
+            {:label (r/as-element
+                     [ant/tooltip
+                      {:title     "To be added after Ops has reviewed the final walkthrough details"
+                       :placement "topLeft"}
+                      [:span.bold "Security Deposit Refund Amount"]] )}
+            [ant/input-number
+             {:style     {:width "50%"}
+              :value     (:deposit-refund @form)
+              :size      "default"
+              :on-change #(dispatch [:accounts.entry.reassign/update :deposit-refund %])}]]])])]))
 
 
 (defn- move-out-confirmation [account form]
@@ -624,22 +665,6 @@
       "Begin Move-out Process"])])
 
 
-(defn move-out-start []
-  [:div
-   [ant/alert
-    {:type        :warning
-     :show-icon   true
-     :message     "Before you begin:"
-     :description "Ensure that you have received written notice from the member stating their intent to move out."}]
-
-   [:br]
-   [:div.has-text-centered
-    [ant/button
-     {:size     :large
-      :on-click #(dispatch [:accounts.entry.transition/update :written-notice true])}
-     "Written notice has been given"]]])
-
-
 (defn- move-out-form-item
   [question input]
   [:div
@@ -648,9 +673,21 @@
    input])
 
 
-(defn- default-moment
-  [m]
-  (or m (js/moment (.getTime (js/Date.)))))
+(defn move-out-start []
+  [:div
+   [ant/alert
+    {:type        :warning
+     :show-icon   true
+     :message     "Before you begin:"
+     :description "Ensure that you have received written notice from the member stating their intent to move out. The date on which they submitted notice will be used to calculate things like termination fees."}]
+
+   [:br]
+   [:div.has-text-centered
+    [:p.bold "When did the member submit their written notice?"]
+    [form/date-picker
+     {:style         {:width "50%"}
+      :disabled-date (constantly false)
+      :on-change     #(dispatch [:accounts.entry.transition/add-notice %])}]]])
 
 
 (defn move-out-additional-form
@@ -670,7 +707,7 @@
     [ant/tooltip
      {:title     "To be added after Ops has reviewed the final walkthrough details"
       :placement "topLeft"}
-     [:p.bold "Security Desposit Refund Amount"]]
+     [:p.bold "Security Deposit Refund Amount"]]
     [ant/input-number
      {:style     {:width "50%"}
       :value     (:deposit-refund @form)
@@ -729,37 +766,39 @@
     (ant/modal-confirm
      {:title   "Confirm License Renewal"
       :content "Are you sure you want to continue? This action can't easily be undone and will send an email notification to the member."
-      :on-ok   #(dispatch [:accounts.entry/renew-license! license @form])
+      :on-ok   #(dispatch [:accounts.entry/renew-license! license form])
       :ok-type :primary
       :ok-text "Yes - Confirm License Renewal"})))
 
 
 (defn renewal-modal-footer
-  [account form]
+  [account {:keys [editing term rate] :as form}]
   [:div
    [ant/button
     {:size     :large
      :on-click #(dispatch [:modal/hide db/renewal-modal-key])}
     "Cancel"]
-   (if (:editing @form)
+   (if editing
      (let [license-id    (get-in account [:active_license :id])
            transition-id (get-in account [:active_license :transition :id])]
        [ant/button
         {:type     :primary
          :size     :large
-         :on-click #(dispatch [:accounts.entry/update-move-out! license-id transition-id @form])}
+         :on-click #(dispatch [:accounts.entry/update-move-out! license-id transition-id form])}
         "Update Renewal Info"])
      [ant/button
       {:type     :primary
        :size     :large
-       :disabled false ;; TODO - disable when no term?
+       :disabled (or (nil? term) (nil? rate))
        :on-click #(renewal-confirmation account form)}
       "Renew License"])])
+
 
 (def radio-style
   {:display     "block"
    :height      "30px"
    :line-height "30px"})
+
 
 (defn renewal-modal
   [account]
@@ -770,16 +809,12 @@
       :visible     @(subscribe [:modal/visible? db/renewal-modal-key])
       :after-close #(dispatch [:accounts.entry.transition/clear])
       :on-cancel   #(dispatch [:modal/hide db/renewal-modal-key])
-      :footer      (r/as-element [renewal-modal-footer account form])}
+      :footer      (r/as-element [renewal-modal-footer account @form])}
      [move-out-form-item
       [:p.bold "What will the member's new license term be?"]
-      [ant/select
-       {:style         {:width "50%"}
-        :default-value "3"
-        :on-change     #(dispatch [:accounts.entry.reassign/update-term license (int %)])}
-       [ant/select-option {:value "3"} "3 months"]
-       [ant/select-option {:value "6"} "6 months"]
-       [ant/select-option {:value "12"} "12 months"]]]
+      [term-select
+       {:value     (:term @form)
+        :on-change #(dispatch [:accounts.entry.transition/update-term license %])}]]
 
      [move-out-form-item
       [:p.bold "Will the member's monthly rate change?"
@@ -791,7 +826,7 @@
                    :style {:margin-left 10}}]]]
       [ant/radio-group
        {:on-change #(dispatch [:accounts.entry.transition/update :rate-changing (.. % -target -value)])
-        :disabled  (nil? (:rate @form))
+        :disabled  (nil? (:term @form))
         :value     (:rate-changing @form)}
        [ant/radio (assoc {:value false} :style radio-style) "No - it will not change"]
        [ant/radio (assoc {:value true} :style radio-style) "Yes - it will change to..."
@@ -805,23 +840,271 @@
                              :value       (:rate @form)
                              :on-change   #(dispatch [:accounts.entry.transition/update :rate %])}])]]]]))
 
+
 (defn membership-actions [account]
-  (when (nil? (:transition (:active_license account)))
+  [:div
+   [ant/button
+    {:icon     "swap"
+     :on-click #(dispatch [:accounts.entry.reassign/show account])}
+    "Transfer"]
+   [ant/button
+    {:icon     "retweet"
+     :on-click #(dispatch [:accounts.entry.renewal/show (:active_license account)])}
+    "Renew License"]
+   [ant/button
+    {:icon     "home"
+     :type     :danger
+     :ghost    true
+     :on-click #(dispatch [:accounts.entry.transition/show (get-in account [:active_license :transition])])}
+    "Move-out"]])
+
+(defn- line-description
+  [type type-str item idx]
+  (let [is-valid (subscribe [:security-deposit.line-item/is-valid? :desc type item idx])
+        value    (subscribe [:security-deposit/input-value item :desc])
+        on-change #(dispatch [:security-deposit.line-item/update %1 %2 :desc %3])]
+    [:div.column.is-7
+     [ant/form-item
+      (merge
+       {:label     (when (zero? idx) "Description")
+        :read-only true}
+       (if @is-valid
+         {}
+         {:help            (format/format "Please provide a description for this %s." type-str)
+          :has-feedback    true
+          :validate-status "error"}))
+      [ant/input-text-area
+       {:value       @value
+        :placeholder (str type-str " description")
+        :on-change   #(on-change idx type (.. % -target -value))}]]]))
+
+
+(defn- line-type
+  [type type-str item idx]
+  (let [is-valid (subscribe [:security-deposit.line-item/is-valid? :types type item idx])
+        value    (subscribe [:security-deposit/input-value item :types])
+        on-change #(dispatch [:security-deposit.line-item/update %1 %2 :types %3])
+        types    (subscribe [:security-deposit/types])]
+    [:div.column.is-2
+     [ant/form-item
+      (merge
+       {:label     (when (zero? idx) "Type")
+        :read-only true}
+       (if @is-valid
+         {}
+         {:help            "Please select a type for this charge."
+          :has-feedback    true
+          :validate-status "error"}))
+      [ant/select
+       {:style       {:width "100%"}
+        :value       @value
+        :placeholder (str type-str " type")
+        :on-change   #(on-change idx type (js->clj %))}
+       (map-indexed
+        (fn [i k]
+          [ant/select-option
+           {:key   i
+            :value k}
+           (str/upper-case (name k))])
+        @types)]]]))
+
+
+(defn- line-price
+  [type item idx]
+  (let [is-valid (subscribe [:security-deposit.line-item/is-valid? :price type item idx])
+        value    (subscribe [:security-deposit/input-value item :price])
+        on-change #(dispatch [:security-deposit.line-item/update %1 %2 :price %3])]
+    [:div.column.is-2
+     [ant/form-item
+      (merge
+       {:label     (when (zero? idx) "Amount")
+        :read-only true}
+       (if @is-valid
+         {}
+         {:help            "Please provide a number greater than or equal to zero."
+          :has-feedback    true
+          :validate-status "error"}))
+      [ant/input-number
+       {:value     @value
+        :style     {:width "100%"}
+        :formatter (fn [value] (str "$" value))
+        :on-change #(on-change idx type %)}]]]))
+
+
+(defn- line-delete
+  [type idx]
+  [:div.column.is-1
+   [ant/form-item
+    {:label     (when (zero? idx) "Remove")
+     :read-only true}
+    [ant/button
+     {:icon     "close-circle-o"
+      :shape    "circle"
+      :type     "danger"
+      :on-click #(dispatch [:security-deposit.line-item/delete idx type])}]]])
+
+
+(defn edit-line-item [idx item type]
+  (let [type-str (str/join "" (drop-last (name type)))]
+    [:div.columns
+     [line-description type type-str item idx]
+     [line-type type type-str item idx]
+     [line-price type item idx]
+     [line-delete type idx]]))
+
+
+(defn create-line-item [type]
+  [:div.align-center
+   [ant/button
+    {:icon     "plus"
+     :type     "dashed"
+     :style    {:width "30%"}
+     :on-click #(dispatch [:security-deposit.line-item/create type])}
+    (str "Add " (name type))]])
+
+
+(defn list-line-items [form type]
+  [:div
+   (map-indexed
+    (fn [idx item]
+      (with-meta
+        [edit-line-item idx item type]
+        {:key idx}))
+    (type @form))
+   [create-line-item type]])
+
+
+(defn total-credit [credits]
+  [:p.bold
+   (format/format
+    "+$%.2f"
+    @(subscribe [:security-deposit/sum-amount credits]))])
+
+
+(defn total-charge [charges]
+  [:p.bold
+   {:style {:color "#f5222d"}}
+   (format/format
+    "-$%.2f"
+    @(subscribe [:security-deposit/sum-amount charges]))])
+
+
+(defn- total-refund [deposit-amount form]
+  [:p.bold
+   (format/format
+    "$%.2f"
+    @(subscribe [:security-deposit/refund-amount deposit-amount form]))])
+
+
+(defn- refund-confirmation-content
+  [charge-amount refund-amount deposit-amount]
+  (merge (if (= deposit-amount refund-amount)
+           [:span.bold
+            (format/format "Are you sure you want to return this member's ENTIRE
+                    deposit of $%.2f?" refund-amount)]
+           [:span
+            "Are you sure want to charge this member "
+            [:span.bold
+             (format/format "$%.2f" (or charge-amount 0))]
+            " and refund "
+            [:span.bold (format/format "$%.2f" refund-amount)]
+            " of their security deposit?"])
+         [:br]
+         [:br]
+         [:span.bold "This will transfer money and cannot be undone!"]))
+
+
+(defn- refund-confirmation-modal [account deposit form]
+  (let [charge-amount @(subscribe [:security-deposit/sum-amount (:charges form)])
+        refund-amount @(subscribe [:security-deposit/refund-amount (:amount deposit)])
+        on-ok         #(dispatch [:security-deposit/refund! %1 %2 %3 %4])]
+    (ant/modal-confirm
+     {:title   "Confirm Deposit Refund"
+      :content (r/as-element [refund-confirmation-content charge-amount refund-amount (:amount deposit)])
+      :ok-type "danger"
+      :ok-text "Confirm!"
+      :on-ok   #(on-ok (:id account) (:id deposit) (:credits form) (:charges form))})))
+
+
+(defn- security-deposit-footer [account deposit]
+  (let [form       (subscribe [:security-deposit/form])
+        can-submit (subscribe [:security-deposit/can-submit? (:amount deposit)])
+        is-loading (subscribe [:ui/loading? :security-deposit/refund!])]
     [:div
      [ant/button
-      {:icon     "swap"
-       :on-click #(dispatch [:accounts.entry.reassign/show account])}
-      "Transfer"]
-     [ant/button
-      {:icon     "retweet"
-       :on-click #(dispatch [:accounts.entry.renewal/show (:active_license account)])}
-      "Renew License"]
-     [ant/button
-      {:icon     "home"
-       :type     :danger
-       :ghost    true
-       :on-click #(dispatch [:accounts.entry.transition/show (get-in account [:active_license :transition])])}
-      "Move-out"]]))
+      {:on-click #(dispatch [:modal/hide :security-deposit/modal])}
+      "Cancel"]
+     [ant/tooltip
+      {:title (when (not @can-submit)
+                "Please fill out or correct all fields and make sure the refunded amount is not negative or greater than the security deposit.")}
+      [ant/button
+       {:on-click #(refund-confirmation-modal account deposit @form)
+        :disabled (not @can-submit)
+        :loading  @is-loading
+        :type     "danger"}
+       "Refund Deposit!"]]]))
+
+
+(defn line-item-sums
+  [form deposit]
+  [:div.columns
+   [:div.column.is-10.align-right
+    [:p "Security Deposit"]
+    [:p "Total Credits"]
+    [:p "Total Charges"]
+    [:p.bold
+     {:style {:text-decoration "underline"}}
+     "Total Refund"]]
+   [:div.column.is-2.align-right
+    [:p (format/format "$%.2f" (:amount deposit))]
+    [total-credit (:credits @form)]
+    [total-charge (:charges @form)]
+    [total-refund (:amount deposit) @form]]])
+
+
+(defn security-deposit-modal [account]
+  (let [is-visible (subscribe [:modal/visible? :security-deposit/modal])
+        form       (subscribe [:security-deposit/form])
+        deposit    (:deposit account)]
+    [ant/modal
+     {:title     (format/format "Refund Security Deposit for %s" (:name account))
+      :width     "80%"
+      :visible   @is-visible
+      :on-close #(dispatch [:modal/hide :security-deposit/modal])
+      :footer    (r/as-element [security-deposit-footer account deposit])}
+     [:h3 "Deposit Credits"]
+     [list-line-items form :credits]
+     [:br]
+     [:h3 "Deposit Charges"]
+     [list-line-items form :charges]
+     [:br]
+     [line-item-sums form deposit]]))
+
+
+(defn transition-actions [account]
+  [:div
+   (let [refundable @(subscribe [:security-deposit/refundable? account])]
+     [ant/tooltip
+      {:title refundable}
+      [ant/button
+       {:icon     "exclamation-circle"
+        :type     :danger
+        :ghost    true
+        :disabled (boolean refundable)
+        :on-click #(dispatch [:modal/show :security-deposit/modal])}
+       (format/format "Refund Security Deposit")]])])
+
+
+(defn account-actions [account]
+  (cond
+    (nil? (:transition (:active_license account)))
+    [membership-actions account]
+
+    (not (nil? (:transition (:active_license account))))
+    [transition-actions account]
+
+    :otherwise
+    nil))
 
 
 (defn- render-status [_ {status :status}]
@@ -840,12 +1123,27 @@
 (defmulti transition-status (fn [_ transition] (:type transition)))
 
 
+(defn- confirm-delete-transition [transition]
+  (ant/modal-confirm
+   {:title   "Delete Transition?"
+    :content "Are you sure you want to continue?"
+    :on-ok   #(dispatch [:accounts.entry.transition/delete! transition])
+    :ok-type :danger
+    :ok-text "Yes - Confirm Delete"}))
+
+
 (defmethod transition-status :renewal
   [account transition]
-  (let [pname (format/make-first-name-possessive (:name account))
+  (let [pname       (format/first-name-possessive (:name account))
         new-license (:new_license transition)]
     [ant/card
-     {:title (str pname "License Renewal")}
+     {:title (str pname "License Renewal")
+      :extra (r/as-element
+              [:div
+               [ant/button
+                {:icon     "delete"
+                 :on-click #(confirm-delete-transition transition)}
+                "Cancel"]])}
      [:div.columns
       [:div.column
        [transition-status-item "Term" (str (:term new-license) " months")]
@@ -856,7 +1154,7 @@
 
 (defmethod transition-status :move_out
   [account transition]
-  (let [pname (format/make-first-name-possessive (:name account))]
+  (let [pname (format/first-name-possessive (:name account))]
     [ant/card
      {:title (str pname "Move-out Information")
       :extra (r/as-element
@@ -894,7 +1192,7 @@
 
 (defmethod transition-status :inter_xfer
   [account transition]
-  (let [pname (format/make-first-name-possessive (:name account))]
+  (let [pname (format/first-name-possessive (:name account))]
     [ant/card
      {:title (str pname "Inter-Community Transfer Info")
       :extra (r/as-element
@@ -907,9 +1205,9 @@
                    {:icon "check-square-o"}
                    "Open in Asana"]]) " "
                [ant/button
-                  {:icon     "edit"
-                   :on-click #(dispatch [:accounts.entry.reassign/edit transition])}
-                  "Edit"]])}
+                {:icon     "edit"
+                 :on-click #(dispatch [:accounts.entry.reassign/edit transition])}
+                "Edit"]])}
      [:div.columns
       [:div.column
        [transition-status-item "Move-out date" (format/date-short (:date transition))]
@@ -945,7 +1243,7 @@
 
 (defmethod transition-status :intra_xfer
   [account transition]
-  (let [pname (format/make-first-name-possessive (:name account))]
+  (let [pname (format/first-name-possessive (:name account))]
     [ant/card
      {:title (str pname "Transfer Info")
       :extra (r/as-element
@@ -996,7 +1294,7 @@
 
 (defn membership-orders-list [account orders]
   [ant/card
-   {:title (str (format/make-first-name-possessive (:name account)) "Helping Hands Orders")}
+   {:title (str (format/first-name-possessive (:name account)) "Helping Hands Orders")}
    [ant/table
     (let [service-route #(routes/path-for :services.orders/entry :order-id (.-id %))]
       {:columns     [{:title     ""
@@ -1022,17 +1320,19 @@
         transition (:transition (:active_license account))
         orders     @(subscribe [:account/orders (:id account)])]
     [:div.columns
-     [move-out-modal account]
-     [renewal-modal account]
-     [reassign-modal account]
+     (when is-active
+       [:div
+        [move-out-modal account]
+        [renewal-modal account]
+        [reassign-modal account]])
+     [security-deposit-modal account]
      [:div.column
       [membership/license-summary license
-       (when is-active {:content [membership-actions account]})]]
+       (when is-active {:content [account-actions account]})]]
      [:div.column
       (when is-active [status-bar account])
       (when (not (nil? transition)) [transition-status account transition])
       (when is-active [membership-orders-list account orders])]]))
-
 
 
 (defn- menu-item [role key]

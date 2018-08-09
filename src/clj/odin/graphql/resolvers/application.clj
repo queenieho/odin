@@ -5,14 +5,16 @@
             [blueprints.models.events :as events]
             [blueprints.models.license :as license]
             [blueprints.models.source :as source]
+            [blueprints.models.unit :as unit]
             [clj-time.core :as t]
             [clojure.set :as set]
             [com.walmartlabs.lacinia.resolve :as resolve]
             [datomic.api :as d]
             [odin.graphql.authorization :as authorization]
             [ring.util.response :as response]
-            [teller.customer :as customer]
-            [teller.payment :as payment]
+            [teller.customer :as tcustomer]
+            [teller.payment :as tpayment]
+            [teller.property :as tproperty]
             [toolbelt.core :as tb]
             [toolbelt.datomic :as td]))
 
@@ -97,7 +99,7 @@
 
 (defn approve!
   "Approve an application for membership."
-  [{:keys [conn requester]} {:keys [application params]} _]
+  [{:keys [conn requester teller]} {:keys [application params]} _]
   (let [application (d/entity (d/db conn) application)
         account     (application/account application)]
     (cond
@@ -108,8 +110,12 @@
       (resolve/resolve-as nil {:message "Application must be in `submitted` status for approval!"})
 
       :otherwise
-      (let [license (license/by-term (d/db conn) (:term params))
-            unit    (d/entity (d/db conn) (:unit params))]
+      (let [license   (license/by-term (d/db conn) (:term params))
+            unit      (d/entity (d/db conn) (:unit params))
+            community (unit/property unit)
+            property  (tproperty/by-community teller community)]
+        (when-let [customer (tcustomer/by-account teller account)]
+          (tcustomer/set-property! customer property))
         @(d/transact conn (conj (approval/approve requester account unit license (:move_in params))
                                 (events/account-approved account)
                                 (source/create requester)))
@@ -247,11 +253,11 @@
           (response/status 400))
       :otherwise
       (do
-        (let [customer (customer/create! teller (account/email account)
+        (let [customer (tcustomer/create! teller (account/email account)
                                          {:account account
                                           :source  token})]
-          (payment/create! customer application-fee :payment.type/application-fee
-                           {:source (first (customer/sources customer :payment-source.type/card))})
+          (tpayment/create! customer application-fee :payment.type/application-fee
+                           {:source (first (tcustomer/sources customer :payment-source.type/card))})
           @(d/transact conn (application/submit application)))))
     (d/entity (d/db conn) (td/id application))))
 

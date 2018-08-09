@@ -3,13 +3,12 @@
             [clojure.edn :as edn]
             [clojure.java.io :as io]
             [clojure.string :as string]
-            [cheshire.core :as json]
             [com.walmartlabs.lacinia.schema :as schema]
             [com.walmartlabs.lacinia.util :as util]
             [datomic.api :as d]
             [mount.core :refer [defstate]]
-            [odin.graphql.resolvers :as resolvers]
-            [taoensso.timbre :as timbre]))
+            [odin.graphql.resolvers :as resolvers]))
+
 
 (defn- parse-keyword [s]
   (let [[ns' n'] (string/split s #"/")]
@@ -86,6 +85,15 @@
 
     )
 
+  (let [account (d/entity (d/db conn) [:account/email "member@test.com"])]
+    (execute schema
+             (venia/graphql-query
+              {:venia/queries
+               [[:account {:id (:db/id account)}
+                 [[:deposit [:id :due :amount [:line_items [:id]]]]]]]})
+             nil
+             ctx))
+
 
   (let [account (d/entity (d/db conn) [:account/email "apply@test.com"])]
     (pretty
@@ -103,7 +111,7 @@
      (execute schema
               (venia/graphql-query
                {:venia/queries
-                [[:payments {:account (:db/id account)}
+                [[:payments {:params {:account (:db/id account)}}
                   [:id :type [:order [:id]] [:property [:name]]]]]})
               nil
               ctx)))

@@ -3,6 +3,7 @@
             [blueprints.models.events :as events]
             [blueprints.models.order :as order]
             [blueprints.models.payment :as payment]
+            [blueprints.models.property :as property]
             [blueprints.models.security-deposit :as deposit]
             [blueprints.models.service :as service]
             [blueprints.models.source :as source]
@@ -25,6 +26,46 @@
             [toolbelt.datomic :as td]))
 
 ;; ==============================================================================
+;; constants ====================================================================
+;; ==============================================================================
+
+
+(def ^:private late-fee-percent
+  "The percentage applied to late rent payments (10%)."
+  0.1)
+
+
+;; ==============================================================================
+;; helpers ======================================================================
+;; ==============================================================================
+
+
+(defn- past-first-courtesy?
+  "Check if there has been more than one late payment, the first being a courtesy."
+  [payments]
+  (some? (tb/find-by #(tpayment/overdue? % (tpayment/paid-on %)) payments)))
+
+
+(defn- should-assess-late-fee?
+  "Check if there is more than one late payment and the payment is overdue."
+  [teller payment]
+  (when (and (or (tpayment/due? payment) (tpayment/failed? payment))
+             (tpayment/overdue? payment (java.util.Date.)))
+    (let [customer (tpayment/customer payment)
+          payments (tpayment/query teller {:customers     [customer]
+                                           :payment-types [:payment.type/rent]
+                                           :statuses      [:payment.status/paid
+                                                           :payment.status/pending]})]
+      (past-first-courtesy? payments))))
+
+
+(defn- payment->order [db payment]
+  (if-let [subs (tpayment/subscription payment)]
+    (order/by-subscription db subs)
+    (order/by-payment db payment)))
+
+
+;; ==============================================================================
 ;; fields =======================================================================
 ;; ==============================================================================
 
@@ -32,7 +73,8 @@
 (defn account
   "The account associated with this `payment`."
   [_ _ payment]
-  (tcustomer/account (tpayment/customer payment)))
+  (or (tcustomer/account (tpayment/customer payment))
+      (tcustomer/account (tpayment/payee payment))))
 
 
 (defn amount
@@ -64,9 +106,11 @@
 (defn- is-first-deposit-payment?
   [teller payment]
   (let [customer (tpayment/customer payment)
-        payments (tpayment/query teller
-                                 {:customers     [customer]
-                                  :payment-types [:payment.type/deposit]})]
+        payments (filterv
+                  (comp nil? tpayment/subtypes)
+                  (tpayment/query teller
+                                  {:customers     [customer]
+                                   :payment-types [:payment.type/deposit]}))]
     (or (= (count payments) 1)
         (= (tpayment/id payment)
            (->> payments
@@ -78,10 +122,22 @@
 (defn- deposit-desc
   "Description for a security deposit `payment`."
   [teller account payment]
-  (let [entire-deposit-desc  "entire security deposit payment"
-        partial-deposit-desc "security deposit installment"
+  (let [entire-deposit-desc  "Entire security deposit payment"
+        partial-deposit-desc "Security deposit installment"
+        deposit-refund-desc  "Deposit refund"
+        deposit-refund-credit-desc  "Deposit refund credit"
+        deposit-refund-charge-desc  "Deposit refund charge"
         deposit              (deposit/by-account account)]
     (cond
+      (= :deposit-refund (first (tpayment/subtypes payment)))
+      deposit-refund-desc
+
+      (= :deposit-refund-credit (first (tpayment/subtypes payment)))
+      deposit-refund-credit-desc
+
+      (= :deposit-refund-charge (first (tpayment/subtypes payment)))
+      deposit-refund-charge-desc
+
       (= :deposit.type/full (deposit/type deposit))
       entire-deposit-desc
 
@@ -92,24 +148,52 @@
       (str "second " partial-deposit-desc))))
 
 
+(defn- period-desc [db payment]
+  (when (and (some? (tpayment/period-start payment))
+             (some? (tpayment/period-end payment)))
+    (let [customer (tpayment/customer payment)
+          account   (tcustomer/account customer)
+          property  (account/current-property db account)]
+      (->> [(tpayment/period-start payment) (tpayment/period-end payment)]
+           (map (comp date/short #(date/tz-uncorrected % (property/time-zone property))))
+           (apply format " from %s-%s")))))
+
+
 (defn description
   "A description of this `payment`. Varies based on payment type."
   [{:keys [teller conn]} _ payment]
-  (letfn [(-rent-desc [payment]
-            (->> [(tpayment/period-start payment) (tpayment/period-end payment)]
-                 (map date/short)
-                 (apply format "rent for %s-%s")))
-          (-order-desc [payment]
-            (let [order        (order/by-payment (d/db conn) (teller/entity payment))
-                  service-desc (service/name (order/service order))]
-              (or (when-let [d (order/summary order)]
-                    (format "%s (%s)" d service-desc))
-                  service-desc)))]
-    (case (tpayment/type payment)
-      :payment.type/rent    (-rent-desc payment)
-      :payment.type/order   (-order-desc payment)
-      :payment.type/deposit (deposit-desc teller (tcustomer/account (tpayment/customer payment)) payment)
-      nil)))
+  (let [account  (or (-> payment tpayment/customer tcustomer/account)
+                     (-> payment tpayment/payee tcustomer/account))
+        property (account/current-property (d/db conn) account)]
+    (letfn [(-rent-desc [payment]
+              (str "Rent" (period-desc (d/db conn) payment)))
+            (-order-desc [payment]
+              (let [order        (payment->order (d/db conn) payment)
+                    service-desc (service/name (order/service order))]
+                (str (or (when-let [d (order/summary order)]
+                           (format "%s (%s)" d service-desc))
+                         service-desc)
+                     (period-desc (d/db conn) payment))))
+            (-late-fee-desc [payment]
+              (let [parent (tpayment/associated-to payment)]
+                (format "Late fee (%s)" (-rent-desc parent))))
+            (-application-fee-desc [payment]
+              (str "Starcity application fee"))
+            (-fee-desc [payment]
+              (if-let [subtypes (tpayment/subtypes payment)]
+                (->> (map name subtypes)
+                     (interpose ", ")
+                     (apply str)
+                     (format "Fee (%s)"))
+                "Fee"))]
+      (case (tpayment/type payment)
+        :payment.type/rent            (-rent-desc payment)
+        :payment.type/order           (-order-desc payment)
+        :payment.type/deposit         (deposit-desc teller account payment)
+        :payment.type/late-fee        (-late-fee-desc payment)
+        :payment.type/application-fee (-application-fee-desc payment)
+        :payment.type/fee             (-fee-desc payment)
+        nil))))
 
 
 (defn due
@@ -118,13 +202,21 @@
   (tpayment/due payment))
 
 
-(defn late-fee
+(defn late-fee-due
+  "Any late fees associated with this `payment`."
+  [{teller :teller} _ payment]
+  (when (should-assess-late-fee? teller payment)
+    (* late-fee-percent (tpayment/amount payment))))
+
+
+(defn late-fee-paid
   "Any late fees associated with this `payment`."
   [_ _ payment]
-  (->> (tpayment/associated payment)
-       (filter tpayment/late-fee?)
-       (map tpayment/amount)
-       (apply +)))
+  (when-let [apayments (tpayment/associated payment)]
+    (->> apayments
+         (filter tpayment/late-fee?)
+         (map tpayment/amount)
+         (apply +))))
 
 
 (defn method
@@ -142,7 +234,7 @@
 (defn order
   "The order associated with this `payment`, if any."
   [{conn :conn} _ payment]
-  (order/by-payment (d/db conn) (teller/entity payment)))
+  (payment->order (d/db conn) payment))
 
 
 (defn paid-on
@@ -223,6 +315,8 @@
    (assoc params :limit 100)
    :customers (when-let [c (and (some? account) (tcustomer/by-account teller account))]
                 [c])
+   :payees (when-let [c (and (some? account) (tcustomer/by-account teller account))]
+             [c])
    :properties (when-some [p property]
                  [(tproperty/by-community teller p)])
    :sources (when-some [s source]
@@ -303,10 +397,6 @@
 ;; create =======================================================================
 
 
-;; =============================================================================
-;; Create Payments
-
-
 (defmulti create-payment!* (fn [_ params] (:type params)))
 
 
@@ -360,24 +450,33 @@
 ;; make payments ===============================================================
 
 
-;; TODO: How to deal with passing the fee?
-;; TODO: How do we communicate what the fee will be to the person making the
-;; payment?
 ;; TODO: We'll need to be able to update the fee amount before we make the
 ;; charge if they're going to be paying with a card
+
+
 (defn pay-rent!
   [{:keys [requester teller conn] :as ctx} {:keys [id source] :as params} _]
   (let [payment (tpayment/by-id teller id)
         source  (tsource/by-id teller source)]
-    (try
-      (if-let [error (ensure-payment-allowed payment source)]
-        (resolve/resolve-as nil {:message error})
-        (let [py (tpayment/charge! payment {:source source})]
-          @(d/transact conn [(events/rent-payment-made requester (td/id py))])
-          py))
-      (catch Throwable t
-        (timbre/error t ::pay-rent {:payment-id id :source-id (tsource/id source)})
-        (resolve/resolve-as nil {:message (error-message t)})))))
+    (letfn [(-charge! []
+              (let [py (tpayment/charge! payment {:source source})]
+                @(d/transact conn [(events/rent-payment-made requester (td/id py))])
+                py))
+            (-late-fee! []
+              (when (should-assess-late-fee? teller payment)
+                (let [amount (* late-fee-percent (tpayment/amount payment))
+                      apy    (tpayment/add-late-fee! payment amount)]
+                  (tpayment/charge! apy {:source source}))))
+            (-pay! []
+              (-late-fee!)
+              (-charge!))]
+      (try
+        (if-let [error (ensure-payment-allowed payment source)]
+          (resolve/resolve-as nil {:message error})
+          (-pay!))
+        (catch Throwable t
+          (timbre/error t ::pay-rent {:payment-id id :source-id (tsource/id source)})
+          (resolve/resolve-as nil {:message (error-message t)}))))))
 
 
 (defn pay-deposit!
@@ -455,9 +554,9 @@
 
 (defmethod authorization/authorized? :payment/pay-deposit!
   [{teller :teller} account params]
-  (let [payment  (tpayment/by-id teller (:id params))
-        customer (tcustomer/by-account teller account)]
-    (= customer (tpayment/customer payment))))
+  (let [source (tsource/by-id teller (:source params))
+        customer (tsource/customer source)]
+    (= customer (tcustomer/by-account teller account))))
 
 
 (defmethod authorization/authorized? :payment/pay!
@@ -474,30 +573,31 @@
 
 (def resolvers
   {;; fields
-   :payment/id           (fn [_ _ payment] (tpayment/id payment))
-   :payment/account      account
-   :payment/amount       amount
-   :payment/autopay?     autopay?
-   :payment/check        check
-   :payment/created      created
-   :payment/description  description
-   :payment/due          due
-   :payment/entity-id    (fn [_ _ payment] (td/id payment))
-   :payment/late-fee     late-fee
-   :payment/method       method
-   :payment/order        order
-   :payment/paid-on      paid-on
-   :payment/pend         period-end
-   :payment/pstart       period-start
-   :payment/property     property
-   :payment/source       source
-   :payment/status       status
-   :payment/subtypes     subtypes
-   :payment/type         payment-type
+   :payment/id            (fn [_ _ payment] (tpayment/id payment))
+   :payment/account       account
+   :payment/amount        amount
+   :payment/autopay?      autopay?
+   :payment/check         check
+   :payment/created       created
+   :payment/description   description
+   :payment/due           due
+   :payment/entity-id     (fn [_ _ payment] (td/id payment))
+   :payment/late-fee-paid late-fee-paid
+   :payment/late-fee-due  late-fee-due
+   :payment/method        method
+   :payment/order         order
+   :payment/paid-on       paid-on
+   :payment/pend          period-end
+   :payment/pstart        period-start
+   :payment/property      property
+   :payment/source        source
+   :payment/status        status
+   :payment/subtypes      subtypes
+   :payment/type          payment-type
    ;; queries
-   :payment/list         payments
+   :payment/list          payments
    ;; mutations
-   :payment/create!      create-payment!
-   :payment/pay-rent!    pay-rent!
-   :payment/pay-deposit! pay-deposit!
-   :payment/pay!         pay!})
+   :payment/create!       create-payment!
+   :payment/pay-rent!     pay-rent!
+   :payment/pay-deposit!  pay-deposit!
+   :payment/pay!          pay!})

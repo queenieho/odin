@@ -963,10 +963,15 @@
 
 
 (defn- finish! [conn account {token :token}]
-  (let [community (approval/property (approval/by-account account))]
+  (let [community (approval/property (approval/by-account account))
+        property  (tproperty/by-community teller community)]
     (when token
       (if-let [customer (tcustomer/by-account teller account)]
-        (tsource/add-source! customer token {:payment-type :payment.type/order})
+        (do
+          (when-not (tcustomer/connected? customer property)
+            (tcustomer/set-property! customer property))
+          (tsource/add-source! (tcustomer/by-account teller account) token
+                               {:payment-type :payment.type/order}))
         (tcustomer/create! teller (account/email account)
                            {:source   token
                             :account  account

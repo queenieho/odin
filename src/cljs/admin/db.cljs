@@ -2,6 +2,7 @@
   (:require [admin.accounts.db :as accounts]
             [admin.overview.db :as overview]
             [admin.kami.db :as kami]
+            [admin.license-terms.db :as license-terms]
             [admin.metrics.db :as metrics]
             [admin.notes.db :as notes]
             [admin.profile.db :as profile]
@@ -41,6 +42,7 @@
    loading/db
    accounts/default-value
    kami/default-value
+   license-terms/default-value
    metrics/default-value
    notes/default-value
    payments/default-value

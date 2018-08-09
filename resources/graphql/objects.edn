@@ -38,6 +38,12 @@
                                     :resolve (:get :person/phone-number)}
                 :property          {:type    :property
                                     :resolve :account/property}
+                :refundable        {:type    (non-null :Boolean)
+                                    :resolve :account/refundable}
+                :refunded          {:type    (non-null :Boolean)
+                                    :resolve :account/refunded}
+                :can_pay           {:type    (non-null :Boolean)
+                                    :resolve :account/can-pay}
                 :role              {:type    (non-null :role)
                                     :resolve :account/role}
                 :service_source    {:type        :payment_source
@@ -231,7 +237,9 @@
                                :resolve     :deposit/amount-pending}
             :refund_status    {:type        :deposit_refund_status
                                :description "The status of the refund, if any."
-                               :resolve     :deposit/refund-status}}}
+                               :resolve     :deposit/refund-status}
+            :line_items       {:type    (list :line_item)
+                               :resolve :deposit/line-items}}}
 
 
   :emergency_contact
@@ -268,7 +276,9 @@
             :new_license           {:type    :license
                                     :resolve (:get :license-transition/new-license)}
             :date                  {:type    :Instant
-                                    :resolve (:get :license-transition/date)}}}
+                                    :resolve (:get :license-transition/date)}
+            :notice_date           {:type    :Instant
+                                    :resolve (:get :license-transition/notice-date)}}}
 
 
   :license
@@ -407,57 +417,61 @@
             :cost  {:type    Float
                     :resolve (:get :line-item/cost)}
             :price {:type    (non-null Float)
-                    :resolve (:get :line-item/price)}}}
+                    :resolve (:get :line-item/price)}
+            :types {:type    (list :Keyword)
+                    :resolve (:get :line-item/types)}}}
 
 
   :payment
-  {:fields {:id          {:type    (non-null :ID)
-                          :resolve :payment/id}
-            :account     {:type    (non-null :account)
-                          :resolve :payment/account}
-            :amount      {:type    (non-null Float)
-                          :resolve :payment/amount}
-            :autopay     {:type        Boolean
-                          :description "Is this an autopay payment?"
-                          :resolve     :payment/autopay?}
-            :check       {:type    :check
-                          :resolve :payment/check}
-            :created     {:type    (non-null :Instant)
-                          :resolve :payment/created}
-            :description {:type    String
-                          :resolve :payment/description}
-            :due         {:type    :Instant
-                          :resolve :payment/due}
-            :ext_id      {:type        String
-                          :description "DEPRECATED: The Stripe external id."
-                          :resolve     :payment/id}
-            :late_fee    {:type    Float
-                          :resolve :payment/late-fee}
-            :method      {:type    :payment_method
-                          :resolve :payment/method}
-            :order       {:type    :order
-                          :resolve :payment/order}
-            :paid_on     {:type    :Instant
-                          :resolve :payment/paid-on}
-            :pend        {:type        :Instant
-                          :description "Period end."
-                          :resolve     :payment/pend}
-            :property    {:type        :property
-                          :description "The property that the member that made this payment is associated with."
-                          :resolve     :payment/property}
-            :pstart      {:type        :Instant
-                          :description "Period start."
-                          :resolve     :payment/pstart}
-            :source      {:type    :payment_source
-                          :resolve :payment/source}
-            :status      {:type    :payment_status
-                          :resolve :payment/status}
-            :subtypes    {:type    (list :Keyword)
-                          :resolve :payment/subtypes}
-            :type        {:type    :payment_type
-                          :resolve :payment/type}
-            :uuid        {:type    (non-null String)
-                          :resolve :payment/id}}}
+  {:fields {:id            {:type    (non-null :ID)
+                            :resolve :payment/id}
+            :account       {:type    (non-null :account)
+                            :resolve :payment/account}
+            :amount        {:type    (non-null Float)
+                            :resolve :payment/amount}
+            :autopay       {:type        Boolean
+                            :description "Is this an autopay payment?"
+                            :resolve     :payment/autopay?}
+            :check         {:type    :check
+                            :resolve :payment/check}
+            :created       {:type    (non-null :Instant)
+                            :resolve :payment/created}
+            :description   {:type    String
+                            :resolve :payment/description}
+            :due           {:type    :Instant
+                            :resolve :payment/due}
+            :ext_id        {:type        String
+                            :description "DEPRECATED: The Stripe external id."
+                            :resolve     :payment/id}
+            :late_fee_due  {:type    Float
+                            :resolve :payment/late-fee-due}
+            :late_fee_paid {:type    Float
+                            :resolve :payment/late-fee-paid}
+            :method        {:type    :payment_method
+                            :resolve :payment/method}
+            :order         {:type    :order
+                            :resolve :payment/order}
+            :paid_on       {:type    :Instant
+                            :resolve :payment/paid-on}
+            :pend          {:type        :Instant
+                            :description "Period end."
+                            :resolve     :payment/pend}
+            :property      {:type        :property
+                            :description "The property that the member that made this payment is associated with."
+                            :resolve     :payment/property}
+            :pstart        {:type        :Instant
+                            :description "Period start."
+                            :resolve     :payment/pstart}
+            :source        {:type    :payment_source
+                            :resolve :payment/source}
+            :status        {:type    :payment_status
+                            :resolve :payment/status}
+            :subtypes      {:type    (list :Keyword)
+                            :resolve :payment/subtypes}
+            :type          {:type    :payment_type
+                            :resolve :payment/type}
+            :uuid          {:type    (non-null String)
+                            :resolve :payment/id}}}
 
 
   :payment_source
@@ -485,29 +499,44 @@
                        :description "Payments associated with this source."
                        :resolve     :payment-source/payments}}}
 
+
+  :property_bank_account
+  {:fields {:id       {:type    (non-null :String)
+                       :resolve (:get :id)}
+            :verified {:type    (non-null :Boolean)
+                       :resolve (:get :verified)}
+            :type     {:type    (non-null :bank_account_type)
+                       :resolve (:get :type)}}}
+
+
   :property
-  {:fields {:id               {:type    (non-null :Long)
-                               :resolve (:get :db/id)}
-            :name             {:type    (non-null String)
-                               :resolve (:get :property/name)}
-            :code             {:type    (non-null String)
-                               :resolve (:get :property/internal-name)}
-            :cover_image_url  {:type    (non-null String)
-                               :resolve (:get :property/cover-image-url)}
-            :units            {:type    (list :unit)
-                               :resolve (:get :property/units)}
-            :rates            {:type    (list :rate)
-                               :resolve :property/license-prices}
-            :tours            {:type        (non-null Boolean)
-                               :description "Is touring enabled?"
-                               :resolve     :property/tours}
-            :has_financials   {:type        (non-null Boolean)
-                               :description "Does this community have financial information?"
-                               :resolve     :property/has-financials}
-            :copy_id          {:type    String
-                               :resolve (:get :tipe/document-id)}
-            :application_copy {:type    :community_application_copy
-                               :resolve :property/application-copy}}}
+  {:fields {:id                      {:type    (non-null :Long)
+                                      :resolve (:get :db/id)}
+            :name                    {:type    (non-null String)
+                                      :resolve (:get :property/name)}
+            :bank_accounts           {:type    (list :property_bank_account)
+                                      :resolve :property/bank-accounts}
+            :code                    {:type    (non-null String)
+                                      :resolve (:get :property/internal-name)}
+            :cover_image_url         {:type    (non-null String)
+                                      :resolve (:get :property/cover-image-url)}
+            :units                   {:type    (list :unit)
+                                      :resolve (:get :property/units)}
+            :rates                   {:type    (list :rate)
+                                      :resolve :property/license-prices}
+            :tours                   {:type        (non-null Boolean)
+                                      :description "Is touring enabled?"
+                                      :resolve     :property/tours}
+            :has_financials          {:type        (non-null Boolean)
+                                      :description "Does this community have financial information?"
+                                      :resolve     :property/has-financials}
+            :has_verified_financials {:type        (non-null Boolean)
+                                      :resolve     :property/has-verified-financials
+                                      :description "Has the financial information for this community been verified?"}
+            :copy_id                 {:type    String
+                                      :resolve (:get :tipe/document-id)}
+            :application_copy        {:type    :community_application_copy
+                                      :resolve :property/application-copy}}}
 
 
   :community_application_copy

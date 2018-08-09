@@ -8,7 +8,8 @@
             [re-frame.core :refer [reg-event-fx
                                    reg-event-db
                                    path]]
-            [toolbelt.core :as tb]))
+            [toolbelt.core :as tb]
+            [taoensso.timbre :as timbre]))
 
 
 ;; ==============================================================================
@@ -61,8 +62,8 @@
      {:dispatch [:ui/loading k true]
       :graphql   {:query
                   [[:account {:id account-id}
-                    [:id :name :email :phone :role :dob
-                     [:deposit [:amount :due :status]]
+                    [:id :name :email :phone :role :dob :refundable :refunded
+                     [:deposit [:id :amount :due :refund_status :status [:line_items [:desc :types :price]]]]
                      [:property [:id :name]]
                      ;; TODO: Move to separate query
                      [:application [:id :move_in :created :updated :submitted :status :term :has_pet
@@ -157,6 +158,7 @@
  (fn [{db :db} [_ query]]
    {:route (db/params->route (assoc (:params db) :q query))}))
 
+
 ;; ==============================================================================
 ;; entry ========================================================================
 ;; ==============================================================================
@@ -246,6 +248,37 @@
      [:account/fetch (get-in response [:data :approve_application :account :id])]]}))
 
 
+;; ==============================================================================
+;; license transitions ==========================================================
+;; ==============================================================================
+
+
+(reg-event-fx
+ :accounts.entry.transition/fetch-rate
+ [(path db/path)]
+ (fn [_ [k unit-id term on-success]]
+   {:dispatch [:ui/loading k true]
+    :graphql  {:query
+               [[:unit {:id unit-id}
+                 [[:rates [:rate :term]]
+                  [:property [[:rates [:rate :term]]]]]]]
+               :on-success [::fetch-rate-success k term on-success]
+               :on-failure [:graphql/failure k]}}))
+
+
+(reg-event-fx
+ ::fetch-rate-success
+ [(path db/path)]
+ (fn [_ [_ k term on-success response]]
+   (let [urates (get-in response [:data :unit :rates])
+         prates (get-in response [:data :unit :property :rates])
+         rate   (->> [urates prates]
+                     (map (comp :rate (partial tb/find-by (comp #{term} :term)))) ; oh my
+                     (apply max))]
+     {:dispatch-n [[:ui/loading k false]
+                   (conj (vec on-success) rate)]})))
+
+
 ;; reassign =====================================================================
 
 
@@ -272,7 +305,9 @@
  (fn [_ [_ account]]
    (let [current-community-id (get-in account [:property :id])]
      {:dispatch-n [[:modal/show db/reassign-modal-key]
+                   [:license-terms/query]
                    [:properties/query]
+                   [:accounts.entry.reassign/update :fee true]
                    [:accounts.entry.reassign/update :community current-community-id]
                    [:accounts.entry.reassign/update :type :intra-xfer]
                    [:property/fetch current-community-id]]})))
@@ -302,13 +337,14 @@
  :accounts.entry.reassign/select-community
  [(path db/path)]
  (fn [{db :db} [_ community license]]
-   (let [community (tb/str->int community)
-         current-community (get-in license [:property :id])]
+   (let [community         (tb/str->int community)
+         current-community (get-in license [:property :id])
+         type              (if (= community current-community)
+                             :intra-xfer
+                             :inter-xfer)]
      {:dispatch-n [[:accounts.entry.reassign/update :community community]
                    [:property/fetch community]
-                   (if (= community current-community)
-                     [:accounts.entry.reassign/update :type :intra-xfer]
-                     [:accounts.entry.reassign/update :type :inter-xfer])]})))
+                   [:accounts.entry.reassign/update :type type]]})))
 
 
 (reg-event-fx
@@ -317,58 +353,34 @@
  (fn [db [_ unit term]]
    (let [unit (tb/str->int unit)]
      {:dispatch-n [[:accounts.entry.reassign/update :unit unit]
-                   [:accounts.entry.reassign/fetch-rate unit term :accounts.entry.reassign/update]]})))
-
-
-(reg-event-fx
- :accounts.entry.reassign/fetch-rate
- [(path db/path)]
- (fn [_ [k unit-id term on-success]]
-   {:dispatch [:ui/loading k true]
-    :graphql  {:query
-               [[:unit {:id unit-id}
-                 [[:rates [:rate :term]]
-                  [:property [[:rates [:rate :term]]]]]]]
-               :on-success [::fetch-rate-success k term on-success]
-               :on-failure [:graphql/failure k]}}))
-
-
-(reg-event-fx
- ::fetch-rate-success
- [(path db/path)]
- (fn [_ [_ k term on-success response]]
-   (let [urates (get-in response [:data :unit :rates])
-         prates (get-in response [:data :unit :property :rates])
-         rate   (->> [urates prates]
-                     (map (comp :rate (partial tb/find-by (comp #{term} :term)))) ; oh my
-                     (apply max))]
-     {:dispatch-n [[:ui/loading k false]
-                   [on-success :rate rate]]})))
+                   [:accounts.entry.transition/fetch-rate unit term
+                    [:accounts.entry.reassign/update :rate]]]})))
 
 
 (defn- reassign-form->transition-params
-  [account {:keys [type move-out-date unit rate move-in-date asana-task] :as form-data}]
-  (let [result (tb/assoc-when
-                {:current_license    (get-in account [:active_license :id])
-                 :type               (keyword (string/replace (name type) "-" "_"))
-                 :date               (.toISOString move-out-date)
-                 :new_license_params {:unit unit
-                                      :rate rate
-                                      :term (get-in account [:active_license :term])
-                                      :date (.toISOString move-in-date)}}
-                :asana_task asana-task)]
-    result))
+  [account {:keys [type move-out-date unit rate move-in-date asana-task term fee]}]
+  (tb/assoc-when
+   {:current_license    (get-in account [:active_license :id])
+    :type               (keyword (string/replace (name type) "-" "_"))
+    :date               (.toISOString (format/beginning-of-day move-out-date))
+    :fee                fee
+    :new_license_params {:unit unit
+                         :rate rate
+                         :term (or term (get-in account [:active_license :term]))
+                         :date (.toISOString (format/beginning-of-day move-in-date))}}
+   :asana_task asana-task))
+
 
 (reg-event-fx
  :accounts.entry/reassign!
  [(path db/path)]
  (fn [_ [k account form]]
-   {:dispatch  [:ui/loading k true]
-    :graphql {:mutation
-              [[:transfer_create {:params (reassign-form->transition-params account form)}
-                [:id [:account [:id]]]]]
-              :on-success [::reassign-unit-success k]
-              :on-failure [:graphql/failure k]}}))
+   {:dispatch [:ui/loading k true]
+    :graphql  {:mutation
+               [[:transition_create {:params (reassign-form->transition-params account form)}
+                 [:id [:account [:id]]]]]
+               :on-success [::reassign-unit-success k]
+               :on-failure [:graphql/failure k]}}))
 
 
 (reg-event-fx
@@ -376,25 +388,25 @@
  [(path db/path)]
  (fn [{db :db} [k account form]]
    (let [transition (get-in account [:active_license :transition])
-         params (tb/assoc-when
-                 {:id (:id transition)
-                  :current_license (get-in account [:active_license :id])}
-                 :room_walkthrough_doc (:room-walkthrough-doc form)
-                 :asana_task (:asana-task form)
-                 :deposit_refund (:deposit-refund form))]
+         params     (tb/assoc-when
+                     {:id              (:id transition)
+                      :current_license (get-in account [:active_license :id])}
+                     :room_walkthrough_doc (:room-walkthrough-doc form)
+                     :asana_task (:asana-task form)
+                     :deposit_refund (:deposit-refund form))]
      {:dispatch [:ui/loading k true]
-      :graphql {:mutation
-                [[:transfer_update {:params params}
-                  [:id [:account [:id]]]]]
-                :on-success [::reassign-update-success k]
-                :on-failure [:graphql/failure k]}})))
+      :graphql  {:mutation
+                 [[:transition_update {:params params}
+                   [:id [:account [:id]]]]]
+                 :on-success [::reassign-update-success k]
+                 :on-failure [:graphql/failure k]}})))
 
 
 (reg-event-fx
  ::reassign-update-success
  [(path db/path)]
  (fn [{db :db} [_ k response]]
-   (let [account-id (get-in response [:data :transfer_update :account :id])]
+   (let [account-id (get-in response [:data :transition_update :account :id])]
      {:dispatch-n [[:ui/loading k false]
                    [:modal/hide db/reassign-modal-key]
                    [:payment-sources/fetch account-id]
@@ -406,12 +418,23 @@
  ::reassign-unit-success
  [(path db/path)]
  (fn [_ [_ k response]]
-   (let [account-id (get-in response [:data :transfer_create :account :id])]
+   (let [account-id (get-in response [:data :transition_create :account :id])]
      {:dispatch-n [[:ui/loading k false]
                    [:modal/hide db/reassign-modal-key]
                    [:payment-sources/fetch account-id]
                    [:notify/success ["Transfer created!"]]
                    [:account/fetch account-id]]})))
+
+
+(reg-event-fx
+ :accounts.entry.reassign/update-term
+ [(path db/path)]
+ (fn [db [k unit term]]
+   {:dispatch-n [[:accounts.entry.reassign/update :term term]
+                 [:accounts.entry.transition/fetch-rate
+                  unit
+                  term
+                  [:accounts.entry.reassign/update :rate]]]}))
 
 
 ;; move-out transition ==========================================================
@@ -473,20 +496,30 @@
    (assoc db :transition-form {})))
 
 
+(reg-event-db
+ :accounts.entry.transition/add-notice
+ [(path db/path)]
+ (fn [db [_ date]]
+   (assoc db :transition-form {:notice-date    date
+                               :written-notice true})))
+
+
 (reg-event-fx
  :accounts.entry/move-out!
  [(path db/path)]
- (fn [db [k license-id {:keys [date asana-task] :as form-data}]]
+ (fn [db [k license-id {:keys [date asana-task notice-date] :as form-data}]]
    {:dispatch-n [[:ui/loading k true]
                  [:accounts.entry.transition/hide]]
     :graphql    {:mutation
-                 [[:move_out_create {:params {:current_license license-id
-                                              :type            :move_out
-                                              :date            (.toISOString date)
-                                              :asana_task      asana-task}}
+                 [[:transition_create {:params {:current_license license-id
+                                                :type            :move_out
+                                                :date            (.toISOString (format/beginning-of-day date))
+                                                :asana_task      asana-task
+                                                :notice_date     (.toISOString (format/beginning-of-day notice-date))}}
                    [:id [:account [:id]]]]]
                  :on-success [::move-out-success k]
                  :on-failure [:graphql/failure k]}}))
+
 
 (reg-event-fx
  :accounts.entry.renewal/populate
@@ -501,7 +534,8 @@
  :accounts.entry.renewal/show
  [(path db/path)]
  (fn [{db :db} [_ license]]
-   {:dispatch-n [[:modal/show db/renewal-modal-key]
+   {:dispatch-n [[:license-terms/query]
+                 [:modal/show db/renewal-modal-key]
                  [:accounts.entry.renewal/populate license]]}))
 
 
@@ -515,15 +549,15 @@
  :accounts.entry/renew-license!
  [(path db/path)]
  (fn [{db :db} [k {:keys [id ends] :as license} {:keys [unit term rate] :as form-data}]]
-   (let [date (.toISOString (.add (js/moment ends) 1 "days"))]
+   (let [date (.toISOString (.add (format/beginning-of-day (js/moment ends)) 1 "days"))]
      {:graphql {:mutation
-                [[:renewal_create {:params {:current_license    id
-                                            :date               date
-                                            :type               :renewal
-                                            :new_license_params {:unit unit
-                                                                 :term term
-                                                                 :rate rate
-                                                                 :date date}}}
+                [[:transition_create {:params {:current_license    id
+                                               :date               date
+                                               :type               :renewal
+                                               :new_license_params {:unit unit
+                                                                    :term term
+                                                                    :rate rate
+                                                                    :date date}}}
                   [:id [:account [:id]]]]]
                 :on-success [::renewal-success k]
                 :on-failure [:graphql/failure k]}})))
@@ -533,7 +567,7 @@
  ::renewal-success
  [(path db/path)]
  (fn [{db :db} [_ k response]]
-   (let [account-id (get-in response [:data :renewal_create :account :id])]
+   (let [account-id (get-in response [:data :transition_create :account :id])]
      {:dispatch-n [[:ui/loading k false]
                    [:notify/success ["Great! License renewed!"]]
                    [:account/fetch account-id]
@@ -544,7 +578,7 @@
  ::move-out-success
  [(path db/path)]
  (fn [db [_ k response]]
-   (let [account-id (get-in response [:data :move_out_create :account :id])]
+   (let [account-id (get-in response [:data :transition_create :account :id])]
      {:dispatch-n [[:ui/loading k false]
                    [:notify/success ["Move-out data created!"]]
                    [:account/fetch account-id]]})))
@@ -557,12 +591,12 @@
    {:dispatch-n [[:ui/loading k true]
                  [:accounts.entry.transition/hide]]
     :graphql    {:mutation
-                 [[:move_out_update {:params {:id                   transition-id
-                                              :current_license      license-id
-                                              :date                 (.toISOString date)
-                                              :deposit_refund       deposit-refund
-                                              :room_walkthrough_doc room-walkthrough-doc
-                                              :asana_task           asana-task}}
+                 [[:transition_update {:params {:id                   transition-id
+                                                :current_license      license-id
+                                                :date                 (.toISOString (format/beginning-of-day date))
+                                                :deposit_refund       deposit-refund
+                                                :room_walkthrough_doc room-walkthrough-doc
+                                                :asana_task           asana-task}}
                    [:id [:account [:id]]]]]
                  :on-success [::move-out-update-success k]
                  :on-failure [:graphql/failure k]}}))
@@ -571,21 +605,116 @@
 (reg-event-fx
  ::move-out-update-success
  (fn [db [_ k response]]
-   (let [account-id (get-in response [:data :move_out_update :account :id])]
+   (let [account-id (get-in response [:data :transition_update :account :id])]
      {:dispatch-n [[:ui/loading k false]
                    [:notify/success "Move-out data updated!"]
                    [:account/fetch account-id]]})))
 
 
 (reg-event-fx
- :accounts.entry.reassign/update-term
+ :accounts.entry.transition/update-term
  [(path db/path)]
  (fn [db [k license term]]
    {:dispatch-n [[:accounts.entry.transition/update :term term]
-                 [:accounts.entry.reassign/fetch-rate (get-in license [:unit :id]) term :accounts.entry.transition/update]]}))
+                 [:accounts.entry.transition/fetch-rate
+                  (get-in license [:unit :id])
+                  term
+                  [:accounts.entry.transition/update :rate]]]}))
 
 
+;; delete renewal ===============================================================
 
+
+(reg-event-fx
+ :accounts.entry.transition/delete!
+ [(path db/path)]
+ (fn [_ [k transition]]
+   {:dispatch [:ui/loading k true]
+    :graphql  {:mutation
+               [[:transition_delete {:id (:id transition)}
+                 [:id [:account [:id]]]]]
+               :on-success [::delete-transition-success k]
+               :on-failure [:graphql/failure k]}}))
+
+
+(reg-event-fx
+ ::delete-transition-success
+ [(path db/path)]
+ (fn [_ [_ k response]]
+   (let [account-id (get-in response [:data :transition_delete :account :id])]
+     {:dispatch-n [[:ui/loading k false]
+                   [:notify/success "Transition deleted!"]
+                   [:account/fetch account-id]]})))
+
+
+;; refund security deposit ======================================================
+
+
+(reg-event-fx
+ :security-deposit.line-item/create
+ [(path db/path)]
+ (fn [{db :db} [_ refund-type]]
+   {:db (-> (update-in db [:form refund-type] conj db/default-line-item)
+            (update-in [(keyword (str (name refund-type) "-form-validation"))]
+                       conj
+                       db/default-validation))}))
+
+
+(defn- parse-price
+  [k v]
+  (if (and (= k :price)
+           (or (js/Number.isNaN v) (< v 0)))
+    nil
+    v))
+
+
+(reg-event-db
+ :security-deposit.line-item/update
+ [(path db/path)]
+ (fn [db [_ idx refund-type key value]]
+   (let [value (parse-price key value)]
+     (assoc-in db [:form refund-type idx key] value))))
+
+
+(reg-event-db
+ :security-deposit.line-item/delete
+ [(path db/path)]
+ (fn [db [_ idx refund-type]]
+   (update-in db [:form refund-type] #(tb/remove-at % idx))))
+
+
+(defn prepare-edits
+  [items]
+  (mapv
+   (fn [item]
+     (tb/transform-when-key-exists item
+       {:types #(vector (clojure.core/keyword %))}))
+   items))
+
+
+(reg-event-fx
+ :security-deposit/refund!
+ [(path db/path)]
+ (fn [{db :db} [k account-id deposit-id credits charges]]
+   {:dispatch [:ui/loading k true]
+    :graphql  {:mutation
+               [[:refund_security_deposit {:deposit_id deposit-id
+                                           :credits    (prepare-edits credits)
+                                           :charges    (prepare-edits charges)}
+                 [:id]]]
+               :on-success [::security-deposit-success k account-id]
+               :on-failure [:graphql/failure k]}}))
+
+
+(reg-event-fx
+ ::security-deposit-success
+ [(path db/path)]
+ (fn [db [_ k account-id]]
+   {:dispatch-n [[:ui/loading k false]
+                 [:modal/hide :security-deposit/modal]
+                 [:account/fetch account-id {:on-success [::on-fetch-account]}]
+                 [:payments/fetch account-id]
+                 [:notify/success "Security Deposit refunded!"]]}))
 
 
 ;; payment ======================================================================

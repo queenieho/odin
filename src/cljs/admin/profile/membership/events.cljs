@@ -29,13 +29,13 @@
  (fn [_ [k account-id]]
    {:dispatch [:ui/loading k true]
     :graphql  {:query      [[:account {:id account-id}
-                             [[:deposit [:id :due :amount :amount_remaining :amount_paid :amount_pending]]
+                             [[:deposit [:id :due :amount :amount_remaining :amount_paid :amount_pending :line_items]]
                               [:active_license
                                [:id :rate :starts :ends :status :term
                                 [:unit [:id :number]]
                                 [:property [:id :name :code :cover_image_url]]
-                                [:payments [:id :description :type :amount :late_fee
-                                            :status :due :paid_on :pstart :pend]]]]]]]
+                                [:payments [:id :description :type :amount :late_fee_due
+                                            :late_fee_paid :status :due :paid_on :pstart :pend]]]]]]]
                :on-success [:member.fetch.license/success k]
                :on-failure [:graphql/failure k]}}))
 

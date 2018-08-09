@@ -28,6 +28,10 @@
   {:description "Possible statuses of the security deposit refund."
    :values      [:initiated :successful :failed]}
 
+  :line_item_type
+  {:description "Possible types of the line items."
+   :values      [:rent :ffe :cleaning :repairs :interest]}
+
   :license_status
   {:description "Possible statuses of a member license."
    :values      [:active :inactive :canceled :renewal :pending]}
@@ -51,6 +55,10 @@
   :payment_type
   {:description "Different types of payment."
    :values      [:order :rent :deposit :fee :application_fee :guest_booking :late_fee]}
+
+  :bank_account_type
+  {:description "Property bank account types."
+   :values      [:ops :deposit]}
 
   :payments_date_key
   {:description "Allowed keys for date-based payment queries."

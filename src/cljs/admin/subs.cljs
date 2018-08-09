@@ -1,6 +1,7 @@
 (ns admin.subs
   (:require [admin.accounts.subs]
             [admin.kami.subs]
+            [admin.license-terms.subs]
             [admin.metrics.subs]
             [admin.notes.subs]
             [admin.profile.subs]

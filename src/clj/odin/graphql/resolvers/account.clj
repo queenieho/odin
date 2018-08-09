@@ -11,13 +11,15 @@
             [datomic.api :as d]
             [odin.graphql.authorization :as authorization]
             [odin.graphql.resolvers.utils :refer [error-message]]
+            [odin.graphql.resolvers.utils.deposit :as utils-deposit]
             [odin.models.payment-source :as payment-source]
             [taoensso.timbre :as timbre]
             [toolbelt.async :refer [<!?]]
             [toolbelt.core :as tb]
             [toolbelt.datomic :as td]
             [odin.util.validation :as uv]
-            [teller.customer :as tcustomer]))
+            [teller.customer :as tcustomer]
+            [teller.property :as tproperty]))
 
 ;; =============================================================================
 ;; Fields
@@ -78,6 +80,23 @@
 (defn notes
   [_ _ account]
   (:account/notes account))
+
+
+(defn refunded
+  [_ _ account]
+  (utils-deposit/is-refunded? (deposit/by-account account)))
+
+
+(defn refundable
+  [{teller :teller conn :conn} _ account]
+  (if-let [deposit (deposit/by-account account)]
+    (utils-deposit/is-refundable? teller (deposit/by-account account))
+    false))
+
+
+(defn can-pay
+  [{teller :teller} _ account]
+  (utils-deposit/can-pay? teller account))
 
 
 ;; =============================================================================
@@ -193,6 +212,31 @@
         requester))))
 
 
+(defn create-payout!
+  [{:keys [conn teller]} {params :params account-id :id} _]
+  (let [account (d/entity (d/db conn) account-id)
+        customer (tcustomer/by-account teller account)
+        source (tproperty/bank-account (:account_number params)
+                                       (:routing_number params)
+                                       "individual"
+                                       (account/full-name account))]
+    (tcustomer/create-payout-account! customer source (tb/assoc-when
+                                                       {;; Personal Info
+                                                        :first-name (account/first-name account)
+                                                        :last-name (account/last-name account)
+                                                        :dob-inst (:dob params)
+                                                        :ssn (:ssn params)
+
+                                                        ;; Address
+                                                        :line1 (:line1 params)
+                                                        :city (:city params)
+                                                        :state (:state params)
+                                                        :postal-code (:postal_code params)
+                                                        :country (:country params)}
+                                                       :line2 (:line2 params)))
+    account))
+
+
 ;; =============================================================================
 ;; Resolvers
 ;; =============================================================================
@@ -225,9 +269,13 @@
    :account/emergency-contact emergency-contact
    :account/service-source    service-source
    :account/notes             notes
+   :account/refunded          refunded
+   :account/refundable        refundable
+   :account/can-pay           can-pay
    ;; mutations
    :account/update!           update!
    :account/change-password!  change-password!
+   :account/create-payout!    create-payout!
    ;; queries
    :account/list              accounts
    :account/entry             entry})

@@ -120,7 +120,7 @@
                [[:payment_sources {:account account-id}
                  [:id :last4 :customer :type :name :default :status :autopay :expires
                   [:payments [:id :method :type :autopay :amount :status :pstart :pend :paid_on :description]]
-                  [:account [:id]]]]]
+                  [:account [:id :first_name :last_name :dob :refundable :can_pay]]]]]
                :on-success [::fetch-success k account-id opts]
                :on-failure [:graphql/failure k]}}))
 
