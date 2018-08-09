@@ -19,7 +19,6 @@
             [iface.components.ptm.layout :as layout]
             [iface.modules.graphql :as graphql]
             [iface.modules.modal]
-            [iface.utils.log :as log]
             [iface.utils.routes :as iroutes]
             [iface.components.ptm.icons :as icons]
             [iface.components.ptm.ui :as ui]
