@@ -55,8 +55,6 @@
 (defmethod events/gql->rfdb :has_pet [k] step)
 
 (defmethod events/gql->rfdb :pet [k v]
-  (log/log "is this a dog?" (:type v))
-  (log/log "does that equal :dog?" (= :dog (:type v)))
   (if (= :dog (:type v))
     :logistics.pets/dog
     :logistics.pets/other))

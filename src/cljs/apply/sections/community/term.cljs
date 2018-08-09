@@ -63,7 +63,6 @@
   [_]
   (let [options (subscribe [::term-options])]
     [:div
-     (log/log @options)
      [:div.w-60-l.w-100
       [:h1 "How long would like to stay with us?"]
       [:p "We know everyone has a different situation,
