@@ -10,6 +10,7 @@
             [clojure.string :as string]
             [com.walmartlabs.lacinia.resolve :as resolve]
             [datomic.api :as d]
+            [odin.graphql.authorization :as authorization]
             [ring.util.response :as response]
             [taoensso.timbre :as timbre]
             [teller.customer :as customer]
@@ -262,6 +263,41 @@
 ;; ==============================================================================
 ;; resolvers --------------------------------------------------------------------
 ;; ==============================================================================
+
+
+(defn- is-owner?
+  [account application]
+  (= (:db/id account) (:db/id (application/account application))))
+
+
+(defn- is-in-progress?
+  [application]
+  (= (application/status application) :application.status/in-progress))
+
+
+(defmethod authorization/authorized? :appication/approve!
+  [_ account _]
+  (account/admin? account))
+
+
+(defmethod authorization/authorized? :appication/create!
+  [_ account _]
+  (and (account/applicant? account)
+       (nil? (account/member-application account))))
+
+
+(defmethod authorization/authorized? :application/update!
+  [{conn :conn} account {:keys [application]}]
+  (let [application (d/entity (d/db conn) application)]
+    (and (is-owner? account application)
+         (is-in-progress? application))))
+
+
+(defmethod authorization/authorized? :application/submit!
+  [{conn :conn} account {:keys [application]}]
+  (let [application (d/entity (d/db conn) application)]
+    (and (is-owner? account application)
+         (is-in-progress? application))))
 
 
 (def resolvers
