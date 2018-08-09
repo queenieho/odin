@@ -203,10 +203,10 @@
                        new-license
                        (when (and (moving-out-after-license-end? license date) (= type :move-out))
                          {:db/id               (td/id current_license)
-                          :member-license/ends (one-day-before (date/end-of-day date tz))})
+                          :member-license/ends (date/end-of-day date tz)})
                        (when (or (= type :inter-xfer) (= type :intra-xfer))
                          {:db/id               (td/id current_license)
-                          :member-license/ends (one-day-before (date/end-of-day date tz))})
+                          :member-license/ends (date/end-of-day date tz)})
                        (when (some? new_license_params)
                          {:db/id            (td/id account)
                           :account/licenses new-license})))
