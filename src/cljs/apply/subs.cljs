@@ -90,7 +90,8 @@
 (reg-sub
  :nav.item/enabled?
  (fn [db [_ nav-item]]
-   (db/can-navigate? db (:section nav-item))))
+   (and (db/can-navigate? db (:section nav-item))
+        (= :in_progress (:application-status db)))))
 
 
 (reg-sub
