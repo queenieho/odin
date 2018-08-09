@@ -7,16 +7,14 @@
             [blueprints.models.source :as source]
             [clj-time.core :as t]
             [clojure.set :as set]
-            [clojure.string :as string]
             [com.walmartlabs.lacinia.resolve :as resolve]
             [datomic.api :as d]
             [odin.graphql.authorization :as authorization]
             [ring.util.response :as response]
-            [taoensso.timbre :as timbre]
             [teller.customer :as customer]
             [teller.payment :as payment]
-            [toolbelt.datomic :as td]
-            [toolbelt.core :as tb]))
+            [toolbelt.core :as tb]
+            [toolbelt.datomic :as td]))
 
 
 ;; ==============================================================================
@@ -204,8 +202,6 @@
   (let [application (d/entity (d/db conn) application)
         account     (application/account application)
         params      (parse-update-params params)]
-    (timbre/info "\n\n\n application is: " application)
-    (timbre/info "\n\n\n application params are: " params)
     (cond
       (not (account/applicant? account))
       (resolve/resolve-as nil {:message "Cannot update applications for non-applicant!"})
