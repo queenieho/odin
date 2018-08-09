@@ -56,7 +56,8 @@
                 (string/ends-with? uri ".png")
                 (string/ends-with? uri ".js")
                 (string/ends-with? uri ".css")
-                (string/ends-with? uri ".map")))]
+                (string/ends-with? uri ".map")
+                (string/starts-with? uri "/api")))]
     (fn [{:keys [deps params uri request-method session remote-addr] :as req}]
       (when-not (-junk? uri)
         (timbre/info :web/request
