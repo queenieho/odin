@@ -83,6 +83,7 @@ $card-icon-opacity-hover: 1;
 
 .card-photo {
   // adjust the .aspect-ratio--#x# class in the HTML to change photo proportions.
+  cursor: default;
   @extend .aspect-ratio;
   .aspect-ratio--object {
     border-top-left-radius: $border-radius;
