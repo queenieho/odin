@@ -119,6 +119,7 @@
 }
 
 .DayPicker-Day {
+  outline: none;
   display: table-cell;
   font-family: $sans-serif;
   font-size: $p-font-size;
@@ -196,6 +197,7 @@
 }
 
 .DayPicker-Day--selected:not(.DayPicker-Day--disabled):not(.DayPicker-Day--outside) {
+  outline: none;
   position: relative;
   color: #f0f8ff;
   background-color: #4a90e2;
