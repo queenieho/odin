@@ -288,8 +288,8 @@
 
 (defmethod authorization/authorized? :application/update!
   [{conn :conn} account {:keys [application]}]
-  (let [application (d/entity (d/db conn) and)]
-    (application (is-owner? account application)
+  (let [application (d/entity (d/db conn) application)]
+    (and (is-owner? account application)
          (is-in-progress? application))))
 
 
