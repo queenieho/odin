@@ -4,7 +4,7 @@
 
 
 (def app-routes
-  ["/onboarding"
+  [""
    [["/welcome" :welcome]
 
     [["/" :section-id] [[["/" :step-id] [["" :section/step]
