@@ -1,16 +1,54 @@
 (ns onboarding.routes
-  (:require [accountant.core :as accountant]
-            [bidi.bidi :as bidi]
-            [onboarding.db :as db]
-            [re-frame.core :refer [dispatch reg-fx]]))
+  (:require [iface.utils.routes :as iroutes]
+            [re-frame.core :refer [dispatch reg-event-fx reg-fx]]))
+
 
 (def app-routes
   ["/onboarding"
-   (conj (db/menu->routes db/menu) [true :overview/start])])
+   [["/welcome" :welcome]
 
-(def path-for (partial bidi/path-for app-routes))
+    [["/" :section-id] [[["/" :step-id] [["" :section/step]
+                                         [["/" :substep-id] :section.step/substep]]]]]
 
-(defn hook-browser-navigation! []
+    ["/logout" :logout]
+
+    [true :home]]])
+
+
+(def path-for
+  (partial iroutes/path-for app-routes))
+
+
+(defmulti dispatches
+  "Define additional events to dispatch when `route` is navigated to.
+
+  Matches either the key identified by `:page`, or to the first key in
+  `path` (which represents the 'root' route.)."
+  (fn [route]
+    (iroutes/route-dispatch dispatches route)))
+
+
+(defmethod dispatches :default [route] [])
+
+
+
+(defmethod dispatches :home [_]
+  [[::home]])
+
+
+(iroutes/install-events-handlers! dispatches)
+
+
+(reg-event-fx
+ ::home
+ (fn [_ _]
+   {:route (path-for :welcome)}))
+
+
+;; (def path-for (partial bidi/path-for app-routes))
+
+
+#_(defn hook-browser-navigation! []
   (accountant/configure-navigation!
    {:nav-handler  (fn [path]
                     (let [match  (bidi/match-route app-routes path)
@@ -21,7 +59,7 @@
                     (boolean (bidi/match-route app-routes path)))})
   (accountant/dispatch-current!))
 
-(reg-fx
+#_(reg-fx
  :route
  (fn [new-route]
    (if (vector? new-route)

@@ -76,6 +76,7 @@
 (reg-event-fx
  :app/init
  (fn [_ [_ account]]
+   (log/log "initting in application" account)
    {:db       (db/bootstrap account)
     :dispatch-n [[:ui/loading :app/init true]
                  [:app.init/fetch-application account]]}))

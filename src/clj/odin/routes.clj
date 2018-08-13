@@ -85,15 +85,17 @@
                  :full-deposit (-> account deposit/by-account deposit/amount)
                  :llc          (-> account approval/by-account approval/property property/llc)
                  :name         (account/short-name account)
-                 :email        (account/email account)}]
+                 :email        (account/email account)
+                 :id           (td/id account)}]
     (facade/app req "onboarding"
                 :title "Starcity Onboarding"
-                :navbar (onboarding-navbar)
+                :fonts ["https://fonts.googleapis.com/css?family=Caveat|Eczar:700|Work+Sans:400,600"]
+                ;; :navbar (onboarding-navbar)
                 :content (onboarding-content)
                 :json [["stripe"  {:key (config/stripe-public-key (->config req))}]
                        ["account" data]]
                 :stylesheets [facade/font-awesome]
-                :css-bundles ["antd.css" "styles.css"]
+                :css-bundles ["antd.css" "ptm.css"]
                 :chatlio? true)))
 
 

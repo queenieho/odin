@@ -1,87 +1,157 @@
 (ns onboarding.events
-  (:require [ajax.core :as ajax]
-            [day8.re-frame.http-fx]
-            [onboarding.db :as db]
-            [onboarding.prompts.events]
+  (:require [onboarding.db :as db]
             [onboarding.routes :as routes]
             [re-frame.core :refer [reg-event-fx path]]
-            [onboarding.chatlio]
+            [starcity.re-frame.chatlio-fx]
             [toolbelt.core :as tb]
-            [antizer.reagent :as ant]))
+            [antizer.reagent :as ant]
+            [iface.utils.log :as log]
+            [devcards.core :as dc]))
 
-;; =============================================================================
-;; Init
-;; =============================================================================
+
+;; ==============================================================================
+;; bootstrap ====================================================================
+;; ==============================================================================
 
 
 (reg-event-fx
  :app/init
- (fn [{:keys [db]} _]
-   {:db       db/default-value
-    :dispatch [:app/bootstrap]}))
-
-
-;; Fetch the server-side progress
-(reg-event-fx
- :app/bootstrap
- (fn [{:keys [db]} [_ {:keys [show-loading] :or {show-loading true}}]]
-   {:db         (assoc db :bootstrapping show-loading)
-    :http-xhrio {:method          :get
-                 :uri             "/api/onboarding"
-                 :response-format (ajax/transit-response-format)
-                 :on-success      [:app.bootstrap/success]
-                 :on-failure      [:app.bootstrap/failure]}}))
-
-
-;; On success, bootstrap the app database with server-side data
-(reg-event-fx
- :app.bootstrap/success
- (fn [{:keys [db]} [_ {result :result}]]
-   (let [db (db/bootstrap db result)]
-     {:db            (assoc db :bootstrapping false)
-      :chatlio/ready [:init-chatlio]
-      :route         (routes/path-for (get-in db [:menu :active]))})))
+ (fn [_ [_ account]]
+   (log/log "initting..." account)
+   {:db       (db/bootstrap account)
+    :dispatch [:app.init/fetch account]}))
 
 
 (reg-event-fx
- :init-chatlio
+ :app.init/fetch
+ (fn [_ [_ {:keys [id] :as account}]]
+   (log/log "fetching" id)
+   {:graphql {:query      [[:account {:id id}
+                            [:name :id
+                             [:application [:id]]]]]
+              :on-success [::init-fetch-success]
+              :on-failure [:graphql/failure]}}))
+
+
+(reg-event-fx
+ ::init-fetch-success
+ (fn [{db :db} [_ response]]
+   (log/log "fetched account on init" response)
+   {:dispatch [:app.init/start-onboarding]}))
+
+
+(reg-event-fx
+ :app.init/start-onboarding
+ (fn [{db :db} _]
+   {:chatlio/ready [:init-chatlio]
+    :route         (routes/path-for :welcome)}))
+
+
+;; ==============================================================================
+;; update onboarding ============================================================
+;; ==============================================================================
+
+
+(reg-event-fx
+ :onboarding/update
+ (fn [{db :db} [_ params]]
+   ;; TODO add graphql mutation here
+   ;; {:dispatch [:ui/loading :step.current/save true]}
+   {:dispatch [::onboarding-update-success]}))
+
+
+(reg-event-fx
+ ::onboarding-update-success
+ (fn [{db :db} [_ response]]
+   ;; TODO add update to local db when this happens
+   {:dispatch [:step/advance]}))
+
+
+;; ==============================================================================
+;; top-level ====================================================================
+;; ==============================================================================
+
+
+(reg-event-fx
+ :onboarding/start
  (fn [_ _]
-   (let [email (aget js/window "account" "email")
-         name  (aget js/window "account" "name")]
-     {:chatlio/show     false
-      :chatlio/identify [email {:name name}]})))
+   {:route (db/step->route db/first-step)}))
 
 
-;; TODO: Update UI so that error is conveyed and option to retry is provided.
-(reg-event-fx
- :app.bootstrap/failure
- (fn [{:keys [db]} [_ err]]
-   (ant/notification-error {:duration    8
-                            :message     "Uh oh!"
-                            :description "We couldn't fetch your progress. Please check your internet connection."})))
+;; ==============================================================================
+;; nav ==========================================================================
+;; ==============================================================================
 
 
 (reg-event-fx
- :help/toggle
+ :nav.item/logout
  (fn [_ _]
-   {:chatlio/show true}))
+   {:route (routes/path-for :logout)}))
 
 
-;; =============================================================================
-;; Routing
-;; =============================================================================
-
-
-;; Prevents flicker by checking if the application is currently being
-;; bootstrapped. If so, do nothing. After bootstrap success, a `:route` effect
-;; will be observed.
 (reg-event-fx
- :app/route
- (fn [{:keys [db]} [_ keypath params]]
-   (when-not (:bootstrapping db)
-     (if (db/can-navigate-to? db keypath)
-       {:db       (assoc-in db [:menu :active] keypath)
-        :dispatch [:prompt/init keypath]}
-       (do
-         (ant/message-warning {:content "Step not available"})
-         {:route (routes/path-for (get-in db [:menu :default]))})))))
+ :nav.item/select
+ (fn [{db :db} [_ nav-item]]
+   (tb/assoc-when
+    {}
+    :route (when (db/can-navigate? db (:section nav-item))
+             (routes/path-for :section/step
+                              :section-id (name (:section nav-item))
+                              :step-id (name (:first-step nav-item)))))))
+
+
+;; ==============================================================================
+;; steps ========================================================================
+;; ==============================================================================
+
+
+(defn- next-route
+  [db params]
+  (-> db db/next-step db/step->route))
+
+
+(defn- default-save-fx [db params]
+  (let [res {:route    (next-route db params)
+             :dispatch [:ui/loading :step.current/save false]}]
+    res))
+
+
+(defmulti save-step-fx
+  (fn [db params]
+    (-> db :route db/route->step)))
+
+
+(defmethod save-step-fx :default [db params]
+  (default-save-fx db params))
+
+
+(reg-event-fx
+ :step/advance
+ (fn [{db :db} [k params]]
+   {:route (next-route db params)
+    :dispatch [:ui/loading :step.current/save false]}))
+
+
+(reg-event-fx
+ :step.current/save
+ (fn [{db :db} [k params]]
+   (merge {:dispatch [:ui/loading k true]}
+          (save-step-fx db params))))
+
+
+(reg-event-fx
+ :step.current/next
+ (fn [{db :db} [_ params]]
+   {:dispatch [:step.current/save params]}))
+
+
+(reg-event-fx
+ :finish
+ (fn [{db :db} _]
+   {:route (routes/path-for :applications)}))
+
+
+(reg-event-fx
+ :step/edit
+ (fn [{db :db} [_ step]]
+   {:route (db/step->route step)}))
