@@ -10,6 +10,28 @@
 
 
 ;; ==============================================================================
+;; chatlio ======================================================================
+;; ==============================================================================
+
+
+(reg-event-fx
+ :init-chatlio
+ (fn [_ _]
+   (let [email (aget js/window "account" "email")
+         name  (aget js/window "account" "name")]
+     {:chatlio/show     false
+      :chatlio/identify [email {:name name}]})))
+
+
+(reg-event-fx
+ :help/toggle
+ (fn [{db :db} _]
+   (let [is-open (:chatlio/show db)]
+     {:db           (assoc db :chatlio/show (not is-open))
+      :chatlio/show (not is-open)})))
+
+
+;; ==============================================================================
 ;; bootstrap ====================================================================
 ;; ==============================================================================
 
@@ -44,7 +66,9 @@
  :app.init/start-onboarding
  (fn [{db :db} _]
    {:chatlio/ready [:init-chatlio]
-    :route         (routes/path-for :welcome)}))
+    ;; TODO uncomment when this is ready
+    ;; :route         (routes/path-for :welcome)
+    }))
 
 
 ;; ==============================================================================
