@@ -8,6 +8,14 @@
             [iface.utils.log :as log]))
 
 
+;; ==============================================================================
+;; nav ==========================================================================
+;; ==============================================================================
+
+
+;; icon =================================
+
+
 (defn- nav-icon
   [{:keys [type active disabled link action]}]
   [:a
@@ -38,6 +46,10 @@
 (s/def ::icon
   string?)
 
+
+;; nav item =============================
+
+
 (defn nav-item
   "A single navigation item to be rendered within `nav` or `nav-footer`."
   [{:keys [progress disabled label link action icon] :or {link ""}}]
@@ -64,11 +76,18 @@
                                        ::link
                                        ::icon])))
 
+
+;; nav footer ===========================
+
+
 (defn nav-footer
   "An optional extra component, rendered at the bottom of the nav component."
   []
   [:div.nav-footer
    (into [:ul.nav-items] (r/children (r/current-component)))] )
+
+
+;; nav ==================================
 
 
 (defn nav
@@ -91,6 +110,11 @@
   [:div.progress-mobile
    [:span.progress-mobile-fill
     {:style {:width (str (or progress 0) "%")}}]])
+
+
+;; ==============================================================================
+;; footer =======================================================================
+;; ==============================================================================
 
 
 (defn- footer-small
@@ -159,6 +183,11 @@
    [footer-small footer-items]])
 
 
+;; ==============================================================================
+;; layout =======================================================================
+;; ==============================================================================
+
+
 (defn layout
   "The main layout component, which defines the nav, footer, and main content for
   the current view."
@@ -174,6 +203,11 @@
      (when (some? footer) (r/as-element footer))]))
 
 
+;; ==============================================================================
+;; loading screen ===============================================================
+;; ==============================================================================
+
+
 (defn loading-fullpage
   "Loading page component"
   [& {:keys [text loading]
@@ -187,3 +221,18 @@
        {:style {:height "50px"}
         :src   "/assets/images/ptm/loading.gif"}])
     [:h1 text]]])
+
+
+;; ==============================================================================
+;; header item ==================================================================
+;; ==============================================================================
+
+
+(defn header
+  ([title]
+   (header title nil))
+  ([title subtext]
+   [:div.w-60-l.w-100
+    [:h1 title]
+    (when-some [s subtext]
+      [:p s])]))
