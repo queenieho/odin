@@ -19,7 +19,7 @@
    [:div.pb4
     [:img {:src icon}]]
    [:h3 title]
-   [:p body]])
+   (into [:p] body)])
 
 
 (defn welcome-layout []
@@ -51,8 +51,8 @@
         [welcome-item
          {:icon  "/assets/images/ptm/icons/ic-credit-card-black.svg"
           :title "Pay Security Deposit"
-          :body (str "Last step is to pay the " deposit " security deposit (partial or
-          full) and you'll be ready to move in!")}]]
+          :body (list "Last step is to pay the " [:b deposit] " security
+          deposit (partial or full) and you'll be ready to move in!")}]]
        [:button.button
         {:on-click #(dispatch [:onboarding/start])}
         "Let's go!"]]]]))
