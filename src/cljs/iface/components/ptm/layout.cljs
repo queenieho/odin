@@ -228,11 +228,8 @@
 ;; ==============================================================================
 
 
-(defn header
-  ([title]
-   (header title nil))
-  ([title subtext]
-   [:div.w-60-l.w-100
-    [:h1 title]
-    (when-some [s subtext]
-      [:p s])]))
+(defn header [{:keys [title subtext]}]
+  [:div.w-60-l.w-100
+   [:h1 title]
+   (when-some [s subtext]
+     (into [:p] s))])
