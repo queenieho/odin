@@ -67,6 +67,12 @@ $card-icon-opacity-hover: 1;
   padding: $card-horizontal-padding;
 }
 
+.card-section {
+  padding: $card-horizontal-padding;
+  overflow: auto;
+  border-top: $border-width solid $line-gray;
+}
+
 .card-footer {
   border-top: $border-width solid $line-gray;
   padding: 0.5rem $card-horizontal-padding;
@@ -103,6 +109,12 @@ $card-icon-opacity-hover: 1;
   background-position: center center;
   background-size: cover;
   min-height: 306px;
+}
+
+.card-img-onboard {
+  background-position: center center;
+  background-size: cover;
+  min-height: 600px;
 }
 
 .card-illo {
