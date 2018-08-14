@@ -26,7 +26,7 @@
 
 (defmethod db/has-back-button? step
   [_]
-  false)
+  true)
 
 
 (defmethod db/step-complete? step
@@ -52,7 +52,8 @@
    [layout/header {:title   "Please sign your membership agreement."
                    :subtext "Review the terms and details of your membership
                    agreement and sign and date it at the end."}]
-   [:div.page-content.w-90-l.w-100
-    [button/primary
-     {:on-click #(dispatch [:step/advance])}
-     "View & sign agreement"]]])
+   [:div.w-60-l.w-100
+    [:div.page-content
+     [button/primary
+      {:on-click #(dispatch [:step/advance])}
+      "View & sign agreement"]]]])

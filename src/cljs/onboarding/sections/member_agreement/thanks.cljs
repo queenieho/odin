@@ -3,7 +3,8 @@
             [antizer.reagent :as ant]
             [re-frame.core :refer [dispatch subscribe]]
             [onboarding.events :as events]
-            [onboarding.db :as db]))
+            [onboarding.db :as db]
+            [iface.components.ptm.layout :as layout]))
 
 
 (def step :member-agreement/thanks)
@@ -14,22 +15,22 @@
 
 (defmethod db/next-step step
   [db]
-  :next/step)
+  :helping-hands/byomf)
 
 
 (defmethod db/previous-step step
   [db]
-  :previous/step)
+  :member-agreement/sign)
 
 
 (defmethod db/has-back-button? step
   [_]
-  false)
+  true)
 
 
 (defmethod db/step-complete? step
   [db step]
-  false)
+  true)
 
 
 ;; events =======================================================================
@@ -47,8 +48,7 @@
 (defmethod content/view step
   [_]
   [:div
+   [layout/header
+    {:title "Thanks for signing your member agreement."}]
    [:div.w-60-l.w-100
-    [:h1 "Step Header"]
-    [:p "Step description"]]
-   [:div.page-content.w-90-l.w-100
-    [:p "Step content"]]])
+    [:div.page-content]]])
