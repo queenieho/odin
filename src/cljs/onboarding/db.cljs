@@ -133,8 +133,7 @@
         :security.deposit.transfer/verify-account
         ;; TODO make sure this list if complete
         }
-      step)))
-  true)
+      step))))
 
 
 ;; has back button? =============================================================

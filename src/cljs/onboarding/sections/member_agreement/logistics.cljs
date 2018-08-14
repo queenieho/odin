@@ -24,12 +24,12 @@
 
 (defmethod db/next-step step
   [db]
-  :next/step)
+  :member-agreement/sign)
 
 
 (defmethod db/previous-step step
   [db]
-  :previous/step)
+  nil)
 
 
 (defmethod db/has-back-button? step
