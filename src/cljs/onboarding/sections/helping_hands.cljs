@@ -1,7 +1,7 @@
 (ns onboarding.sections.helping-hands
   (:require [onboarding.content :as content]
             [onboarding.sections.helping-hands.bundles]
-            [onboarding.sections.helping-hands.byof]
+            [onboarding.sections.helping-hands.byomf]
             [onboarding.sections.helping-hands.dog-info]
             [onboarding.sections.helping-hands.dog-walking]
             [onboarding.sections.helping-hands.packages]
