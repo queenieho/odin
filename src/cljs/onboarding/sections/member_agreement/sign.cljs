@@ -3,7 +3,9 @@
             [antizer.reagent :as ant]
             [re-frame.core :refer [dispatch subscribe]]
             [onboarding.events :as events]
-            [onboarding.db :as db]))
+            [onboarding.db :as db]
+            [iface.components.ptm.layout :as layout]
+            [iface.components.ptm.ui.button :as button]))
 
 
 (def step :member-agreement/sign)
@@ -14,12 +16,12 @@
 
 (defmethod db/next-step step
   [db]
-  :next/step)
+  :member-agreement/thanks)
 
 
 (defmethod db/previous-step step
   [db]
-  :previous/step)
+  :member-agreement/logistics)
 
 
 (defmethod db/has-back-button? step
@@ -47,8 +49,10 @@
 (defmethod content/view step
   [_]
   [:div
-   [:div.w-60-l.w-100
-    [:h1 "Step Header"]
-    [:p "Step description"]]
+   [layout/header {:title   "Please sign your membership agreement."
+                   :subtext "Review the terms and details of your membership
+                   agreement and sign and date it at the end."}]
    [:div.page-content.w-90-l.w-100
-    [:p "Step content"]]])
+    [button/primary
+     {:on-click #(dispatch [:step/advance])}
+     "View & sign agreement"]]])
